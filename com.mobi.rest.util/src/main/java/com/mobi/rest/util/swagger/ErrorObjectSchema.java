@@ -28,13 +28,16 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 
 /**
- * Class used for OpenAPI documentation for Error Object
+ * Class used for OpenAPI documentation for Error Object.
  */
 public class ErrorObjectSchema {
-    @Schema(type = "string", description = "Error Type")
+
+    @Schema(type = "string", description = "Error Type", example = "IllegalArgumentException")
     public String error;
-    @Schema(type = "string", description = "Error Message")
+
+    @Schema(type = "string", description = "Error Message", example = "Invalid argument provided")
     public String errorMessage;
-    @Schema(type = "array", description = "List of error details")
+
+    @Schema(type = "array", description = "List of error details", example = "[\"Detail 1\", \"Detail 2\"]")
     public List<String> errorDetails;
 }

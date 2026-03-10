@@ -1,0 +1,44 @@
+package com.mobi.rest.util.swagger;
+
+/*-
+ * #%L
+ * com.mobi.rest.util
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2026 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
+import io.swagger.v3.oas.annotations.media.Schema;
+
+/**
+ * Class representing a source record for Swagger documentation.
+ */
+public class SourceRecord {
+
+    @Schema(description = "The title of the source record", example = "Entity 1 Source Record")
+    public String title;
+
+    @Schema(description = "The IRI of the source record", example = "http://example.org/source-record1")
+    public String iri;
+
+    @Schema(description = "The type of the source record (subclass of VersionedRDFRecord)", example = "http://example.org/VersionedRDFRecord")
+    public String type;
+
+    public SourceRecord() {
+    }
+}

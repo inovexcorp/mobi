@@ -12,12 +12,12 @@ package com.mobi.dataset.rest;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -62,10 +62,12 @@ import com.mobi.rest.util.FileUpload;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.rest.util.jaxb.Links;
+import com.mobi.rest.util.swagger.JsonLdObject;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.Explode;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -146,11 +148,11 @@ public class DatasetRest {
      * Retrieves all the DatasetRecords in the local Catalog in a JSON array. Can optionally be paged if passed a
      * limit and offset. Can optionally be sorted by property value if passed a sort IRI.
      *
-     * @param uriInfo URI information of the request to be used in creating links to other pages of DatasetRecords
-     * @param offset Offset for a page of DatasetRecords
-     * @param limit Number of DatasetRecords to return in one page
-     * @param sort IRI of the property to sort by
-     * @param asc Whether the list should be sorted ascending or descending. Default is ascending
+     * @param uriInfo    URI information of the request to be used in creating links to other pages of DatasetRecords
+     * @param offset     Offset for a page of DatasetRecords
+     * @param limit      Number of DatasetRecords to return in one page
+     * @param sort       IRI of the property to sort by
+     * @param asc        Whether the list should be sorted ascending or descending. Default is ascending
      * @param searchText Optional search text for the query
      * @return Response with a JSON array of DatasetRecords
      */
@@ -161,10 +163,25 @@ public class DatasetRest {
             tags = "datasets",
             summary = "Retrieves all DatasetRecords in the local Catalog",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Response with a JSON array of DatasetRecords"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+                    @ApiResponse(responseCode = "200", description = "Response with a JSON array of DatasetRecords",
+                    content = @Content(array = @ArraySchema(
+                            schema = @Schema(implementation = JsonLdObject.class,
+                            description = "A list of DatasetRecord JSON-LD objects")))),
+                    @ApiResponse(responseCode = "400", description = "Bad Request",
+                            headers = @Header(name = "HTTP Status",
+                                    description = "Reason Phrase contains error message",
+                                    schema = @Schema(type = "string"))
+                    ),
+                    @ApiResponse(responseCode = "403", description = "Forbidden",
+                            headers = @Header(name = "HTTP Status",
+                                    description = "Reason Phrase contains error message",
+                                    schema = @Schema(type = "string"))
+                    ),
+                    @ApiResponse(responseCode = "500", description = "Internal Server Error",
+                            headers = @Header(name = "HTTP Status",
+                                    description = "Reason Phrase contains error message",
+                                    schema = @Schema(type = "string"))
+                    ),
             }
     )
     public Response getDatasetRecords(
@@ -174,7 +191,7 @@ public class DatasetRest {
             @QueryParam("offset") int offset,
             @Parameter(description = "Number of DatasetRecords to return in one page", required = true)
             @QueryParam("limit") int limit,
-            @Parameter(description = "IRI of the property to sort by", required = true)
+            @Parameter(description = "IRI of the property to sort by")
             @QueryParam("sort") String sort,
             @Parameter(description = "Whether or not the list should be sorted ascending or descending")
             @DefaultValue("true") @QueryParam("ascending") boolean asc,
@@ -225,13 +242,13 @@ public class DatasetRest {
      * IRI in the repository with the passed id.
      *
      * @param servletRequest The HttpServletRequest
-     * @param title The required title for the new DatasetRecord
-     * @param repositoryId The required id of a repository in Mobi
-     * @param datasetIRI The optional IRI for the new Dataset
-     * @param description The optional description for the new DatasetRecord
-     * @param markdown The optional markdown abstract for the new DatasetRecord.
-     * @param keywords The optional list of keywords strings for the new DatasetRecord
-     * @param ontologies The optional list of OntologyRecord IRI strings for the new DatasetRecord
+     * @param title          The required title for the new DatasetRecord
+     * @param repositoryId   The required id of a repository in Mobi
+     * @param datasetIRI     The optional IRI for the new Dataset
+     * @param description    The optional description for the new DatasetRecord
+     * @param markdown       The optional markdown abstract for the new DatasetRecord.
+     * @param keywords       The optional list of keywords strings for the new DatasetRecord
+     * @param ontologies     The optional list of OntologyRecord IRI strings for the new DatasetRecord
      * @return A Response with the IRI string of the created DatasetRecord
      */
     @POST
@@ -245,9 +262,21 @@ public class DatasetRest {
                     @ApiResponse(responseCode = "201",
                             description = "Response with the IRI string of the created DatasetRecord",
                             content = @Content(schema = @Schema(type = "string"))),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+                    @ApiResponse(responseCode = "400", description = "Bad Request",
+                            headers = @Header(name = "HTTP Status",
+                                    description = "Reason Phrase contains error message",
+                                    schema = @Schema(type = "string"))
+                    ),
+                    @ApiResponse(responseCode = "403", description = "Forbidden",
+                            headers = @Header(name = "HTTP Status",
+                                    description = "Reason Phrase contains error message",
+                                    schema = @Schema(type = "string"))
+                    ),
+                    @ApiResponse(responseCode = "500", description = "Internal Server Error",
+                            headers = @Header(name = "HTTP Status",
+                                    description = "Reason Phrase contains error message",
+                                    schema = @Schema(type = "string"))
+                    ),
             }
     )
     @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = DatasetRecord.TYPE))
@@ -279,10 +308,10 @@ public class DatasetRest {
                             "Optional list of OntologyRecord IRI strings for the new DatasetRecord"),
                     schema = @Schema(implementation = String.class, description = "OntologyRecord IRI")))
             @FormParam("ontologies") List<String> ontologies) {
-        checkStringParam(title, "Title is required");
-        checkStringParam(repositoryId, "Repository id is required");
-        User user = getActiveUser(servletRequest, engineManager);
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            checkStringParam(title, "Title is required");
+            checkStringParam(repositoryId, "Repository id is required");
+            User user = getActiveUser(servletRequest, engineManager);
             RecordOperationConfig config = new OperationConfig();
             config.set(RecordCreateSettings.CATALOG_ID, configProvider.getLocalCatalogIRI().stringValue());
             config.set(RecordCreateSettings.RECORD_TITLE, title);
@@ -324,18 +353,45 @@ public class DatasetRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Success",
-                            content = @Content(schema = @Schema(type = "object"))),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+                            content = @Content(schema = @Schema(implementation = JsonLdObject.class))),
+                    @ApiResponse(responseCode = "400", description = "Bad Request",
+                            headers = @Header(
+                                name = "HTTP Status",
+                                description = "Reason Phrase contains error message",
+                                schema = @Schema(type = "string")
+                            )
+                    ),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied",
+                            headers = @Header(
+                                name = "HTTP Status",
+                                description = "Reason Phrase contains error message",
+                                schema = @Schema(type = "string")
+                            )
+                    ),
+                    @ApiResponse(responseCode = "404", description = "Not Found",
+                            headers = @Header(
+                                name = "HTTP Status",
+                                description = "Reason Phrase contains error message",
+                                schema = @Schema(type = "string")
+                            )
+                    ),
+                    @ApiResponse(responseCode = "500", description = "Internal Server Error",
+                            headers = @Header(
+                                name = "HTTP Status",
+                                description = "Reason Phrase contains error message",
+                                schema = @Schema(type = "string")
+                            )
+                    )
             }
     )
     @ResourceId(type = ValueType.PATH, value = "datasetRecordId")
     public Response getDatasetRecord(
-            @Parameter(description = "IRI of a DatasetRecord", required = true)
+            @Parameter(description = "IRI of a DatasetRecord", required = true,
+                    schema = @Schema(type = "string", format = "uri",
+                            example = "http://mobi.com/dataset/2d4a4592-0b54-4057-a65f-f649261cd302"))
             @PathParam("datasetRecordId") String datasetRecordId) {
-        Resource recordIRI = vf.createIRI(datasetRecordId);
         try {
+            Resource recordIRI = vf.createIRI(datasetRecordId);
             DatasetRecord datasetRecord = manager.getDatasetRecord(recordIRI).orElseThrow(() ->
                     ErrorUtils.sendError("DatasetRecord " + datasetRecordId + " could not be found",
                             Response.Status.NOT_FOUND));
@@ -353,9 +409,9 @@ public class DatasetRest {
      * Deletes a specific DatasetRecord and its Dataset from the local Catalog. By default only removes named graphs
      * that aren't used by another Dataset, but can be forced to delete them.
      *
-     * @param servletRequest The HttpServletRequest
+     * @param servletRequest  The HttpServletRequest
      * @param datasetRecordId The IRI of a DatasetRecord
-     * @param force Whether the delete should be forced
+     * @param force           Whether the delete should be forced
      * @return A Response indicating the success of the request
      */
     @DELETE
@@ -366,33 +422,38 @@ public class DatasetRest {
             summary = "Deletes a specific DatasetRecord in the local Catalog",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+                    @ApiResponse(responseCode = "400", description = "Bad Request",
+                            headers = @Header(name = "HTTP Status", description = "Reason Phrase contains error message", schema = @Schema(type = "string"))),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied",
+                            headers = @Header(name = "HTTP Status", description = "Reason Phrase contains error message", schema = @Schema(type = "string"))),
+                    @ApiResponse(responseCode = "500", description = "Internal Server Error",
+                            headers = @Header(name = "HTTP Status", description = "Reason Phrase contains error message", schema = @Schema(type = "string"))),
             }
     )
     @ActionId(value = Delete.TYPE)
     @ResourceId(type = ValueType.PATH, value = "datasetRecordId")
     public Response deleteDatasetRecord(
             @Context HttpServletRequest servletRequest,
-            @Parameter(schema = @Schema(description = "DatasetRecord IRI", required = true,
-                    ref = "#/components/schemas/IRI"))
+            @Parameter(description = "DatasetRecord IRI",
+                    schema = @Schema(type = "string", format = "uri",
+                            example = "http://mobi.com/dataset/2d4a4592-0b54-4057-a65f-f649261cd302"))
             @PathParam("datasetRecordId") String datasetRecordId,
             @Parameter(description = "Whether or not the delete should be forced")
             @DefaultValue("false") @QueryParam("force") boolean force) {
-        Resource recordIRI = vf.createIRI(datasetRecordId);
-        User activeUser = getActiveUser(servletRequest, engineManager);
         try {
-            DatasetRecord record = (force
-                    ? manager.deleteDataset(recordIRI, activeUser)
-                    : manager.safeDeleteDataset(recordIRI, activeUser));
-
+            User activeUser = getActiveUser(servletRequest, engineManager);
+            Resource recordIRI = vf.createIRI(datasetRecordId);
+            if (force) {
+                manager.deleteDataset(recordIRI, activeUser);
+            } else {
+                manager.safeDeleteDataset(recordIRI, activeUser);
+            }
+            return Response.ok().build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (Exception ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
-        return Response.ok().build();
     }
 
     /**
@@ -400,7 +461,7 @@ public class DatasetRest {
      * graphs that aren't used by another Dataset, but can be forced to delete them.
      *
      * @param datasetRecordId The IRI of a DatasetRecord
-     * @param force Whether or not the clear should be forced
+     * @param force           Whether or not the clear should be forced
      * @return Response indicating the success of the request
      */
     @DELETE
@@ -411,37 +472,42 @@ public class DatasetRest {
             summary = "Clears the data within a specific DatasetRecord in the local Catalog",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+                    @ApiResponse(responseCode = "400", description = "Bad Request",
+                            headers = @Header(name = "HTTP Status", description = "Reason Phrase contains error message", schema = @Schema(type = "string"))),
+                    @ApiResponse(responseCode = "403", description = "Forbidden",
+                            headers = @Header(name = "HTTP Status", description = "Reason Phrase contains error message", schema = @Schema(type = "string"))),
+                    @ApiResponse(responseCode = "500", description = "Internal Server Error",
+                            headers = @Header(name = "HTTP Status", description = "Reason Phrase contains error message", schema = @Schema(type = "string"))),
             }
     )
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "datasetRecordId")
     public Response clearDatasetRecord(
-            @Parameter(description = "IRI of a DatasetRecord", required = true)
+            @Parameter(description = "IRI of a DatasetRecord", required = true,
+                    schema = @Schema(type = "string", format = "uri",
+                            example = "http://mobi.com/dataset/2d4a4592-0b54-4057-a65f-f649261cd302"))
             @PathParam("datasetRecordId") String datasetRecordId,
             @Parameter(description = "Whether or not the clear should be forced")
             @DefaultValue("false") @QueryParam("force") boolean force) {
-        Resource recordIRI = vf.createIRI(datasetRecordId);
         try {
+            Resource recordIRI = vf.createIRI(datasetRecordId);
             if (force) {
                 manager.clearDataset(recordIRI);
             } else {
                 manager.safeClearDataset(recordIRI);
             }
+            return Response.ok().build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (Exception ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
-        return Response.ok().build();
     }
 
     /**
      * Uploads all RDF data in the provided file into the Dataset of a specific DatasetRecord.
      *
-     * @param servletRequest The HttpServletRequest
+     * @param servletRequest  The HttpServletRequest
      * @param datasetRecordId The IRI of a DatasetRecord
      * @return A Response indicating the success of the request
      */
@@ -453,9 +519,19 @@ public class DatasetRest {
             summary = "Uploads the data within an RDF file to a specific DatasetRecord in the local Catalog",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
+                    @ApiResponse(responseCode = "400", description = "Bad Request",
+                            headers = @Header(name = "HTTP Status",
+                                    description = "Reason Phrase contains error: 'Must provide a file' or 'File is not in a valid RDF format'",
+                                    schema = @Schema(type = "string"))),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied",
+                            headers = @Header(
+                                    name = "HTTP Status",
+                                    description = "Reason Phrase contains error message",
+                                    schema = @Schema(type = "string"))),
+                    @ApiResponse(responseCode = "500", description = "Internal Server Error",
+                            headers = @Header(name = "HTTP Status",
+                                    description = "Reason Phrase contains error message",
+                                    schema = @Schema(type = "string")))
             },
             requestBody = @RequestBody(
                     content = {
@@ -468,24 +544,26 @@ public class DatasetRest {
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "datasetRecordId")
     public Response uploadData(@Context HttpServletRequest servletRequest,
-                               @Parameter(description = "IRI of a DatasetRecord", required = true)
+                               @Parameter(description = "IRI of a DatasetRecord", required = true,
+                                       schema = @Schema(type = "string", format = "uri",
+                                               example = "http://mobi.com/dataset/2d4a4592-0b54-4057-a65f-f649261cd302"))
                                @PathParam("datasetRecordId") String datasetRecordId) {
-        Map<String, Object> formData = RestUtils.getFormData(servletRequest, new HashMap<>());
-        FileUpload file = (FileUpload) formData.getOrDefault("file", new FileUpload());
-        InputStream inputStream = file.getStream();
-        String filename = file.getFilename();
-
-        if (inputStream == null) {
-            throw ErrorUtils.sendError("Must provide a file", Response.Status.BAD_REQUEST);
-        }
-        RDFFormat format = Rio.getParserFormatForFileName(filename).orElseThrow(() ->
-                ErrorUtils.sendError("File is not in a valid RDF format", Response.Status.BAD_REQUEST));
-
-        ImportServiceConfig.Builder builder = new ImportServiceConfig.Builder()
-                .dataset(vf.createIRI(datasetRecordId))
-                .format(format)
-                .logOutput(true);
         try {
+            Map<String, Object> formData = RestUtils.getFormData(servletRequest, new HashMap<>());
+            FileUpload file = (FileUpload) formData.getOrDefault("file", new FileUpload());
+            InputStream inputStream = file.getStream();
+            String filename = file.getFilename();
+
+            if (inputStream == null) {
+                throw new IllegalArgumentException("Must provide a file");
+            }
+            RDFFormat format = Rio.getParserFormatForFileName(filename).orElseThrow(() ->
+                    new IllegalArgumentException("File is not in a valid RDF format"));
+
+            ImportServiceConfig.Builder builder = new ImportServiceConfig.Builder()
+                    .dataset(vf.createIRI(datasetRecordId))
+                    .format(format)
+                    .logOutput(true);
             importService.importInputStream(builder.build(), inputStream, true);
             return Response.ok().build();
         } catch (IllegalArgumentException | RDFParseException ex) {

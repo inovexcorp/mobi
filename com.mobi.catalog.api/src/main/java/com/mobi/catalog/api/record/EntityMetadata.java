@@ -33,11 +33,11 @@ import java.util.Map;
 /**
  * Represents an entity with detailed information.
  *
- * This record encapsulates the properties of an entity, including its IRI (Internationalized Resource Identifier),
+ * This record encapsulates the properties of an entity, including its IRI,
  * name, types, description, and source record details. The source record is represented as a map of key-value pairs
  * for flexibility.
  *
- * @param iri            The Internationalized Resource Identifier (IRI) of the entity. Must not be null.
+ * @param iri            The IRI of the entity. Must not be null.
  * @param entityName     The name of the entity. Must not be null.
  * @param types          A list of RDF types associated with the entity. Must not be null or empty.
  * @param description    A description of the entity. May be an empty string if no description is available.

@@ -76,6 +76,7 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.FileUpload;
 import com.mobi.rest.util.MobiNotFoundException;
 import com.mobi.rest.util.RestUtils;
+import com.mobi.rest.util.swagger.JsonLdObject;
 import com.mobi.security.policy.api.Decision;
 import com.mobi.security.policy.api.PDP;
 import com.mobi.shapes.api.NodeShapeSummary;
@@ -677,14 +678,26 @@ public class ShapesGraphRest {
      */
     @GET
     @Path("{recordId}/content")
-    @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
+    @Produces({LDJSON_MIME_TYPE, TURTLE_MIME_TYPE, RDFXML_MIME_TYPE, TRIG_MIME_TYPE})
     @RolesAllowed("user")
     @Operation(
             tags = "shapes-graphs",
-            summary = "Retrieves the triples for a specified entity",
+            summary = "Retrieves all triples in a Shapes Graph not directly attached to the Shapes Graph IRI subjectId",
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "RDF triples for a specified entity"),
+                            description = "RDF triples for the Shapes Graph serialized in the format determined by"
+                                    + " the 'format' query parameter (jsonld, turtle, rdf/xml, or trig)",
+                            content = {
+                                    @Content(mediaType = LDJSON_MIME_TYPE,
+                                            array = @ArraySchema(schema = @Schema(implementation = JsonLdObject.class,
+                                                    description = "A list of JSON-LD objects representing the graph content"))),
+                                    @Content(mediaType = TURTLE_MIME_TYPE,
+                                            schema = @Schema(type = "string", example = "<http://example.org/s> <http://example.org/p> <http://example.org/o> .")),
+                                    @Content(mediaType = RDFXML_MIME_TYPE,
+                                            schema = @Schema(type = "string")),
+                                    @Content(mediaType = TRIG_MIME_TYPE,
+                                            schema = @Schema(type = "string"))
+                            }),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
@@ -709,7 +722,8 @@ public class ShapesGraphRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             ShapesGraph shapesGraph = getShapesGraph(recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit,
                     servletRequest, conn);
-            return Response.ok(shapesGraph.serializeShapesGraphContent(format)).build();
+            return Response.ok(shapesGraph.serializeShapesGraphContent(format))
+                    .header("Content-Type", getRDFFormatMimeType(format)).build();
         } catch (MobiNotFoundException ex) {
             throw RestUtils.getErrorObjNotFound(ex);
         } catch (IllegalArgumentException ex) {
