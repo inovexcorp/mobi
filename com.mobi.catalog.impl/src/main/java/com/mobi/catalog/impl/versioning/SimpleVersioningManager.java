@@ -42,6 +42,7 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Component;
@@ -163,7 +164,7 @@ public class SimpleVersioningManager implements VersioningManager {
      */
     private OrmFactory<? extends VersionedRDFRecord> getFactory(Resource recordId, RepositoryConnection conn) {
         List<Resource> types = QueryResults.asList(
-                conn.getStatements(recordId, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null))
+                conn.getStatements(recordId, RDF.TYPE, null))
                 .stream()
                 .map(Statements::objectResource)
                 .filter(Optional::isPresent)

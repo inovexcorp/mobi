@@ -32,9 +32,11 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
@@ -68,7 +70,7 @@ public class SimpleThingManager implements ThingManager {
 
     @Override
     public <T extends Thing> Optional<T> optObject(Resource id, OrmFactory<T> factory, RepositoryConnection conn) {
-        try (RepositoryResult repositoryResult = conn.getStatements(null, null, null, id)) {
+        try (RepositoryResult<Statement> repositoryResult = conn.getStatements(null, null, null, id)) {
             Model model = QueryResults.asModel(repositoryResult, mf);
             return factory.getExisting(id, model);
         } catch (Exception e) {
@@ -120,7 +122,7 @@ public class SimpleThingManager implements ThingManager {
 
     @Override
     public void validateResource(Resource resource, IRI classId, RepositoryConnection conn) {
-        if (!ConnectionUtils.contains(conn, resource, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI),
+        if (!ConnectionUtils.contains(conn, resource, RDF.TYPE,
                 classId, resource)) {
             throw new IllegalArgumentException(classId.getLocalName() + " " + resource + COULD_NOT_BE_FOUND);
         }

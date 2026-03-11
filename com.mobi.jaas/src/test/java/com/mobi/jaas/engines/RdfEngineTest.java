@@ -130,8 +130,8 @@ public class RdfEngineTest extends OrmEnabledTestCase {
             Group testGroup1 = groupFactory.createNew(VALUE_FACTORY.createIRI(groupId1));
             Group testGroup2 = groupFactory.createNew(VALUE_FACTORY.createIRI(groupId2));
             Group externalGroup = externalGroupFactory.createNew(VALUE_FACTORY.createIRI(externalGroupId));
-            testGroup1.setProperty(VALUE_FACTORY.createLiteral(groupName1), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()));
-            testGroup2.setProperty(VALUE_FACTORY.createLiteral(groupName2), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()));
+            testGroup1.setProperty(VALUE_FACTORY.createLiteral(groupName1), DCTERMS.TITLE);
+            testGroup2.setProperty(VALUE_FACTORY.createLiteral(groupName2), DCTERMS.TITLE);
             testGroup1.setHasGroupRole(roles);
             testGroup2.setHasGroupRole(Collections.singleton(roleFactory.createNew(VALUE_FACTORY.createIRI(adminRoleId))));
             testGroup1.setMember(members);
@@ -343,17 +343,17 @@ public class RdfEngineTest extends OrmEnabledTestCase {
         assertEquals(group.getResource().stringValue(), groupId1);
         assertEquals(group.getMember_resource().size(), members.size());
         assertEquals(group.getHasGroupRole_resource().size(), roles.size());
-        assertTrue(group.getProperty(VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue())).isPresent()
-                && group.getProperty(VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue())).get().stringValue().equals(groupName1));
-        assertTrue(group.getProperty(VALUE_FACTORY.createIRI(DCTERMS.DESCRIPTION.stringValue())).isPresent()
-                && group.getProperty(VALUE_FACTORY.createIRI(DCTERMS.DESCRIPTION.stringValue())).get().stringValue().equals("Test"));
+        assertTrue(group.getProperty(DCTERMS.TITLE).isPresent()
+                && group.getProperty(DCTERMS.TITLE).get().stringValue().equals(groupName1));
+        assertTrue(group.getProperty(DCTERMS.DESCRIPTION).isPresent()
+                && group.getProperty(DCTERMS.DESCRIPTION).get().stringValue().equals("Test"));
     }
 
     @Test
     public void testStoreGroup() {
         Resource newGroupId = VALUE_FACTORY.createIRI("http://mobi.com/users/newgroup");
         Group newGroup = groupFactory.createNew(newGroupId);
-        newGroup.setProperty(VALUE_FACTORY.createLiteral("newgroup"), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()));
+        newGroup.setProperty(VALUE_FACTORY.createLiteral("newgroup"), DCTERMS.TITLE);
         engine.storeGroup(newGroup);
         RepositoryConnection connection = repo.getConnection();
         RepositoryResult<Statement> statements = connection.getStatements(newGroupId, null, null);

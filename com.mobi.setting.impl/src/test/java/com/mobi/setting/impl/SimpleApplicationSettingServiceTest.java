@@ -313,9 +313,9 @@ public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
         }
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            conn.remove((Resource) null, VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()),
+            conn.remove((Resource) null, RDF.TYPE,
                     VALUE_FACTORY.createIRI(SimpleApplicationSettingServiceTest.TestComplexApplicationSetting.TYPE));
-            conn.remove((Resource) null, VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()),
+            conn.remove((Resource) null, RDF.TYPE,
                     VALUE_FACTORY.createIRI(ApplicationSetting.TYPE));
         }
 

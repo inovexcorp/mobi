@@ -41,12 +41,12 @@ import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import com.mobi.vfs.api.VirtualFile;
 import com.mobi.vfs.api.VirtualFilesystem;
 import com.mobi.vfs.ontologies.documents.BinaryFile;
-import com.mobi.vocabularies.xsd.XSD;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.XSD;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.osgi.service.component.annotations.Component;
@@ -151,14 +151,11 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<BalanaPolicy> {
 
         // no errors happened during the search, so now take the right
         // action based on how many policies we found
-        switch (selectedPolicies.size()) {
-            case 0:
-                return new PolicyFinderResult();
-            case 1:
-                return new PolicyFinderResult(selectedPolicies.get(0));
-            default:
-                return new PolicyFinderResult(new PolicySet(null, combiningAlg, null, selectedPolicies));
-        }
+        return switch (selectedPolicies.size()) {
+            case 0 -> new PolicyFinderResult();
+            case 1 -> new PolicyFinderResult(selectedPolicies.get(0));
+            default -> new PolicyFinderResult(new PolicySet(null, combiningAlg, null, selectedPolicies));
+        };
     }
 
     private List<BalanaPolicy> findMatchingPolicies(EvaluationCtx context) {
@@ -167,8 +164,8 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<BalanaPolicy> {
         if (cache.isPresent()) {
             EvaluationResult relatedResourceResult;
             try {
-                 relatedResourceResult = context.getAttribute(new URI(XSD.STRING),
-                        new URI(XACML.RESOURCE_ID),null, new URI(XACML.RESOURCE_CATEGORY));
+                relatedResourceResult = context.getAttribute(new URI(XSD.STRING.stringValue()),
+                        new URI(XACML.RESOURCE_ID), null, new URI(XACML.RESOURCE_CATEGORY));
             } catch (URISyntaxException e) {
                 throw new MobiException("Invalid URIs in policy.", e);
             }

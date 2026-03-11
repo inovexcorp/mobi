@@ -34,13 +34,13 @@ import com.mobi.catalog.api.ontologies.mcat.MasterBranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.record.RecordService;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.rdf.orm.OrmFactory;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -86,7 +86,7 @@ public class SimpleBranchManager implements BranchManager {
                 .collect(Collectors.toSet());
         branches.add(branch);
         record.setBranch(branches);
-        record.setProperty(vf.createLiteral(OffsetDateTime.now()), vf.createIRI(_Thing.modified_IRI));
+        record.setProperty(vf.createLiteral(OffsetDateTime.now()), DCTERMS.MODIFIED);
         thingManager.updateObject(record, conn);
         thingManager.addObject(branch, conn);
     }
@@ -97,11 +97,11 @@ public class SimpleBranchManager implements BranchManager {
         OffsetDateTime now = OffsetDateTime.now();
 
         T branch = factory.createNew(vf.createIRI(Catalogs.BRANCH_NAMESPACE + UUID.randomUUID()));
-        branch.setProperty(vf.createLiteral(title), vf.createIRI(_Thing.title_IRI));
-        branch.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.issued_IRI));
-        branch.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.modified_IRI));
+        branch.setProperty(vf.createLiteral(title), DCTERMS.TITLE);
+        branch.setProperty(vf.createLiteral(now), DCTERMS.ISSUED);
+        branch.setProperty(vf.createLiteral(now), DCTERMS.MODIFIED);
         if (description != null) {
-            branch.setProperty(vf.createLiteral(description), vf.createIRI(_Thing.description_IRI));
+            branch.setProperty(vf.createLiteral(description), DCTERMS.DESCRIPTION);
         }
 
         return branch;
@@ -186,7 +186,7 @@ public class SimpleBranchManager implements BranchManager {
             throw new IllegalArgumentException("Branch " + newBranch.getResource()
                     + " is the master Branch and cannot be updated.");
         }
-        newBranch.setProperty(vf.createLiteral(OffsetDateTime.now()), vf.createIRI(_Thing.modified_IRI));
+        newBranch.setProperty(vf.createLiteral(OffsetDateTime.now()), DCTERMS.MODIFIED);
         thingManager.updateObject(newBranch, conn);
     }
 

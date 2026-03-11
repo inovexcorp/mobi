@@ -65,9 +65,9 @@ public class BNodeUtilsTest {
     @Before
     public void setup() {
 
-        type = vf.createIRI(RDF.TYPE.stringValue());
-        owlClass = vf.createIRI(OWL.CLASS.stringValue());
-        title = vf.createIRI(DCTERMS.TITLE.stringValue());
+        type = RDF.TYPE;
+        owlClass = OWL.CLASS;
+        title = DCTERMS.TITLE;
 
         bnode1 = vf.createBNode();
         bnode2 = vf.createBNode();

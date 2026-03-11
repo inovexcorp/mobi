@@ -46,7 +46,6 @@ import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.ConnectionUtils;
 import org.apache.commons.io.IOUtils;
@@ -92,8 +91,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-
-import static org.eclipse.rdf4j.common.iteration.Iterations.asSet;
 
 @Component
 public class SimpleCommitManager implements CommitManager {
@@ -198,13 +195,13 @@ public class SimpleCommitManager implements CommitManager {
 
         Optional<Resource> recordOpt = getRecordFromBranch(branch, conn);
         recordOpt.ifPresent(recordId -> {
-            conn.getStatements(recordId, vf.createIRI(_Thing.modified_IRI), null)
+            conn.getStatements(recordId, DCTERMS.MODIFIED, null)
                     .forEach(conn::remove);
-            conn.add(recordId, vf.createIRI(_Thing.modified_IRI), vf.createLiteral(OffsetDateTime.now()), recordId);
+            conn.add(recordId, DCTERMS.MODIFIED, vf.createLiteral(OffsetDateTime.now()), recordId);
         });
 
         branch.setHead(commit);
-        branch.setProperty(vf.createLiteral(OffsetDateTime.now()), vf.createIRI(_Thing.modified_IRI));
+        branch.setProperty(vf.createLiteral(OffsetDateTime.now()), DCTERMS.MODIFIED);
         thingManager.updateObject(branch, conn);
         thingManager.addObject(commit, conn);
     }

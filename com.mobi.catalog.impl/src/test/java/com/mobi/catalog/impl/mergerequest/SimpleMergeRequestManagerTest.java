@@ -26,7 +26,6 @@ package com.mobi.catalog.impl.mergerequest;
 import static com.mobi.catalog.impl.mergerequest.SimpleMergeRequestManager.ACCEPTED_MERGE_REQUEST_IRI;
 import static com.mobi.catalog.impl.mergerequest.SimpleMergeRequestManager.CLOSED_MERGE_REQUEST_IRI;
 import static com.mobi.catalog.impl.mergerequest.SimpleMergeRequestManager.TYPE_IRI;
-import static com.mobi.ontologies.rdfs.Resource.type_IRI;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -65,7 +64,6 @@ import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
@@ -78,6 +76,8 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.impl.TreeModel;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
@@ -199,7 +199,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         repo = new MemoryRepositoryWrapper();
         repo.setDelegate(new SailRepository(new MemoryStore()));
 
-        titleIRI = VALUE_FACTORY.createIRI(_Thing.title_IRI);
+        titleIRI = DCTERMS.TITLE;
 
         // commits
         sourceCommit1 = commitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#source-commit1"));
@@ -234,51 +234,51 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         userSet2.add(user2);
 
         request1 = mergeRequestFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/merge-requests#1"));
-        request1.setProperty(VALUE_FACTORY.createLiteral("Request 1"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
-        request1.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.of(2018, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC)), VALUE_FACTORY.createIRI(_Thing.issued_IRI));
+        request1.setProperty(VALUE_FACTORY.createLiteral("Request 1"), DCTERMS.TITLE);
+        request1.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.of(2018, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC)), DCTERMS.ISSUED);
         request1.setAssignee(userSet1);
         request1.setOnRecord(versionedRDFRecord1);
         request1.setSourceBranch(sourceBranch1);
         request1.setTargetBranch(targetBranch1);
         request1.setRemoveSource(true);
-        request1.setProperty(user2.getResource(), VALUE_FACTORY.createIRI(_Thing.creator_IRI));
+        request1.setProperty(user2.getResource(), DCTERMS.CREATOR);
         request2 = mergeRequestFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/merge-requests#2"));
-        request2.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.of(2018, 1, 2, 0, 0, 0, 0, ZoneOffset.UTC)), VALUE_FACTORY.createIRI(_Thing.issued_IRI));
-        request2.setProperty(VALUE_FACTORY.createLiteral("Request 2"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
-        request2.setProperty(VALUE_FACTORY.createLiteral("Description 1"), VALUE_FACTORY.createIRI(_Thing.description_IRI));
+        request2.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.of(2018, 1, 2, 0, 0, 0, 0, ZoneOffset.UTC)), DCTERMS.ISSUED);
+        request2.setProperty(VALUE_FACTORY.createLiteral("Request 2"), DCTERMS.TITLE);
+        request2.setProperty(VALUE_FACTORY.createLiteral("Description 1"), DCTERMS.DESCRIPTION);
         request2.setAssignee(userSet2);
         request2.setOnRecord(versionedRDFRecord2);
         request2.setSourceBranch(sourceBranch2);
         request2.setTargetBranch(targetBranch2);
         request2.setRemoveSource(false);
-        request2.setProperty(user2.getResource(), VALUE_FACTORY.createIRI(_Thing.creator_IRI));
+        request2.setProperty(user2.getResource(), DCTERMS.CREATOR);
         request3 = mergeRequestFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/merge-requests#3"));
-        request3.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.of(2018, 1, 3, 0, 0, 0, 0, ZoneOffset.UTC)), VALUE_FACTORY.createIRI(_Thing.issued_IRI));
-        request3.setProperty(VALUE_FACTORY.createLiteral("Request 3"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        request3.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.of(2018, 1, 3, 0, 0, 0, 0, ZoneOffset.UTC)), DCTERMS.ISSUED);
+        request3.setProperty(VALUE_FACTORY.createLiteral("Request 3"), DCTERMS.TITLE);
         request4 = acceptedMergeRequestFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/merge-requests#4"));
-        request3.setProperty(user1.getResource(), VALUE_FACTORY.createIRI(_Thing.creator_IRI));
-        request4.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.of(2018, 1, 4, 0, 0, 0, 0, ZoneOffset.UTC)), VALUE_FACTORY.createIRI(_Thing.issued_IRI));
-        request4.setProperty(VALUE_FACTORY.createLiteral("Request 4"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        request3.setProperty(user1.getResource(), DCTERMS.CREATOR);
+        request4.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.of(2018, 1, 4, 0, 0, 0, 0, ZoneOffset.UTC)), DCTERMS.ISSUED);
+        request4.setProperty(VALUE_FACTORY.createLiteral("Request 4"), DCTERMS.TITLE);
         request4.setAssignee(userSet1);
         request4.setOnRecord(versionedRDFRecord1);
         request4.setSourceBranch(sourceBranch1);
         request4.setTargetBranch(targetBranch1);
         request4.setSourceCommit(sourceCommit1);
         request4.setTargetCommit(targetCommit1);
-        request4.setProperty(user1.getResource(), VALUE_FACTORY.createIRI(_Thing.creator_IRI));
+        request4.setProperty(user1.getResource(), DCTERMS.CREATOR);
         request5 = acceptedMergeRequestFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/merge-requests#5"));
-        request5.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.of(2018, 1, 5, 0, 0, 0, 0, ZoneOffset.UTC)), VALUE_FACTORY.createIRI(_Thing.issued_IRI));
-        request5.setProperty(VALUE_FACTORY.createLiteral("Request 5"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        request5.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.of(2018, 1, 5, 0, 0, 0, 0, ZoneOffset.UTC)), DCTERMS.ISSUED);
+        request5.setProperty(VALUE_FACTORY.createLiteral("Request 5"), DCTERMS.TITLE);
         request5.setAssignee(userSet2);
         request5.setOnRecord(versionedRDFRecord2);
         request5.setSourceBranch(sourceBranch2);
         request5.setTargetBranch(targetBranch2);
         request5.setSourceCommit(sourceCommit2);
         request5.setTargetCommit(targetCommit2);
-        request5.setProperty(user1.getResource(), VALUE_FACTORY.createIRI(_Thing.creator_IRI));
+        request5.setProperty(user1.getResource(), DCTERMS.CREATOR);
         request6 = closedMergeRequestFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/merge-requests#6"));
-        request6.setProperty(VALUE_FACTORY.createLiteral("Request 6"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
-        request6.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.of(2018, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC)), VALUE_FACTORY.createIRI(_Thing.issued_IRI));
+        request6.setProperty(VALUE_FACTORY.createLiteral("Request 6"), DCTERMS.TITLE);
+        request6.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.of(2018, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC)), DCTERMS.ISSUED);
         request6.setAssignee(userSet1);
         request6.setOnRecord(versionedRDFRecord1);
         request6.setSourceBranch(sourceBranch1);
@@ -286,41 +286,41 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         request6.setRemoveSource(true);
         request6.setSourceCommit(sourceCommit1);
         request6.setTargetCommit(targetCommit1);
-        request6.setProperty(user2.getResource(), VALUE_FACTORY.createIRI(_Thing.creator_IRI));
+        request6.setProperty(user2.getResource(), DCTERMS.CREATOR);
         request7 = closedMergeRequestFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/merge-requests#7"));
-        request7.setProperty(VALUE_FACTORY.createLiteral("Request 7"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
-        request7.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.of(2018, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC)), VALUE_FACTORY.createIRI(_Thing.issued_IRI));
+        request7.setProperty(VALUE_FACTORY.createLiteral("Request 7"), DCTERMS.TITLE);
+        request7.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.of(2018, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC)), DCTERMS.ISSUED);
         request7.setAssignee(userSet1);
         request7.setOnRecord(versionedRDFRecord1);
         request7.setSourceBranch(sourceBranch1);
         request7.setSourceCommit(sourceCommit1);
         request7.setTargetCommit(targetCommit1);
         request7.setRemoveSource(true);
-        request7.setProperty(user2.getResource(), VALUE_FACTORY.createIRI(_Thing.creator_IRI));
+        request7.setProperty(user2.getResource(), DCTERMS.CREATOR);
         request8 = closedMergeRequestFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/merge-requests#8"));
-        request8.setProperty(VALUE_FACTORY.createLiteral("Request 8"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
-        request8.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.of(2018, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC)), VALUE_FACTORY.createIRI(_Thing.issued_IRI));
+        request8.setProperty(VALUE_FACTORY.createLiteral("Request 8"), DCTERMS.TITLE);
+        request8.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.of(2018, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC)), DCTERMS.ISSUED);
         request8.setAssignee(userSet1);
         request8.setOnRecord(versionedRDFRecord1);
         request8.setSourceCommit(sourceCommit1);
         request8.setTargetBranch(targetBranch1);
         request8.setTargetCommit(targetCommit1);
         request8.setRemoveSource(true);
-        request8.setProperty(user2.getResource(), VALUE_FACTORY.createIRI(_Thing.creator_IRI));
+        request8.setProperty(user2.getResource(), DCTERMS.CREATOR);
         comment1 = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#1"));
         comment1.setOnMergeRequest(request1);
-        comment1.setProperty(VALUE_FACTORY.createLiteral("2018-11-05T13:40:55.257-07:00"), VALUE_FACTORY.createIRI(_Thing.issued_IRI));
-        comment1.setProperty(VALUE_FACTORY.createLiteral("2018-11-05T13:40:55.257-07:00"), VALUE_FACTORY.createIRI(_Thing.modified_IRI));
-        comment1.setProperty(user1.getResource(), VALUE_FACTORY.createIRI(_Thing.creator_IRI));
-        comment1.setProperty(VALUE_FACTORY.createLiteral("Comment1"), VALUE_FACTORY.createIRI(_Thing.description_IRI));
+        comment1.setProperty(VALUE_FACTORY.createLiteral("2018-11-05T13:40:55.257-07:00"), DCTERMS.ISSUED);
+        comment1.setProperty(VALUE_FACTORY.createLiteral("2018-11-05T13:40:55.257-07:00"), DCTERMS.MODIFIED);
+        comment1.setProperty(user1.getResource(), DCTERMS.CREATOR);
+        comment1.setProperty(VALUE_FACTORY.createLiteral("Comment1"), DCTERMS.DESCRIPTION);
         comment2 = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#2"));
-        comment2.setProperty(VALUE_FACTORY.createLiteral("Comment2"), VALUE_FACTORY.createIRI(_Thing.description_IRI));
+        comment2.setProperty(VALUE_FACTORY.createLiteral("Comment2"), DCTERMS.DESCRIPTION);
         comment2.setOnMergeRequest(request1);
         comment3 = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#3"));
-        comment3.setProperty(VALUE_FACTORY.createLiteral("Comment3"), VALUE_FACTORY.createIRI(_Thing.description_IRI));
+        comment3.setProperty(VALUE_FACTORY.createLiteral("Comment3"), DCTERMS.DESCRIPTION);
         comment3.setOnMergeRequest(request1);
         comment4 = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#4"));
-        comment4.setProperty(VALUE_FACTORY.createLiteral("Comment4"), VALUE_FACTORY.createIRI(_Thing.description_IRI));
+        comment4.setProperty(VALUE_FACTORY.createLiteral("Comment4"), DCTERMS.DESCRIPTION);
         comment4.setOnMergeRequest(request1);
 
         comment1.setReplyComment(comment2);
@@ -329,14 +329,14 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
 
         commentA = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#A"));
         commentA.setOnMergeRequest(request1);
-        commentA.setProperty(VALUE_FACTORY.createLiteral("2018-11-04T13:40:55.257-07:00"), VALUE_FACTORY.createIRI(_Thing.issued_IRI));
-        commentA.setProperty(VALUE_FACTORY.createLiteral("2018-11-04T13:40:55.257-07:00"), VALUE_FACTORY.createIRI(_Thing.modified_IRI));
-        commentA.setProperty(VALUE_FACTORY.createLiteral("CommentA"), VALUE_FACTORY.createIRI(_Thing.description_IRI));
+        commentA.setProperty(VALUE_FACTORY.createLiteral("2018-11-04T13:40:55.257-07:00"), DCTERMS.ISSUED);
+        commentA.setProperty(VALUE_FACTORY.createLiteral("2018-11-04T13:40:55.257-07:00"), DCTERMS.MODIFIED);
+        commentA.setProperty(VALUE_FACTORY.createLiteral("CommentA"), DCTERMS.DESCRIPTION);
         commentB = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#B"));
-        commentB.setProperty(VALUE_FACTORY.createLiteral("CommentB"), VALUE_FACTORY.createIRI(_Thing.description_IRI));
+        commentB.setProperty(VALUE_FACTORY.createLiteral("CommentB"), DCTERMS.DESCRIPTION);
         commentB.setOnMergeRequest(request1);
         commentC = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#C"));
-        commentC.setProperty(VALUE_FACTORY.createLiteral("CommentC"), VALUE_FACTORY.createIRI(_Thing.description_IRI));
+        commentC.setProperty(VALUE_FACTORY.createLiteral("CommentC"), DCTERMS.DESCRIPTION);
         commentC.setOnMergeRequest(request1);
 
         commentA.setReplyComment(commentB);
@@ -344,20 +344,20 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
 
         commentI = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#I"));
         commentI.setOnMergeRequest(request1);
-        commentI.setProperty(VALUE_FACTORY.createLiteral("2018-11-10T13:40:55.257-07:00"), VALUE_FACTORY.createIRI(_Thing.issued_IRI));
-        commentI.setProperty(VALUE_FACTORY.createLiteral("2018-11-10T13:40:55.257-07:00"), VALUE_FACTORY.createIRI(_Thing.modified_IRI));
-        commentI.setProperty(VALUE_FACTORY.createLiteral("CommentI"), VALUE_FACTORY.createIRI(_Thing.description_IRI));
+        commentI.setProperty(VALUE_FACTORY.createLiteral("2018-11-10T13:40:55.257-07:00"), DCTERMS.ISSUED);
+        commentI.setProperty(VALUE_FACTORY.createLiteral("2018-11-10T13:40:55.257-07:00"), DCTERMS.MODIFIED);
+        commentI.setProperty(VALUE_FACTORY.createLiteral("CommentI"), DCTERMS.DESCRIPTION);
 
         commentX = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#X"));
-        commentX.setProperty(VALUE_FACTORY.createLiteral("2018-11-02T13:40:55.257-07:00"), VALUE_FACTORY.createIRI(_Thing.issued_IRI));
-        commentX.setProperty(VALUE_FACTORY.createLiteral("2018-11-02T13:40:55.257-07:00"), VALUE_FACTORY.createIRI(_Thing.modified_IRI));
-        commentX.setProperty(VALUE_FACTORY.createLiteral("CommentX"), VALUE_FACTORY.createIRI(_Thing.description_IRI));
+        commentX.setProperty(VALUE_FACTORY.createLiteral("2018-11-02T13:40:55.257-07:00"), DCTERMS.ISSUED);
+        commentX.setProperty(VALUE_FACTORY.createLiteral("2018-11-02T13:40:55.257-07:00"), DCTERMS.MODIFIED);
+        commentX.setProperty(VALUE_FACTORY.createLiteral("CommentX"), DCTERMS.DESCRIPTION);
         commentX.setOnMergeRequest(request2);
         commentY = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#Y"));
-        commentY.setProperty(VALUE_FACTORY.createLiteral("CommentY"), VALUE_FACTORY.createIRI(_Thing.description_IRI));
+        commentY.setProperty(VALUE_FACTORY.createLiteral("CommentY"), DCTERMS.DESCRIPTION);
         commentY.setOnMergeRequest(request2);
         commentZ = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#Z"));
-        commentZ.setProperty(VALUE_FACTORY.createLiteral("CommentZ"), VALUE_FACTORY.createIRI(_Thing.description_IRI));
+        commentZ.setProperty(VALUE_FACTORY.createLiteral("CommentZ"), DCTERMS.DESCRIPTION);
         commentZ.setOnMergeRequest(request2);
 
         commentX.setReplyComment(commentY);
@@ -518,7 +518,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     @Test
     public void getOpenMergeRequestsSortByTitleTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
-            MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(VALUE_FACTORY.createIRI(_Thing.title_IRI));
+            MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(DCTERMS.TITLE);
             List<MergeRequest> result = manager.getMergeRequests(builder.build(), conn);
             assertEquals(2, result.size());
             Iterator<MergeRequest> it = result.iterator();
@@ -539,7 +539,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     @Test
     public void getOpenMergeRequestsSortByIssuedTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
-            MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(VALUE_FACTORY.createIRI(_Thing.issued_IRI));
+            MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(DCTERMS.ISSUED);
             List<MergeRequest> result = manager.getMergeRequests(builder.build(), conn);
             assertEquals(2, result.size());
             Iterator<MergeRequest> it = result.iterator();
@@ -560,7 +560,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     @Test
     public void getOpenMergeRequestsAssignee() {
         try (RepositoryConnection conn = repo.getConnection()) {
-            MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(VALUE_FACTORY.createIRI(_Thing.title_IRI));
+            MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(DCTERMS.TITLE);
             builder.setAssignees(Collections.singletonList(user1.getResource()));
             List<MergeRequest> result = manager.getMergeRequests(builder.build(), conn);
             assertEquals(1, result.size());
@@ -578,7 +578,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     @Test
     public void getOpenMergeRequestsOnRecord() {
         try (RepositoryConnection conn = repo.getConnection()) {
-            MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(VALUE_FACTORY.createIRI(_Thing.title_IRI));
+            MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(DCTERMS.TITLE);
             builder.setOnRecords(Arrays.asList(RECORD_1_IRI));
             List<MergeRequest> result = manager.getMergeRequests(builder.build(), conn);
             assertEquals(1, result.size());
@@ -596,7 +596,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     @Test
     public void getOpenMergeRequestsSourceBranch() {
         try (RepositoryConnection conn = repo.getConnection()) {
-            MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(VALUE_FACTORY.createIRI(_Thing.title_IRI));
+            MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(DCTERMS.TITLE);
             builder.setSourceBranch(SOURCE_BRANCH_1_IRI);
             List<MergeRequest> result = manager.getMergeRequests(builder.build(), conn);
             assertEquals(1, result.size());
@@ -614,7 +614,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     @Test
     public void getOpenMergeRequestsTargetBranch() {
         try (RepositoryConnection conn = repo.getConnection()) {
-            MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(VALUE_FACTORY.createIRI(_Thing.title_IRI));
+            MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(DCTERMS.TITLE);
             builder.setTargetBranch(TARGET_BRANCH_1_IRI);
             List<MergeRequest> result = manager.getMergeRequests(builder.build(), conn);
             assertEquals(1, result.size());
@@ -632,7 +632,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     @Test
     public void getOpenMergeRequestsRemoveSource() {
         try (RepositoryConnection conn = repo.getConnection()) {
-            MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(VALUE_FACTORY.createIRI(_Thing.title_IRI));
+            MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(DCTERMS.TITLE);
             builder.setRemoveSource(true);
             List<MergeRequest> result = manager.getMergeRequests(builder.build(), conn);
             assertEquals(1, result.size());
@@ -679,7 +679,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     public void getAcceptedMergeRequestsTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
             MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder();
-            builder.setSortBy(VALUE_FACTORY.createIRI(_Thing.title_IRI)).setRequestStatus("accepted");
+            builder.setSortBy(DCTERMS.TITLE).setRequestStatus("accepted");
             List<MergeRequest> result = manager.getMergeRequests(builder.build(), conn);
             assertEquals(2, result.size());
             Iterator<MergeRequest> it = result.iterator();
@@ -692,7 +692,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     @Test
     public void getAcceptedMergeRequestsSourceCommit() {
         try (RepositoryConnection conn = repo.getConnection()) {
-            MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(VALUE_FACTORY.createIRI(_Thing.title_IRI));
+            MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(DCTERMS.TITLE);
             builder.setRequestStatus("accepted").setSourceCommit(sourceCommit1.getResource());
             List<MergeRequest> result = manager.getMergeRequests(builder.build(), conn);
             assertEquals(1, result.size());
@@ -710,7 +710,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     @Test
     public void getAcceptedMergeRequestsTargetCommit() {
         try (RepositoryConnection conn = repo.getConnection()) {
-            MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(VALUE_FACTORY.createIRI(_Thing.title_IRI));
+            MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(DCTERMS.TITLE);
             builder.setRequestStatus("accepted").setTargetCommit(targetCommit1.getResource());
             List<MergeRequest> result = manager.getMergeRequests(builder.build(), conn);
             assertEquals(1, result.size());
@@ -757,10 +757,10 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
 
         try (RepositoryConnection conn = repo.getConnection()) {
             MergeRequest result = manager.createMergeRequest(config, LOCAL_CATALOG_IRI, conn);
-            Optional<Value> title = result.getProperty(VALUE_FACTORY.createIRI(_Thing.title_IRI));
+            Optional<Value> title = result.getProperty(DCTERMS.TITLE);
             assertTrue(title.isPresent());
             assertEquals("title", title.get().stringValue());
-            Optional<Value> description = result.getProperty(VALUE_FACTORY.createIRI(_Thing.description_IRI));
+            Optional<Value> description = result.getProperty(DCTERMS.DESCRIPTION);
             assertTrue(description.isPresent());
             assertEquals("description", description.get().stringValue());
             Optional<Resource> record = result.getOnRecord_resource();
@@ -773,7 +773,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
             assertTrue(targetBranch.isPresent());
             assertEquals(TARGET_BRANCH_1_IRI, targetBranch.get());
             assertTrue(result.getRemoveSource().get());
-            Optional<Value> creator = result.getProperty(VALUE_FACTORY.createIRI(_Thing.creator_IRI));
+            Optional<Value> creator = result.getProperty(DCTERMS.CREATOR);
             assertTrue(creator.isPresent());
             assertEquals(user1.getResource().stringValue(), creator.get().stringValue());
             assertEquals(1, result.getAssignee_resource().size());
@@ -1016,7 +1016,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     @Test
     public void acceptMergeRequestWithNoSourceTitleTest() {
         // Setup
-        sourceBranch1.removeProperty(null, VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        sourceBranch1.removeProperty(null, DCTERMS.TITLE);
         thrown.expect(IllegalStateException.class);
 
         try (RepositoryConnection conn = repo.getConnection()) {
@@ -1028,7 +1028,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     @Test
     public void acceptMergeRequestWithNoTargetTitleTest() {
         // Setup
-        targetBranch1.removeProperty(null, VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        targetBranch1.removeProperty(null, DCTERMS.TITLE);
         thrown.expect(IllegalStateException.class);
 
         try (RepositoryConnection conn = repo.getConnection()) {
@@ -1071,12 +1071,12 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         ClosedMergeRequest closedMergeRequest = captor.getValue();
         assertNotNull(closedMergeRequest);
         assertEquals(15, closedMergeRequest.getModel().size());
-        assertFalse(closedMergeRequest.getProperty(VALUE_FACTORY.createIRI(_Thing.modified_IRI)).isPresent());
-        assertTrue(closedMergeRequest.getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).isPresent());
-        assertFalse(closedMergeRequest.getProperty(VALUE_FACTORY.createIRI(_Thing.description_IRI)).isPresent());
-        assertEquals("http://mobi.com/ontologies/merge-requests#ClosedMergeRequest", closedMergeRequest.getProperty(VALUE_FACTORY.createIRI(type_IRI)).get().stringValue());
-        assertEquals("Request 1", closedMergeRequest.getProperty(VALUE_FACTORY.createIRI(_Thing.title_IRI)).get().stringValue());
-        assertEquals("http://mobi.com/users#user2", closedMergeRequest.getProperty(VALUE_FACTORY.createIRI(_Thing.creator_IRI)).get().stringValue());
+        assertFalse(closedMergeRequest.getProperty(DCTERMS.MODIFIED).isPresent());
+        assertTrue(closedMergeRequest.getProperty(DCTERMS.ISSUED).isPresent());
+        assertFalse(closedMergeRequest.getProperty(DCTERMS.DESCRIPTION).isPresent());
+        assertEquals("http://mobi.com/ontologies/merge-requests#ClosedMergeRequest", closedMergeRequest.getProperty(RDF.TYPE).get().stringValue());
+        assertEquals("Request 1", closedMergeRequest.getProperty(DCTERMS.TITLE).get().stringValue());
+        assertEquals("http://mobi.com/users#user2", closedMergeRequest.getProperty(DCTERMS.CREATOR).get().stringValue());
         assertEquals("http://mobi.com/users#user1", closedMergeRequest.getProperty(VALUE_FACTORY.createIRI(MergeRequest.assignee_IRI)).get().stringValue());
         assertEquals("http://mobi.com/users#user1", closedMergeRequest.getProperty(VALUE_FACTORY.createIRI(MergeRequest.assignee_IRI)).get().stringValue());
         assertEquals("http://mobi.com/test/records#versioned-rdf-record1", closedMergeRequest.getProperty(VALUE_FACTORY.createIRI(MergeRequest.onRecord_IRI)).get().stringValue());
@@ -1136,12 +1136,12 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         MergeRequest reopenedMergeRequest = captor.getValue();
         assertNotNull(reopenedMergeRequest);
         assertEquals(10, reopenedMergeRequest.getModel().size());
-        assertFalse(reopenedMergeRequest.getProperty(VALUE_FACTORY.createIRI(_Thing.modified_IRI)).isPresent());
-        assertTrue(reopenedMergeRequest.getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).isPresent());
-        assertFalse(reopenedMergeRequest.getProperty(VALUE_FACTORY.createIRI(_Thing.description_IRI)).isPresent());
-        assertEquals("http://mobi.com/ontologies/merge-requests#MergeRequest", reopenedMergeRequest.getProperty(VALUE_FACTORY.createIRI(type_IRI)).get().stringValue());
-        assertEquals("Request 6", reopenedMergeRequest.getProperty(VALUE_FACTORY.createIRI(_Thing.title_IRI)).get().stringValue());
-        assertEquals("http://mobi.com/users#user2", reopenedMergeRequest.getProperty(VALUE_FACTORY.createIRI(_Thing.creator_IRI)).get().stringValue());
+        assertFalse(reopenedMergeRequest.getProperty(DCTERMS.MODIFIED).isPresent());
+        assertTrue(reopenedMergeRequest.getProperty(DCTERMS.ISSUED).isPresent());
+        assertFalse(reopenedMergeRequest.getProperty(DCTERMS.DESCRIPTION).isPresent());
+        assertEquals("http://mobi.com/ontologies/merge-requests#MergeRequest", reopenedMergeRequest.getProperty(RDF.TYPE).get().stringValue());
+        assertEquals("Request 6", reopenedMergeRequest.getProperty(DCTERMS.TITLE).get().stringValue());
+        assertEquals("http://mobi.com/users#user2", reopenedMergeRequest.getProperty(DCTERMS.CREATOR).get().stringValue());
         assertEquals("http://mobi.com/users#user1", reopenedMergeRequest.getProperty(VALUE_FACTORY.createIRI(MergeRequest.assignee_IRI)).get().stringValue());
         assertEquals("http://mobi.com/users#user1", reopenedMergeRequest.getProperty(VALUE_FACTORY.createIRI(MergeRequest.assignee_IRI)).get().stringValue());
         assertEquals("http://mobi.com/test/records#versioned-rdf-record1", reopenedMergeRequest.getProperty(VALUE_FACTORY.createIRI(MergeRequest.onRecord_IRI)).get().stringValue());
@@ -1258,14 +1258,14 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     @Test
     public void clearClosedMergeRequestTest() {
         ClosedMergeRequest closedMergeRequest = Mockito.spy(closedMergeRequestFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/merge-requests#100Closed")));
-        closedMergeRequest.setProperty(VALUE_FACTORY.createLiteral("Request 1"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
-        closedMergeRequest.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.of(2018, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC)), VALUE_FACTORY.createIRI(_Thing.issued_IRI));
+        closedMergeRequest.setProperty(VALUE_FACTORY.createLiteral("Request 1"), DCTERMS.TITLE);
+        closedMergeRequest.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.of(2018, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC)), DCTERMS.ISSUED);
         closedMergeRequest.setAssignee(new HashSet<>(Arrays.asList(user1)));
         closedMergeRequest.setOnRecord(versionedRDFRecord1);
         closedMergeRequest.setSourceBranch(sourceBranch1);
         closedMergeRequest.setTargetBranch(targetBranch1);
         closedMergeRequest.setRemoveSource(true);
-        closedMergeRequest.setProperty(user2.getResource(), VALUE_FACTORY.createIRI(_Thing.creator_IRI));
+        closedMergeRequest.setProperty(user2.getResource(), DCTERMS.CREATOR);
         closedMergeRequest.setSourceBranchTitle("Source Title");
         closedMergeRequest.setTargetBranchTitle("Target Title");
         closedMergeRequest.setSourceCommit(sourceCommit1);
@@ -1333,8 +1333,8 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             List<List<Comment>> comments = manager.getComments(request1.getResource(), conn);
             assertEquals(3, comments.size());
-            String firstThreadTime = comments.get(0).get(0).getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).get().stringValue();
-            String secondThreadTime = comments.get(1).get(0).getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).get().stringValue();
+            String firstThreadTime = comments.get(0).get(0).getProperty(DCTERMS.ISSUED).get().stringValue();
+            String secondThreadTime = comments.get(1).get(0).getProperty(DCTERMS.ISSUED).get().stringValue();
             assertTrue(OffsetDateTime.parse(firstThreadTime).isBefore(OffsetDateTime.parse(secondThreadTime)));
         }
     }
@@ -1363,10 +1363,10 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         String commentStr = "This is a test comment.";
         Comment comment = manager.createComment(request1.getResource(), user1, commentStr);
         assertEquals(request1.getResource(), comment.getOnMergeRequest_resource().get());
-        assertEquals(user1.getResource(), comment.getProperty(VALUE_FACTORY.createIRI(_Thing.creator_IRI)).get());
-        assertEquals(commentStr, comment.getProperty(VALUE_FACTORY.createIRI(_Thing.description_IRI)).get().stringValue());
-        assertTrue(comment.getProperty(VALUE_FACTORY.createIRI(_Thing.modified_IRI)).isPresent());
-        assertTrue(comment.getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).isPresent());
+        assertEquals(user1.getResource(), comment.getProperty(DCTERMS.CREATOR).get());
+        assertEquals(commentStr, comment.getProperty(DCTERMS.DESCRIPTION).get().stringValue());
+        assertTrue(comment.getProperty(DCTERMS.MODIFIED).isPresent());
+        assertTrue(comment.getProperty(DCTERMS.ISSUED).isPresent());
         assertFalse(comment.getReplyComment().isPresent());
 
         verify(configProvider, times(2)).getRepository();
@@ -1399,10 +1399,10 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         String commentStr = "This is a test comment.";
         Comment comment = manager.createComment(request1.getResource(), user1, commentStr, commentZ.getResource());
         assertEquals(request1.getResource(), comment.getOnMergeRequest_resource().get());
-        assertEquals(user1.getResource(), comment.getProperty(VALUE_FACTORY.createIRI(_Thing.creator_IRI)).get());
-        assertEquals(commentStr, comment.getProperty(VALUE_FACTORY.createIRI(_Thing.description_IRI)).get().stringValue());
-        assertTrue(comment.getProperty(VALUE_FACTORY.createIRI(_Thing.modified_IRI)).isPresent());
-        assertTrue(comment.getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).isPresent());
+        assertEquals(user1.getResource(), comment.getProperty(DCTERMS.CREATOR).get());
+        assertEquals(commentStr, comment.getProperty(DCTERMS.DESCRIPTION).get().stringValue());
+        assertTrue(comment.getProperty(DCTERMS.MODIFIED).isPresent());
+        assertTrue(comment.getProperty(DCTERMS.ISSUED).isPresent());
         assertFalse(comment.getReplyComment().isPresent());
 
         Comment commentZRepo = manager.getComment(commentZ.getResource()).get();
@@ -1420,10 +1420,10 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         String commentStr = "This is a test comment.";
         Comment comment = manager.createComment(request1.getResource(), user1, commentStr, commentA.getResource());
         assertEquals(request1.getResource(), comment.getOnMergeRequest_resource().get());
-        assertEquals(user1.getResource(), comment.getProperty(VALUE_FACTORY.createIRI(_Thing.creator_IRI)).get());
-        assertEquals(commentStr, comment.getProperty(VALUE_FACTORY.createIRI(_Thing.description_IRI)).get().stringValue());
-        assertTrue(comment.getProperty(VALUE_FACTORY.createIRI(_Thing.modified_IRI)).isPresent());
-        assertTrue(comment.getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).isPresent());
+        assertEquals(user1.getResource(), comment.getProperty(DCTERMS.CREATOR).get());
+        assertEquals(commentStr, comment.getProperty(DCTERMS.DESCRIPTION).get().stringValue());
+        assertTrue(comment.getProperty(DCTERMS.MODIFIED).isPresent());
+        assertTrue(comment.getProperty(DCTERMS.ISSUED).isPresent());
         assertFalse(comment.getReplyComment().isPresent());
 
         Comment commentCRepo = manager.getComment(commentC.getResource()).get();
@@ -1459,7 +1459,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     @Test
     public void updateCommentTest() {
         Comment comment1Update = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#1"));
-        comment1Update.setProperty(VALUE_FACTORY.createLiteral("Comment1Update"), VALUE_FACTORY.createIRI(_Thing.description_IRI));
+        comment1Update.setProperty(VALUE_FACTORY.createLiteral("Comment1Update"), DCTERMS.DESCRIPTION);
         manager.updateComment(comment1Update.getResource(), comment1Update);
         verify(configProvider).getRepository();
         verify(manager).updateComment(eq(comment1Update.getResource()), eq(comment1Update), any(RepositoryConnection.class));
@@ -1469,7 +1469,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     public void updateCommentWithConnTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
             Comment comment1Update = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#1"));
-            comment1Update.setProperty(VALUE_FACTORY.createLiteral("Comment1Update"), VALUE_FACTORY.createIRI(_Thing.description_IRI));
+            comment1Update.setProperty(VALUE_FACTORY.createLiteral("Comment1Update"), DCTERMS.DESCRIPTION);
             manager.updateComment(comment1Update.getResource(), comment1Update, conn);
 
             verify(thingManager).validateResource(eq(comment1Update.getResource()), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));
@@ -1484,7 +1484,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
 
         try (RepositoryConnection conn = repo.getConnection()) {
             Comment comment1Update = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#1"));
-            comment1Update.setProperty(VALUE_FACTORY.createLiteral(StringUtils.repeat("*", 2000000)), VALUE_FACTORY.createIRI(_Thing.description_IRI));
+            comment1Update.setProperty(VALUE_FACTORY.createLiteral(StringUtils.repeat("*", 2000000)), DCTERMS.DESCRIPTION);
             manager.updateComment(comment1Update.getResource(), comment1Update, conn);
 
             verify(thingManager, never()).validateResource(eq(comment1Update.getResource()), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));
@@ -1499,7 +1499,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
 
         try (RepositoryConnection conn = repo.getConnection()) {
             Comment comment1Update = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#1"));
-            comment1Update.setProperty(VALUE_FACTORY.createLiteral(""), VALUE_FACTORY.createIRI(_Thing.description_IRI));
+            comment1Update.setProperty(VALUE_FACTORY.createLiteral(""), DCTERMS.DESCRIPTION);
             manager.updateComment(comment1Update.getResource(), comment1Update, conn);
 
             verify(thingManager, never()).validateResource(eq(comment1Update.getResource()), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));
@@ -1528,7 +1528,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
 
         try (RepositoryConnection conn = repo.getConnection()) {
             Comment commentDoesNotExist = commentFactory.createNew(DOES_NOT_EXIST_IRI);
-            commentDoesNotExist.setProperty(VALUE_FACTORY.createLiteral("commentDoesNotExist"), VALUE_FACTORY.createIRI(_Thing.description_IRI));
+            commentDoesNotExist.setProperty(VALUE_FACTORY.createLiteral("commentDoesNotExist"), DCTERMS.DESCRIPTION);
             manager.updateComment(DOES_NOT_EXIST_IRI, commentDoesNotExist, conn);
 
             verify(thingManager).validateResource(eq(commentDoesNotExist.getResource()), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));
@@ -1539,9 +1539,9 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     @Test
     public void updateCommentTimeTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
-            Optional<Value> preUpdateTime = comment1.getProperty(VALUE_FACTORY.createIRI(_Thing.modified_IRI));
+            Optional<Value> preUpdateTime = comment1.getProperty(DCTERMS.MODIFIED);
             manager.updateComment(comment1.getResource(), comment1, conn);
-            Optional<Value> postUpdateTime = comment1.getProperty(VALUE_FACTORY.createIRI(_Thing.modified_IRI));
+            Optional<Value> postUpdateTime = comment1.getProperty(DCTERMS.MODIFIED);
 
             assertNotEquals(preUpdateTime.get().stringValue(), postUpdateTime.get().stringValue());
             verify(thingManager).validateResource(eq(comment1.getResource()), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));

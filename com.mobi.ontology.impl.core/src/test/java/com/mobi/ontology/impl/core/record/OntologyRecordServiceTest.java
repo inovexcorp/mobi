@@ -23,8 +23,8 @@ package com.mobi.ontology.impl.core.record;
  * #L%
  */
 
-import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static junit.framework.TestCase.fail;
 import static org.junit.Assert.assertNotSame;
@@ -69,7 +69,6 @@ import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
@@ -262,10 +261,10 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         headCommit = commitFactory.createNew(commitIRI);
         branch = branchFactory.createNew(branchIRI);
         branch.setHead(headCommit);
-        branch.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        branch.setProperty(VALUE_FACTORY.createLiteral("Test Record"), DCTERMS.TITLE);
 
         Model deletions = MODEL_FACTORY.createEmptyModel();
-        deletions.add(VALUE_FACTORY.createIRI("http://test.com#sub"), VALUE_FACTORY.createIRI(_Thing.description_IRI),
+        deletions.add(VALUE_FACTORY.createIRI("http://test.com#sub"), DCTERMS.DESCRIPTION,
                 VALUE_FACTORY.createLiteral("Description"));
 
         difference = new Difference.Builder()
@@ -277,7 +276,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         tag.setVersionedDistribution(Collections.singleton(distributionFactory.createNew(distributionIRI)));
 
         testRecord = recordFactory.createNew(testIRI);
-        testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), DCTERMS.TITLE);
         testRecord.setCatalog(catalogFactory.createNew(catalogId));
         testRecord.setBranch(Collections.singleton(branch));
         testRecord.setVersion(Collections.singleton(tag));
@@ -431,15 +430,15 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
             ontologyRecord = recordService.create(user, config, connection);
         }
 
-        Optional<Value> optTitle = ontologyRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        Optional<Value> optTitle = ontologyRecord.getProperty(DCTERMS.TITLE);
         assertTrue(optTitle.isPresent());
         assertEquals("TestTitle", optTitle.get().stringValue());
-        Optional<Value> optDescription = ontologyRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.description_IRI));
+        Optional<Value> optDescription = ontologyRecord.getProperty(DCTERMS.DESCRIPTION);
         assertTrue(optDescription.isPresent());
         assertEquals("TestTitle", optDescription.get().stringValue());
-        assertTrue(ontologyRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.modified_IRI)).isPresent());
-        assertTrue(ontologyRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).isPresent());
-        Set<Value> publishers = ontologyRecord.getProperties(VALUE_FACTORY.createIRI(_Thing.publisher_IRI));
+        assertTrue(ontologyRecord.getProperty(DCTERMS.MODIFIED).isPresent());
+        assertTrue(ontologyRecord.getProperty(DCTERMS.ISSUED).isPresent());
+        Set<Value> publishers = ontologyRecord.getProperties(DCTERMS.PUBLISHER);
         assertEquals(users.size(), publishers.size());
         Optional<Resource> optCatalogId = ontologyRecord.getCatalog_resource();
         assertTrue(optCatalogId.isPresent());
@@ -489,15 +488,15 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
             ontologyRecord = recordService.create(user, config, connection);
         }
 
-        Optional<Value> optTitle = ontologyRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        Optional<Value> optTitle = ontologyRecord.getProperty(DCTERMS.TITLE);
         assertTrue(optTitle.isPresent());
         assertEquals("TestTitle", optTitle.get().stringValue());
-        Optional<Value> optDescription = ontologyRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.description_IRI));
+        Optional<Value> optDescription = ontologyRecord.getProperty(DCTERMS.DESCRIPTION);
         assertTrue(optDescription.isPresent());
         assertEquals("TestTitle", optDescription.get().stringValue());
-        assertTrue(ontologyRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.modified_IRI)).isPresent());
-        assertTrue(ontologyRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).isPresent());
-        Set<Value> publishers = ontologyRecord.getProperties(VALUE_FACTORY.createIRI(_Thing.publisher_IRI));
+        assertTrue(ontologyRecord.getProperty(DCTERMS.MODIFIED).isPresent());
+        assertTrue(ontologyRecord.getProperty(DCTERMS.ISSUED).isPresent());
+        Set<Value> publishers = ontologyRecord.getProperties(DCTERMS.PUBLISHER);
         assertEquals(users.size(), publishers.size());
         Optional<Resource> optCatalogId = ontologyRecord.getCatalog_resource();
         assertTrue(optCatalogId.isPresent());
@@ -566,8 +565,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
 
         // Verify Repo data
         try (RepositoryConnection connection = repository.getConnection()) {
-            Model ontologySubjects = QueryResults.asModel(connection.getStatements(null, VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()),
-                    VALUE_FACTORY.createIRI(OWL.ONTOLOGY.stringValue())));
+            Model ontologySubjects = QueryResults.asModel(connection.getStatements(null, RDF.TYPE, OWL.ONTOLOGY));
             Resource subject = ontologySubjects.stream().findFirst().get().getSubject();
             assertEquals(ontologyId.getOntologyIdentifier(), subject);
             assertTrue(subject instanceof IRI);
@@ -613,8 +611,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user), eq("The initial commit."), any(RepositoryConnection.class));
 
         try (RepositoryConnection connection = repository.getConnection()) {
-            Model ontologySubjects = QueryResults.asModel(connection.getStatements(null, VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()),
-                    VALUE_FACTORY.createIRI(OWL.ONTOLOGY.stringValue())));
+            Model ontologySubjects = QueryResults.asModel(connection.getStatements(null, RDF.TYPE, OWL.ONTOLOGY));
             Resource subject = ontologySubjects.stream().findFirst().get().getSubject();
             assertEquals(1, ontologySubjects.size());
             assertTrue(subject instanceof IRI);
@@ -645,15 +642,15 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
             ontologyRecord = recordService.create(user, config, connection);
         }
 
-        Optional<Value> optTitle = ontologyRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        Optional<Value> optTitle = ontologyRecord.getProperty(DCTERMS.TITLE);
         assertTrue(optTitle.isPresent());
         assertEquals("TestTitle", optTitle.get().stringValue());
-        Optional<Value> optDescription = ontologyRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.description_IRI));
+        Optional<Value> optDescription = ontologyRecord.getProperty(DCTERMS.DESCRIPTION);
         assertTrue(optDescription.isPresent());
         assertEquals("TestTitle", optDescription.get().stringValue());
-        assertTrue(ontologyRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.modified_IRI)).isPresent());
-        assertTrue(ontologyRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).isPresent());
-        Set<Value> publishers = ontologyRecord.getProperties(VALUE_FACTORY.createIRI(_Thing.publisher_IRI));
+        assertTrue(ontologyRecord.getProperty(DCTERMS.MODIFIED).isPresent());
+        assertTrue(ontologyRecord.getProperty(DCTERMS.ISSUED).isPresent());
+        Set<Value> publishers = ontologyRecord.getProperties(DCTERMS.PUBLISHER);
         assertEquals(users.size(), publishers.size());
         Optional<Resource> optCatalogId = ontologyRecord.getCatalog_resource();
         assertTrue(optCatalogId.isPresent());
@@ -1131,8 +1128,8 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
             Branch branch = branchFactory.createNew(branchIRI);
             Commit commit = commitFactory.createNew(commitIRI);
             branch.setHead(commit);
-            branch.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
-            record.setProperty(vf.createLiteral(OffsetDateTime.now().minusDays(1)), vf.createIRI(_Thing.modified_IRI));
+            branch.setProperty(VALUE_FACTORY.createLiteral("Test Record"), DCTERMS.TITLE);
+            record.setProperty(vf.createLiteral(OffsetDateTime.now().minusDays(1)), DCTERMS.MODIFIED);
             String previousModifiedValue = getModifiedIriValue(record);
             when(recordManager.getRecord(eq(catalogId), eq(testIRI), any(), any(RepositoryConnection.class))).thenReturn(record);
             when(branchManager.getBranch(any(VersionedRDFRecord.class), any(), any(), any())).thenReturn(branch);
@@ -1143,7 +1140,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
             // record service - abstract method
             verify(recordManager).getRecord(eq(catalogId), eq(testIRI), any(OntologyRecordFactory.class), any(RepositoryConnection.class));
             verify(branchManager).getBranch(eq(record), eq(branchIRI), eq(recordService.branchFactory), any(RepositoryConnection.class));
-            verify(record).setProperty(any(), eq(vf.createIRI(_Thing.modified_IRI)));
+            verify(record).setProperty(any(), eq(DCTERMS.MODIFIED));
             verify(thingManager).updateObject(eq(record), any(RepositoryConnection.class));
             // record service - abstract method - removeBranch
             verify(thingManager).removeObjectWithRelationship(eq(branchIRI), eq(testIRI), eq(VersionedRDFRecord.branch_IRI), any(RepositoryConnection.class));
@@ -1212,6 +1209,6 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     }
 
     private String getModifiedIriValue(Thing property) {
-        return property.getProperty(vf.createIRI(_Thing.modified_IRI)).get().toString();
+        return property.getProperty(DCTERMS.MODIFIED).get().toString();
     }
 }

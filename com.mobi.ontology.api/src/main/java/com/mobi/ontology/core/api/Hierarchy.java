@@ -29,6 +29,7 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.Rio;
@@ -51,16 +52,16 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Hierarchy {
     private static final Logger LOG = LoggerFactory.getLogger(Hierarchy.class);
 
-    private Model model;
-    private Set<Resource> iris = ConcurrentHashMap.newKeySet();
-    private Map<String, Set<String>> parentMap = new ConcurrentHashMap<>();
-    private Map<String, Set<String>> childMap = new ConcurrentHashMap<>();
-    private Map<String, Map<String, Set<String>>> circularMap = new ConcurrentHashMap<>();
+    private final Model model;
+    private final Set<Resource> iris = ConcurrentHashMap.newKeySet();
+    private final Map<String, Set<String>> parentMap = new ConcurrentHashMap<>();
+    private final Map<String, Set<String>> childMap = new ConcurrentHashMap<>();
+    private final Map<String, Map<String, Set<String>>> circularMap = new ConcurrentHashMap<>();
 
-    private IRI type;
-    private IRI nodeType;
-    private IRI childProp;
-    private ValueFactory vf;
+    private final IRI type;
+    private final IRI nodeType;
+    private final IRI childProp;
+    private final ValueFactory vf;
 
     /**
      * Creates an empty {@link Hierarchy}.
@@ -70,7 +71,7 @@ public class Hierarchy {
      */
     public Hierarchy(ValueFactory vf, ModelFactory mf) {
         model = mf.createEmptyModel();
-        type = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
+        type = RDF.TYPE;
         nodeType = vf.createIRI("http://mobi.com/hierarchy#Node");
         childProp = vf.createIRI("http://mobi.com/hierarchy#child");
         this.vf = vf;

@@ -54,7 +54,6 @@ import com.mobi.security.policy.api.xacml.jaxb.MatchType;
 import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
 import com.mobi.security.policy.api.xacml.jaxb.RuleType;
 import com.mobi.security.policy.api.xacml.jaxb.TargetType;
-import com.mobi.vocabularies.xsd.XSD;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -65,6 +64,7 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.XSD;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.osgi.service.component.annotations.Component;
@@ -364,7 +364,7 @@ public class RecordPermissionsRest {
             TargetType target = new TargetType();
             RuleType rule = createRule(EffectType.PERMIT, key, target);
             AttributeValueType ruleTypeAttrVal = new AttributeValueType();
-            ruleTypeAttrVal.setDataType(XSD.STRING);
+            ruleTypeAttrVal.setDataType(XSD.STRING.stringValue());
 
             // Setup Rule Type
             MatchType ruleTypeMatch = createMatch(XACML.STRING_EQUALS, actionIdAttrDesig, ruleTypeAttrVal);
@@ -383,7 +383,7 @@ public class RecordPermissionsRest {
             allOfType.getMatch().add(ruleTypeMatch);
 
             if (key.equalsIgnoreCase("urn:modifyMaster") && masterBranch.isPresent()) {
-                AttributeValueType branchAttrVal = createAttributeValue(XSD.STRING, masterBranch.get());
+                AttributeValueType branchAttrVal = createAttributeValue(XSD.STRING.stringValue(), masterBranch.get());
                 MatchType branchMatch = createMatch(XACML.STRING_EQUALS, branchAttrDesig, branchAttrVal);
                 allOfType.getMatch().add(branchMatch);
             }
@@ -445,7 +445,7 @@ public class RecordPermissionsRest {
                 throw new IllegalArgumentException("Invalid JSON representation of a Policy."
                         + " User or group not set properly.");
             }
-            AttributeValueType userAttrVal = createAttributeValue(XSD.STRING, value);
+            AttributeValueType userAttrVal = createAttributeValue(XSD.STRING.stringValue(), value);
 
             MatchType userMatch = createMatch(XACML.STRING_EQUALS, attributeDesignator, userAttrVal);
             AllOfType userAllOf = new AllOfType();
@@ -469,7 +469,7 @@ public class RecordPermissionsRest {
 
         JAXBElement<AttributeValueType> branchValue = new JAXBElement<>(
                 new QName("urn:oasis:names:tc:xacml:3.0:core:schema:wd-17", "AttributeValue"),
-                AttributeValueType.class, createAttributeValue(XSD.STRING, masterBranch));
+                AttributeValueType.class, createAttributeValue(XSD.STRING.stringValue(), masterBranch));
         JAXBElement<AttributeDesignatorType> branchDesignator = new JAXBElement<>(
                 new QName("urn:oasis:names:tc:xacml:3.0:core:schema:wd-17", "AttributeDesignator"),
                 AttributeDesignatorType.class, createBranchAttrDesig());
@@ -583,29 +583,29 @@ public class RecordPermissionsRest {
     }
 
     private AttributeDesignatorType createSubjectIdAttrDesig() {
-        return createAttributeDesignator(XACML.SUBJECT_ID, XACML.SUBJECT_CATEGORY, XSD.STRING, true);
+        return createAttributeDesignator(XACML.SUBJECT_ID, XACML.SUBJECT_CATEGORY, XSD.STRING.stringValue(), true);
     }
 
     private AttributeDesignatorType createActionIdAttrDesig() {
-        return createAttributeDesignator(XACML.ACTION_ID, XACML.ACTION_CATEGORY, XSD.STRING, true);
+        return createAttributeDesignator(XACML.ACTION_ID, XACML.ACTION_CATEGORY, XSD.STRING.stringValue(), true);
     }
 
     private AttributeDesignatorType createGroupAttrDesig() {
         return createAttributeDesignator(
                 "http://mobi.com/policy/prop-path(%5E%3Chttp%3A%2F%2Fxmlns.com%2Ffoaf%2F0.1%2Fmember%3E)",
-                XACML.SUBJECT_CATEGORY, XSD.STRING, true);
+                XACML.SUBJECT_CATEGORY, XSD.STRING.stringValue(), true);
     }
 
     private AttributeDesignatorType createBranchAttrDesig() {
         return createAttributeDesignator("http://mobi.com/ontologies/catalog#branch", XACML.ACTION_CATEGORY,
-                XSD.STRING, false);
+                XSD.STRING.stringValue(), false);
     }
 
     private AttributeDesignatorType createUserAttrDesig() {
-        return createAttributeDesignator(User.hasUserRole_IRI,  XACML.SUBJECT_CATEGORY, XSD.STRING, true);
+        return createAttributeDesignator(User.hasUserRole_IRI,  XACML.SUBJECT_CATEGORY, XSD.STRING.stringValue(), true);
     }
 
     private AttributeValueType createUserAttrVal() {
-        return createAttributeValue(XSD.STRING, "http://mobi.com/roles/user");
+        return createAttributeValue(XSD.STRING.stringValue(), "http://mobi.com/roles/user");
     }
 }

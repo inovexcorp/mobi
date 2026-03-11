@@ -64,8 +64,6 @@ import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.settings.editor.api.ontologies.namespace.DefaultShapesGraphNamespaceApplicationSetting;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
@@ -76,6 +74,7 @@ import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import com.mobi.setting.api.SettingService;
 import com.mobi.setting.api.ontologies.setting.ApplicationSetting;
+import com.mobi.settings.editor.api.ontologies.namespace.DefaultShapesGraphNamespaceApplicationSetting;
 import com.mobi.shapes.api.ShapesGraphManager;
 import com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecord;
 import org.eclipse.rdf4j.model.IRI;
@@ -206,7 +205,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         headCommit = commitFactory.createNew(commitIRI);
         branch = branchFactory.createNew(branchIRI);
         branch.setHead(headCommit);
-        branch.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        branch.setProperty(VALUE_FACTORY.createLiteral("Test Record"), DCTERMS.TITLE);
 
         InputStream testStateOntology = getClass().getResourceAsStream("/test-state.ttl");
         testStateModel = MODEL_FACTORY.createEmptyModel();
@@ -217,7 +216,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         stateRecord03 = recordFactory.createNew(VALUE_FACTORY.createIRI("https://mobi.com/records#eb-record-id-not-exit"));
 
         Model deletions = MODEL_FACTORY.createEmptyModel();
-        deletions.add(VALUE_FACTORY.createIRI("http://test.com#sub"), VALUE_FACTORY.createIRI(_Thing.description_IRI),
+        deletions.add(VALUE_FACTORY.createIRI("http://test.com#sub"), DCTERMS.DESCRIPTION,
                 VALUE_FACTORY.createLiteral("Description"));
         difference = new Difference.Builder()
                 .additions(MODEL_FACTORY.createEmptyModel())
@@ -228,7 +227,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         tag.setVersionedDistribution(Collections.singleton(distributionFactory.createNew(distributionIRI)));
 
         testRecord = recordFactory.createNew(testIRI);
-        testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), DCTERMS.TITLE);
         testRecord.setCatalog(catalogFactory.createNew(catalogId));
         testRecord.setBranch(Collections.singleton(branch));
         testRecord.setVersion(Collections.singleton(tag));
@@ -356,15 +355,15 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
             shaclRecord = recordService.create(user, config, connection);
         }
         
-        Optional<Value> optTitle = shaclRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        Optional<Value> optTitle = shaclRecord.getProperty(DCTERMS.TITLE);
         assertTrue(optTitle.isPresent());
         assertEquals("TestTitle", optTitle.get().stringValue());
-        Optional<Value> optDescription = shaclRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.description_IRI));
+        Optional<Value> optDescription = shaclRecord.getProperty(DCTERMS.DESCRIPTION);
         assertTrue(optDescription.isPresent());
         assertEquals("TestTitle", optDescription.get().stringValue());
-        assertTrue(shaclRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.modified_IRI)).isPresent());
-        assertTrue(shaclRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).isPresent());
-        Set<Value> publishers = shaclRecord.getProperties(VALUE_FACTORY.createIRI(_Thing.publisher_IRI));
+        assertTrue(shaclRecord.getProperty(DCTERMS.MODIFIED).isPresent());
+        assertTrue(shaclRecord.getProperty(DCTERMS.ISSUED).isPresent());
+        Set<Value> publishers = shaclRecord.getProperties(DCTERMS.PUBLISHER);
         assertEquals(users.size(), publishers.size());
         Optional<Resource> optCatalogId = shaclRecord.getCatalog_resource();
         assertTrue(optCatalogId.isPresent());
@@ -417,15 +416,15 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
             shaclRecord = recordService.create(user, config, connection);
         }
         
-        Optional<Value> optTitle = shaclRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        Optional<Value> optTitle = shaclRecord.getProperty(DCTERMS.TITLE);
         assertTrue(optTitle.isPresent());
         assertEquals("TestTitle", optTitle.get().stringValue());
-        Optional<Value> optDescription = shaclRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.description_IRI));
+        Optional<Value> optDescription = shaclRecord.getProperty(DCTERMS.DESCRIPTION);
         assertTrue(optDescription.isPresent());
         assertEquals("TestTitle", optDescription.get().stringValue());
-        assertTrue(shaclRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.modified_IRI)).isPresent());
-        assertTrue(shaclRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).isPresent());
-        Set<Value> publishers = shaclRecord.getProperties(VALUE_FACTORY.createIRI(_Thing.publisher_IRI));
+        assertTrue(shaclRecord.getProperty(DCTERMS.MODIFIED).isPresent());
+        assertTrue(shaclRecord.getProperty(DCTERMS.ISSUED).isPresent());
+        Set<Value> publishers = shaclRecord.getProperties(DCTERMS.PUBLISHER);
         assertEquals(users.size(), publishers.size());
         Optional<Resource> optCatalogId = shaclRecord.getCatalog_resource();
         assertTrue(optCatalogId.isPresent());
@@ -476,15 +475,15 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
             shaclRecord = recordService.create(user, config, connection);
         }
         
-        Optional<Value> optTitle = shaclRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        Optional<Value> optTitle = shaclRecord.getProperty(DCTERMS.TITLE);
         assertTrue(optTitle.isPresent());
         assertEquals("TestTitle", optTitle.get().stringValue());
-        Optional<Value> optDescription = shaclRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.description_IRI));
+        Optional<Value> optDescription = shaclRecord.getProperty(DCTERMS.DESCRIPTION);
         assertTrue(optDescription.isPresent());
         assertEquals("TestTitle", optDescription.get().stringValue());
-        assertTrue(shaclRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.modified_IRI)).isPresent());
-        assertTrue(shaclRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).isPresent());
-        Set<Value> publishers = shaclRecord.getProperties(VALUE_FACTORY.createIRI(_Thing.publisher_IRI));
+        assertTrue(shaclRecord.getProperty(DCTERMS.MODIFIED).isPresent());
+        assertTrue(shaclRecord.getProperty(DCTERMS.ISSUED).isPresent());
+        Set<Value> publishers = shaclRecord.getProperties(DCTERMS.PUBLISHER);
         assertEquals(users.size(), publishers.size());
         Optional<Resource> optCatalogId = shaclRecord.getCatalog_resource();
         assertTrue(optCatalogId.isPresent());

@@ -35,11 +35,11 @@ import com.mobi.catalog.api.ontologies.mcat.UnversionedRecord;
 import com.mobi.catalog.api.ontologies.mcat.UnversionedRecordFactory;
 import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.ontologies.mcat.VersionFactory;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.ConnectionUtils;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -111,15 +111,15 @@ public class SimpleDistributionManager implements DistributionManager {
 
         Distribution distribution = distributionFactory.createNew(vf.createIRI(Catalogs.DISTRIBUTION_NAMESPACE
                 + UUID.randomUUID()));
-        distribution.setProperty(vf.createLiteral(config.getTitle()), vf.createIRI(_Thing.title_IRI));
-        distribution.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.issued_IRI));
-        distribution.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.modified_IRI));
+        distribution.setProperty(vf.createLiteral(config.getTitle()), DCTERMS.TITLE);
+        distribution.setProperty(vf.createLiteral(now), DCTERMS.ISSUED);
+        distribution.setProperty(vf.createLiteral(now), DCTERMS.MODIFIED);
         if (config.getDescription() != null) {
             distribution.setProperty(vf.createLiteral(config.getDescription()),
-                    vf.createIRI(_Thing.description_IRI));
+                    DCTERMS.DESCRIPTION);
         }
         if (config.getFormat() != null) {
-            distribution.setProperty(vf.createLiteral(config.getFormat()), vf.createIRI(_Thing.format_IRI));
+            distribution.setProperty(vf.createLiteral(config.getFormat()), DCTERMS.FORMAT);
         }
         if (config.getAccessURL() != null) {
             distribution.setAccessURL(config.getAccessURL());

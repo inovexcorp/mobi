@@ -54,15 +54,15 @@ public class OntologyModelsTest extends OrmEnabledTestCase {
         vf = getValueFactory();
         ontologyIRI = vf.createIRI("urn:ontologyIRI");
         versionIRI = vf.createIRI("urn:versionIRI");
-        type = vf.createIRI(RDF.TYPE.stringValue());
-        versionType = vf.createIRI(OWL.VERSIONIRI.stringValue());
-        ontologyObj = vf.createIRI(OWL.ONTOLOGY.stringValue());
+        type = RDF.TYPE;
+        versionType = OWL.VERSIONIRI;
+        ontologyObj = OWL.ONTOLOGY;
     }
 
     @Test
     public void findFirstOntologyIRIOneTest() {
         Model model = mf.createEmptyModel();
-        model.add(ontologyIRI, type, vf.createIRI(OWL.ONTOLOGY.stringValue()));
+        model.add(ontologyIRI, type, OWL.ONTOLOGY);
 
         Optional<IRI> ontologyIRIOpt = OntologyModels.findFirstOntologyIRI(model);
         assertTrue(ontologyIRIOpt.isPresent());

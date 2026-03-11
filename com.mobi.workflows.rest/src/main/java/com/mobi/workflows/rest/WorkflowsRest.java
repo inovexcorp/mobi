@@ -109,6 +109,7 @@ import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.query.GraphQuery;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.query.algebra.Str;
@@ -357,7 +358,7 @@ public class WorkflowsRest {
                     }
             )
     )
-    @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = WorkflowRecord.TYPE))
+    @ActionAttributes(@AttributeValue(id = RDF.NAMESPACE + "type", value = WorkflowRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
     public Response createWorkflow(@Context HttpServletRequest servletRequest,
                                    @HeaderParam("Content-Type") String contentType) {

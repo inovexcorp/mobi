@@ -41,7 +41,6 @@ import com.mobi.catalog.api.ontologies.mcat.MasterBranch;
 import com.mobi.catalog.api.ontologies.mcat.UserBranch;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.record.RecordService;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
@@ -138,12 +137,12 @@ public class SimpleBranchManagerTest extends OrmEnabledTestCase {
 
             // Setup:
             VersionedRDFRecord record = versionedRDFRecordFactory.createNew(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI);
-            record.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.now().minusDays(1)), VALUE_FACTORY.createIRI(_Thing.modified_IRI));
+            record.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.now().minusDays(1)), DCTERMS.MODIFIED);
             String previousModifiedValue = ManagerTestConstants.getModifiedIriValue(record);
             doReturn(record).when(recordManager).getRecord(eq(ManagerTestConstants.CATALOG_IRI), eq(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
 
             Branch branch = branchFactory.createNew(ManagerTestConstants.NEW_IRI);
-            branch.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.now().minusDays(1)), VALUE_FACTORY.createIRI(_Thing.modified_IRI));
+            branch.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.now().minusDays(1)), DCTERMS.MODIFIED);
 
             manager.addBranch(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, branch, conn);
             verify(recordManager).getRecord(eq(ManagerTestConstants.CATALOG_IRI), eq(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
@@ -178,7 +177,7 @@ public class SimpleBranchManagerTest extends OrmEnabledTestCase {
             // Setup:
             Branch branch = branchFactory.createNew(ManagerTestConstants.BRANCH_IRI);
             branch.getModel().add(ManagerTestConstants.BRANCH_IRI, DCTERMS.TITLE, VALUE_FACTORY.createLiteral("New Title"));
-            branch.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.now().minusDays(1)), VALUE_FACTORY.createIRI(_Thing.modified_IRI));
+            branch.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.now().minusDays(1)), DCTERMS.MODIFIED);
             String previousModifiedValue = ManagerTestConstants.getModifiedIriValue(branch);
 
             manager.updateBranch(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, branch, conn);
@@ -194,7 +193,7 @@ public class SimpleBranchManagerTest extends OrmEnabledTestCase {
             // Setup:
             UserBranch branch = userBranchFactory.createNew(ManagerTestConstants.USER_BRANCH_IRI);
             branch.getModel().add(ManagerTestConstants.USER_BRANCH_IRI, DCTERMS.TITLE, VALUE_FACTORY.createLiteral("New Title"));
-            branch.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.now().minusDays(1)), VALUE_FACTORY.createIRI(_Thing.modified_IRI));
+            branch.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.now().minusDays(1)), DCTERMS.MODIFIED);
             String previousModifiedValue = ManagerTestConstants.getModifiedIriValue(branch);
 
             manager.updateBranch(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, branch, conn);
@@ -211,7 +210,7 @@ public class SimpleBranchManagerTest extends OrmEnabledTestCase {
             Branch branch = branchFactory.createNew(ManagerTestConstants.MASTER_BRANCH_IRI);
             thrown.expect(IllegalArgumentException.class);
             thrown.expectMessage("Branch " + ManagerTestConstants.MASTER_BRANCH_IRI + " is the master Branch and cannot be updated.");
-            branch.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.now().minusDays(1)), VALUE_FACTORY.createIRI(_Thing.modified_IRI));
+            branch.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.now().minusDays(1)), DCTERMS.MODIFIED);
             String previousModifiedValue = ManagerTestConstants.getModifiedIriValue(branch);
 
             manager.updateBranch(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, branch, conn);

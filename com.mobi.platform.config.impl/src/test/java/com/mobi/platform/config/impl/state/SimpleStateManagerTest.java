@@ -112,8 +112,8 @@ public class SimpleStateManagerTest extends OrmEnabledTestCase {
     public void stateExistsTest() throws Exception {
         // Setup:
         RepositoryConnection conn = repo.getConnection();
-        conn.add(VALUE_FACTORY.createIRI("http://mobi.com/states/0"), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(State.TYPE));
-        conn.add(VALUE_FACTORY.createIRI("http://mobi.com/states/1"), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()), VALUE_FACTORY.createLiteral("Title"));
+        conn.add(VALUE_FACTORY.createIRI("http://mobi.com/states/0"), RDF.TYPE, VALUE_FACTORY.createIRI(State.TYPE));
+        conn.add(VALUE_FACTORY.createIRI("http://mobi.com/states/1"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Title"));
 
         assertTrue(manager.stateExists(VALUE_FACTORY.createIRI("http://mobi.com/states/0")));
         assertFalse(manager.stateExists(VALUE_FACTORY.createIRI("http://mobi.com/states/1")));
@@ -125,10 +125,10 @@ public class SimpleStateManagerTest extends OrmEnabledTestCase {
     public void stateExistsForUserTest() throws Exception {
         // Setup:
         RepositoryConnection conn = repo.getConnection();
-        conn.add(VALUE_FACTORY.createIRI("http://mobi.com/states/0"), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(State.TYPE));
+        conn.add(VALUE_FACTORY.createIRI("http://mobi.com/states/0"), RDF.TYPE, VALUE_FACTORY.createIRI(State.TYPE));
         conn.add(VALUE_FACTORY.createIRI("http://mobi.com/states/0"), VALUE_FACTORY.createIRI(State.forUser_IRI), user.getResource());
-        conn.add(VALUE_FACTORY.createIRI("http://mobi.com/states/1"), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(State.TYPE));
-        conn.add(VALUE_FACTORY.createIRI("http://mobi.com/states/2"), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()), VALUE_FACTORY.createLiteral("Title"));
+        conn.add(VALUE_FACTORY.createIRI("http://mobi.com/states/1"), RDF.TYPE, VALUE_FACTORY.createIRI(State.TYPE));
+        conn.add(VALUE_FACTORY.createIRI("http://mobi.com/states/2"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Title"));
 
         assertTrue(manager.stateExistsForUser(VALUE_FACTORY.createIRI("http://mobi.com/states/0"), "test"));
         assertFalse(manager.stateExistsForUser(VALUE_FACTORY.createIRI("http://mobi.com/states/1"), "test"));
@@ -144,7 +144,7 @@ public class SimpleStateManagerTest extends OrmEnabledTestCase {
     public void stateExistsForUserThatDoesNotExistTest() {
         // Setup:
         RepositoryConnection conn = repo.getConnection();
-        conn.add(VALUE_FACTORY.createIRI("http://mobi.com/states/0"), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(State.TYPE));
+        conn.add(VALUE_FACTORY.createIRI("http://mobi.com/states/0"), RDF.TYPE, VALUE_FACTORY.createIRI(State.TYPE));
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
 
         manager.stateExistsForUser(VALUE_FACTORY.createIRI("http://mobi.com/states/0"), "error");
@@ -154,8 +154,8 @@ public class SimpleStateManagerTest extends OrmEnabledTestCase {
     public void getStatesNoFiltersTest() throws Exception {
         // Setup:
         Model newState = MODEL_FACTORY.createEmptyModel();
-        newState.add(VALUE_FACTORY.createIRI("http://example.com/example"), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()), VALUE_FACTORY.createLiteral("Title"));
-        newState.add(VALUE_FACTORY.createIRI("http://example.com/example"), VALUE_FACTORY.createIRI(DCTERMS.DESCRIPTION.stringValue()), VALUE_FACTORY.createLiteral("Description"));
+        newState.add(VALUE_FACTORY.createIRI("http://example.com/example"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Title"));
+        newState.add(VALUE_FACTORY.createIRI("http://example.com/example"), DCTERMS.DESCRIPTION, VALUE_FACTORY.createLiteral("Description"));
         State state0 = stateFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/states/0"));
         state0.setStateResource(Collections.singleton(VALUE_FACTORY.createIRI("http://example.com/example")));
         state0.setForUser(user);
@@ -176,12 +176,12 @@ public class SimpleStateManagerTest extends OrmEnabledTestCase {
     public void getStatesApplicationFilterTest() throws Exception {
         // Setup:
         Model state0Model = MODEL_FACTORY.createEmptyModel();
-        state0Model.add(VALUE_FACTORY.createIRI("http://example.com/example/0"), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()), VALUE_FACTORY.createLiteral("Title"));
+        state0Model.add(VALUE_FACTORY.createIRI("http://example.com/example/0"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Title"));
         State state0 = stateFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/states/0"));
         state0.setStateResource(stateResource0);
         state0.setForUser(user);
         Model state1Model = MODEL_FACTORY.createEmptyModel();
-        state1Model.add(VALUE_FACTORY.createIRI("http://example.com/example/1"), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()), VALUE_FACTORY.createLiteral("Title"));
+        state1Model.add(VALUE_FACTORY.createIRI("http://example.com/example/1"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Title"));
         ApplicationState state1 = applicationStateFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/states/1"));
         state1.setStateResource(stateResource1);
         state1.setForUser(user);
@@ -203,12 +203,12 @@ public class SimpleStateManagerTest extends OrmEnabledTestCase {
     public void getStatesSubjectsFilterTest() throws Exception {
         // Setup:
         Model state0Model = MODEL_FACTORY.createEmptyModel();
-        state0Model.add(VALUE_FACTORY.createIRI("http://example.com/example/0"), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()), VALUE_FACTORY.createLiteral("Title"));
+        state0Model.add(VALUE_FACTORY.createIRI("http://example.com/example/0"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Title"));
         State state0 = stateFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/states/0"));
         state0.setStateResource(stateResource0);
         state0.setForUser(user);
         Model state1Model = MODEL_FACTORY.createEmptyModel();
-        state1Model.add(VALUE_FACTORY.createIRI("http://example.com/example/1"), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()), VALUE_FACTORY.createLiteral("Title"));
+        state1Model.add(VALUE_FACTORY.createIRI("http://example.com/example/1"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Title"));
         State state1 = stateFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/states/1"));
         state1.setStateResource(stateResource1);
         state1.setForUser(user);
@@ -229,12 +229,12 @@ public class SimpleStateManagerTest extends OrmEnabledTestCase {
     public void getStatesUserFilterTest() throws Exception {
         // Setup:
         Model state0Model = MODEL_FACTORY.createEmptyModel();
-        state0Model.add(VALUE_FACTORY.createIRI("http://example.com/example/0"), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()), VALUE_FACTORY.createLiteral("Title"));
+        state0Model.add(VALUE_FACTORY.createIRI("http://example.com/example/0"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Title"));
         State state0 = stateFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/states/0"));
         state0.setStateResource(stateResource0);
         state0.setForUser(user);
         Model state1Model = MODEL_FACTORY.createEmptyModel();
-        state1Model.add(VALUE_FACTORY.createIRI("http://example.com/example/1"), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()), VALUE_FACTORY.createLiteral("Title"));
+        state1Model.add(VALUE_FACTORY.createIRI("http://example.com/example/1"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Title"));
         State state1 = stateFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/states/1"));
         state1.setStateResource(stateResource1);
         state1.setForUser(userFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/users/test1")));
@@ -255,18 +255,18 @@ public class SimpleStateManagerTest extends OrmEnabledTestCase {
     public void getStatesAllFiltersTest() throws Exception {
         // Setup:
         Model state0Model = MODEL_FACTORY.createEmptyModel();
-        state0Model.add(VALUE_FACTORY.createIRI("http://example.com/example/0"), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()), VALUE_FACTORY.createLiteral("Title"));
+        state0Model.add(VALUE_FACTORY.createIRI("http://example.com/example/0"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Title"));
         State state0 = stateFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/states/0"));
         state0.setStateResource(stateResource0);
         state0.setForUser(user);
         Model state1Model = MODEL_FACTORY.createEmptyModel();
-        state1Model.add(VALUE_FACTORY.createIRI("http://example.com/example/1"), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()), VALUE_FACTORY.createLiteral("Title"));
+        state1Model.add(VALUE_FACTORY.createIRI("http://example.com/example/1"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Title"));
         ApplicationState state1 = applicationStateFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/states/1"));
         state1.setStateResource(stateResource1);
         state1.setForUser(user);
         state1.setApplication(application);
         Model state2Model = MODEL_FACTORY.createEmptyModel();
-        state2Model.add(VALUE_FACTORY.createIRI("http://example.com/example/2"), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()), VALUE_FACTORY.createLiteral("Title"));
+        state2Model.add(VALUE_FACTORY.createIRI("http://example.com/example/2"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Title"));
         ApplicationState state2 = applicationStateFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/states/2"));
         state2.setStateResource(Collections.singleton(VALUE_FACTORY.createIRI("http://example.com/example/2")));
         state2.setForUser(user);
@@ -306,7 +306,7 @@ public class SimpleStateManagerTest extends OrmEnabledTestCase {
     public void storeStateTest() throws Exception {
         // Setup:
         Model newState = MODEL_FACTORY.createEmptyModel();
-        newState.add(VALUE_FACTORY.createIRI("http://example.com/example"), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()), VALUE_FACTORY.createLiteral("Title"));
+        newState.add(VALUE_FACTORY.createIRI("http://example.com/example"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Title"));
 
         Resource result = manager.storeState(newState, "test");
         verify(engineManager, times(1)).retrieveUser(eq("test"));
@@ -314,7 +314,7 @@ public class SimpleStateManagerTest extends OrmEnabledTestCase {
         Model stateModel = MODEL_FACTORY.createEmptyModel();
         conn.getStatements(result, null, null).forEach(stateModel::add);
         assertFalse(stateModel.isEmpty());
-        assertTrue(stateModel.contains(result, VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(State.TYPE)));
+        assertTrue(stateModel.contains(result, RDF.TYPE, VALUE_FACTORY.createIRI(State.TYPE)));
         assertTrue(stateModel.contains(result, VALUE_FACTORY.createIRI(State.forUser_IRI), user.getResource()));
         newState.forEach(statement -> {
             assertTrue(stateModel.contains(result, VALUE_FACTORY.createIRI(State.stateResource_IRI), statement.getSubject()));
@@ -335,7 +335,7 @@ public class SimpleStateManagerTest extends OrmEnabledTestCase {
     public void storeApplicationStateTest() throws Exception {
         // Setup:
         Model newState = MODEL_FACTORY.createEmptyModel();
-        newState.add(VALUE_FACTORY.createIRI("http://example.com/example"), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()), VALUE_FACTORY.createLiteral("Title"));
+        newState.add(VALUE_FACTORY.createIRI("http://example.com/example"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Title"));
 
         Resource result = manager.storeState(newState, "test", "test");
         verify(engineManager, times(1)).retrieveUser(eq("test"));
@@ -344,7 +344,7 @@ public class SimpleStateManagerTest extends OrmEnabledTestCase {
         Model stateModel = MODEL_FACTORY.createEmptyModel();
         conn.getStatements(result, null, null).forEach(stateModel::add);
         assertFalse(stateModel.isEmpty());
-        assertTrue(stateModel.contains(result, VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(ApplicationState.TYPE)));
+        assertTrue(stateModel.contains(result, RDF.TYPE, VALUE_FACTORY.createIRI(ApplicationState.TYPE)));
         assertTrue(stateModel.contains(result, VALUE_FACTORY.createIRI(State.forUser_IRI), user.getResource()));
         assertTrue(stateModel.contains(result, VALUE_FACTORY.createIRI(ApplicationState.application_IRI), application.getResource()));
         newState.forEach(statement -> {
@@ -374,7 +374,7 @@ public class SimpleStateManagerTest extends OrmEnabledTestCase {
     public void getStateTest() throws Exception {
         // Setup:
         Model resources = MODEL_FACTORY.createEmptyModel();
-        resources.add(VALUE_FACTORY.createIRI("http://example.com/example"), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()), VALUE_FACTORY.createLiteral("Title"));
+        resources.add(VALUE_FACTORY.createIRI("http://example.com/example"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Title"));
         State state = stateFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/states/0"));
         state.setStateResource(Collections.singleton(VALUE_FACTORY.createIRI("http://example.com/example")));
         RepositoryConnection conn = repo.getConnection();
@@ -409,8 +409,8 @@ public class SimpleStateManagerTest extends OrmEnabledTestCase {
         // Setup:
         Model oldModel = MODEL_FACTORY.createEmptyModel();
         Model newModel = MODEL_FACTORY.createEmptyModel();
-        oldModel.add(VALUE_FACTORY.createIRI("http://example.com/example/0"), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()), VALUE_FACTORY.createLiteral("Title"));
-        newModel.add(VALUE_FACTORY.createIRI("http://example.com/example/1"), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()), VALUE_FACTORY.createLiteral("Title"));
+        oldModel.add(VALUE_FACTORY.createIRI("http://example.com/example/0"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Title"));
+        newModel.add(VALUE_FACTORY.createIRI("http://example.com/example/1"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Title"));
         State state = stateFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/states/0"));
         state.setStateResource(stateResource0);
         RepositoryConnection conn = repo.getConnection();
@@ -437,8 +437,8 @@ public class SimpleStateManagerTest extends OrmEnabledTestCase {
         // Setup:
         Model oldModel = MODEL_FACTORY.createEmptyModel();
         Model newModel = MODEL_FACTORY.createEmptyModel();
-        oldModel.add(VALUE_FACTORY.createIRI("http://example.com/example/0"), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()), VALUE_FACTORY.createLiteral("Title"));
-        newModel.add(VALUE_FACTORY.createIRI("http://example.com/example/1"), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()), VALUE_FACTORY.createLiteral("Title"));
+        oldModel.add(VALUE_FACTORY.createIRI("http://example.com/example/0"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Title"));
+        newModel.add(VALUE_FACTORY.createIRI("http://example.com/example/1"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Title"));
         State state0 = stateFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/states/0"));
         State state1 = stateFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/states/1"));
         state0.setStateResource(stateResource0);
@@ -467,7 +467,7 @@ public class SimpleStateManagerTest extends OrmEnabledTestCase {
     public void updateStateThatWasEmptyTest() throws Exception {
         // Setup:
         Model newModel = MODEL_FACTORY.createEmptyModel();
-        newModel.add(VALUE_FACTORY.createIRI("http://example.com/example"), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()), VALUE_FACTORY.createLiteral("Title"));
+        newModel.add(VALUE_FACTORY.createIRI("http://example.com/example"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Title"));
         State state = stateFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/states/0"));
         RepositoryConnection conn = repo.getConnection();
         conn.add(state.getModel());
@@ -492,7 +492,7 @@ public class SimpleStateManagerTest extends OrmEnabledTestCase {
     public void deleteStateTest() throws Exception {
         // Setup:
         Model model = MODEL_FACTORY.createEmptyModel();
-        model.add(VALUE_FACTORY.createIRI("http://example.com/example"), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()), VALUE_FACTORY.createLiteral("Title"));
+        model.add(VALUE_FACTORY.createIRI("http://example.com/example"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Title"));
         State state = stateFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/states/0"));
         state.setStateResource(Collections.singleton(VALUE_FACTORY.createIRI("http://example.com/example")));
         RepositoryConnection conn = repo.getConnection();
@@ -512,7 +512,7 @@ public class SimpleStateManagerTest extends OrmEnabledTestCase {
     public void deleteStateWithResourcesUsedForAnotherStateTest() throws Exception {
         // Setup:
         Model model = MODEL_FACTORY.createEmptyModel();
-        model.add(VALUE_FACTORY.createIRI("http://example.com/example"), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()), VALUE_FACTORY.createLiteral("Title"));
+        model.add(VALUE_FACTORY.createIRI("http://example.com/example"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Title"));
         State state0 = stateFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/states/0"));
         State state1 = stateFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/states/1"));
         state0.setStateResource(Collections.singleton(VALUE_FACTORY.createIRI("http://example.com/example")));

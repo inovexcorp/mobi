@@ -341,7 +341,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         user = userFactory.createNew(vf.createIRI("http://mobi.com/users/" + UsernameTestFilter.USERNAME));
         record.setMasterBranch(masterBranch);
         classId = vf.createIRI("http://mobi.com/ontology#Class1a");
-        IRI titleIRI = vf.createIRI(DCTERMS.TITLE.stringValue());
+        IRI titleIRI = DCTERMS.TITLE;
         Model additions = mf.createEmptyModel();
         additions.add(catalogId, titleIRI, vf.createLiteral("Addition"));
         Model deletions = mf.createEmptyModel();
@@ -417,7 +417,6 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
     @Before
     public void setupMocks() throws Exception {
         configureApp();
-        final IRI skosSemanticRelation = vf.createIRI(SKOS.SEMANTIC_RELATION.stringValue());
 
         when(results.page()).thenReturn(Collections.emptyList());
         when(results.pageNumber()).thenReturn(0);
@@ -510,8 +509,8 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
         when(ontology.getSubClassesFor(any(IRI.class))).thenReturn(Collections.singleton(vf.createIRI("https://mobi.com/values#Value1")));
         when(importedOntology.getSubClassesFor(any(IRI.class))).thenReturn(Collections.singleton(vf.createIRI("https://mobi.com/values#Value1")));
-        when(ontology.getSubPropertiesFor(eq(skosSemanticRelation))).thenReturn(Collections.singleton(vf.createIRI("https://mobi.com/values#Value1")));
-        when(importedOntology.getSubPropertiesFor(eq(skosSemanticRelation))).thenReturn(Collections.singleton(vf.createIRI("https://mobi.com/values#Value1")));
+        when(ontology.getSubPropertiesFor(eq(SKOS.SEMANTIC_RELATION))).thenReturn(Collections.singleton(vf.createIRI("https://mobi.com/values#Value1")));
+        when(importedOntology.getSubPropertiesFor(eq(SKOS.SEMANTIC_RELATION))).thenReturn(Collections.singleton(vf.createIRI("https://mobi.com/values#Value1")));
 
         Hierarchy individualsHierarchy = new Hierarchy(vf, mf);
         individualsHierarchy.addParentChild(vf.createIRI("https://mobi.com#parent"), vf.createIRI("https://mobi.com#individual"));

@@ -42,6 +42,7 @@ import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
@@ -108,7 +109,7 @@ public class OntologyImportServiceImpl implements OntologyImportService {
                 throw new IllegalStateException("Could not read ontology data file.");
             }
             existingData.filter(null,
-                    vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), vf.createIRI(Ontology.TYPE))
+                    RDF.TYPE, vf.createIRI(Ontology.TYPE))
                     .subjects()
                     .forEach(resource -> newData.addAll(existingData.filter(resource, null, null)));
 

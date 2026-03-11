@@ -55,7 +55,6 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.token.TokenManager;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.prov.api.ProvenanceService;
 import com.mobi.prov.api.builder.ActivityConfig;
@@ -215,14 +214,14 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         commit = commitFactory.createNew(commitIRI);
         branch = branchFactory.createNew(branchIRI);
         branch.setHead(commit);
-        branch.setProperty(vf.createLiteral("Test Branch"), vf.createIRI(_Thing.title_IRI));
+        branch.setProperty(vf.createLiteral("Test Branch"), DCTERMS.TITLE);
 
         masterBranch = masterBranchFactory.createNew(branchIRI);
         branch.setHead(commit);
-        branch.setProperty(vf.createLiteral("Test Master Branch"), vf.createIRI(_Thing.title_IRI));
+        branch.setProperty(vf.createLiteral("Test Master Branch"), DCTERMS.TITLE);
 
         workflowRecord = recordFactory.createNew(recordIRI);
-        workflowRecord.setProperty(vf.createLiteral("Test Record"), vf.createIRI(_Thing.title_IRI));
+        workflowRecord.setProperty(vf.createLiteral("Test Record"), DCTERMS.TITLE);
         workflowRecord.setCatalog(catalogFactory.createNew(catalogId));
         workflowRecord.setBranch(Collections.singleton(branch));
         workflowRecord.setMasterBranch(masterBranchFactory.createNew(masterBranchIRI));

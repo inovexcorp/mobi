@@ -84,7 +84,6 @@ import com.mobi.dataset.ontology.dataset.DatasetRecord;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
@@ -1189,7 +1188,7 @@ public class CatalogRest {
 
             Version newVersion = versionManager.createVersion(title, description, versionFactories.get(typeIRI));
             newVersion.setProperty(getActiveUser(servletRequest, engineManager).getResource(),
-                    vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
+                    DCTERMS.PUBLISHER);
             versionManager.addVersion(vf.createIRI(catalogId), vf.createIRI(recordId), newVersion, conn);
             return Response.status(201).entity(newVersion.getResource().stringValue()).build();
         } catch (IllegalArgumentException ex) {
@@ -1269,14 +1268,14 @@ public class CatalogRest {
                     new IllegalStateException("Tag Factory not found"));
             OffsetDateTime now = OffsetDateTime.now();
             Tag tag = factory.createNew(tagIri);
-            tag.setProperty(vf.createLiteral(title), vf.createIRI(_Thing.title_IRI));
+            tag.setProperty(vf.createLiteral(title), DCTERMS.TITLE);
             if (description != null) {
-                tag.setProperty(vf.createLiteral(description), vf.createIRI(_Thing.description_IRI));
+                tag.setProperty(vf.createLiteral(description), DCTERMS.DESCRIPTION);
             }
-            tag.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.issued_IRI));
-            tag.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.modified_IRI));
+            tag.setProperty(vf.createLiteral(now), DCTERMS.ISSUED);
+            tag.setProperty(vf.createLiteral(now), DCTERMS.MODIFIED);
             tag.setProperty(getActiveUser(servletRequest, engineManager).getResource(),
-                    vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
+                    DCTERMS.PUBLISHER);
             tag.setCommit(commitFactory.createNew(commitIri));
             versionManager.addVersion(vf.createIRI(catalogId), recordIri, tag, conn);
             return Response.status(201).entity(tag.getResource().stringValue()).build();
@@ -1888,11 +1887,11 @@ public class CatalogRest {
             if (applyUserFilter) {
                 User activeUser = getActiveUser(servletRequest, engineManager);
                 filterFunction = branch -> {
-                    Set<String> types = branch.getProperties(vf.createIRI(RDF.TYPE.stringValue())).stream()
+                    Set<String> types = branch.getProperties(RDF.TYPE).stream()
                             .map(Value::stringValue)
                             .collect(Collectors.toSet());
                     return !types.contains(UserBranch.TYPE)
-                            || branch.getProperty(vf.createIRI(DCTERMS.PUBLISHER.stringValue())).get()
+                            || branch.getProperty(DCTERMS.PUBLISHER).get()
                             .stringValue().equals(activeUser.getResource().stringValue());
                 };
             }
@@ -1974,7 +1973,7 @@ public class CatalogRest {
 
             Branch newBranch = branchManager.createBranch(title, description, branchFactories.get(typeIRI));
             newBranch.setProperty(getActiveUser(servletRequest, engineManager).getResource(),
-                    vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
+                    DCTERMS.PUBLISHER);
             Commit newCommit = commitManager.getCommit(commitIri, conn)
                     .orElseThrow(() -> ErrorUtils.sendError(COMMIT + commitId + COULD_NOT_BE_FOUND,
                             Response.Status.BAD_REQUEST));
@@ -3146,7 +3145,7 @@ public class CatalogRest {
         }
         Distribution distribution = distributionManager.createDistribution(builder.build());
         distribution.setProperty(getActiveUser(servletRequest, engineManager).getResource(),
-                vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
+                DCTERMS.PUBLISHER);
         return distribution;
     }
 

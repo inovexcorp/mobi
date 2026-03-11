@@ -23,29 +23,29 @@ package com.mobi.catalog.impl;
  * #L%
  */
 
-import org.eclipse.rdf4j.model.ModelFactory;
-import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
-import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
-import org.eclipse.rdf4j.query.QueryResults;
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
 import com.mobi.ontologies.provo.EntityFactory;
-import com.mobi.server.api.Mobi;
 import com.mobi.prov.api.ProvenanceService;
 import com.mobi.prov.api.builder.ActivityConfig;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivityFactory;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivityFactory;
+import com.mobi.server.api.Mobi;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.query.QueryResults;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -133,8 +133,8 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
 
         finalizeActivity(deleteActivity);
 
-        record.getProperty(vf.createIRI(_Thing.title_IRI))
-                .ifPresent(v -> recordEntity.addProperty(v, vf.createIRI(_Thing.title_IRI)));
+        record.getProperty(DCTERMS.TITLE)
+                .ifPresent(v -> recordEntity.addProperty(v, DCTERMS.TITLE));
 
         provenanceService.updateActivity(deleteActivity);
     }

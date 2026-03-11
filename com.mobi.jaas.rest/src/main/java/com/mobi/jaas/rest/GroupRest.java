@@ -203,7 +203,7 @@ public class GroupRest {
             Group group = engineManager.createGroup(rdfEngine.getEngineName(), builder.build());
             engineManager.storeGroup(rdfEngine.getEngineName(), group);
             logger.info("Created group " + title);
-            Value createGroupTitle = group.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).orElseThrow(() ->
+            Value createGroupTitle = group.getProperty(DCTERMS.TITLE).orElseThrow(() ->
                     ErrorUtils.sendError("Group title must be present in created group", Response.Status.BAD_REQUEST));
             return Response.status(201).entity(createGroupTitle.stringValue()).build();
         } catch (IllegalArgumentException ex) {
@@ -278,14 +278,14 @@ public class GroupRest {
         }
 
         Model groupModel = jsonldToModel(newGroupStr);
-        Set<Resource> subjects = groupModel.filter(null, vf.createIRI(RDF.TYPE.stringValue()),
+        Set<Resource> subjects = groupModel.filter(null, RDF.TYPE,
                 vf.createIRI(Group.TYPE)).subjects();
         if (subjects.size() < 1) {
             throw ErrorUtils.sendError("Group must have an ID", Response.Status.BAD_REQUEST);
         }
         Group newGroup = groupFactory.createNew(subjects.iterator().next(), groupModel);
 
-        Value title = newGroup.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).orElseThrow(() ->
+        Value title = newGroup.getProperty(DCTERMS.TITLE).orElseThrow(() ->
                 ErrorUtils.sendError("Group title must be present in new group", Response.Status.BAD_REQUEST));
         if (!groupTitle.equals(title.stringValue())) {
             throw ErrorUtils.sendError("Provided group title and the group title in the data must match",
@@ -295,7 +295,7 @@ public class GroupRest {
         try {
             Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
                     ErrorUtils.sendError(GROUP + groupTitle + NOT_FOUND, Response.Status.BAD_REQUEST));
-            Optional<Value> savedGroupTitle = savedGroup.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue()));
+            Optional<Value> savedGroupTitle = savedGroup.getProperty(DCTERMS.TITLE);
             if (!savedGroupTitle.isPresent()) {
                 throw ErrorUtils.sendError("Group must have a title", Response.Status.INTERNAL_SERVER_ERROR);
             }

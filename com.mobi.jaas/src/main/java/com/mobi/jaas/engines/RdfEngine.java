@@ -162,7 +162,7 @@ public class RdfEngine implements Engine {
                     .forEach(role -> {
                         Role adminRole = roleFactory.createNew(vf.createIRI(roleNamespace + role));
                         adminRole.setProperty(vf.createLiteral(role),
-                                vf.createIRI(DCTERMS.TITLE.stringValue()));
+                                DCTERMS.TITLE);
                         conn.add(adminRole.getModel(), context);
                     });
             if (getUserId(ADMIN).isEmpty()) {
@@ -355,7 +355,7 @@ public class RdfEngine implements Engine {
     public Group createGroup(GroupConfig groupConfig) {
         Group group = groupFactory.createNew(createGroupIri(groupConfig.getTitle()));
         group.setProperty(vf.createLiteral(groupConfig.getTitle()),
-                vf.createIRI(DCTERMS.TITLE.stringValue()));
+                DCTERMS.TITLE);
 
         if (groupConfig.getMembers() != null) {
             Set<Agent> members = new HashSet<>(groupConfig.getMembers());
@@ -375,14 +375,14 @@ public class RdfEngine implements Engine {
         }
         if (!groupConfig.getDescription().equals("")) {
             group.setProperty(vf.createLiteral(groupConfig.getDescription()),
-                    vf.createIRI(DCTERMS.DESCRIPTION.stringValue()));
+                    DCTERMS.DESCRIPTION);
         }
         return group;
     }
 
     @Override
     public void storeGroup(Group group) {
-        Value title = group.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).orElseThrow(() ->
+        Value title = group.getProperty(DCTERMS.TITLE).orElseThrow(() ->
                 new IllegalArgumentException("Group must have a title"));
         if (resourceExists(group.getResource()) || groupExists(title.stringValue())) {
             throw new IllegalArgumentException("Group with that id already exists");
@@ -553,7 +553,7 @@ public class RdfEngine implements Engine {
 
     private boolean resourceExists(Resource resource, String typeString) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            return ConnectionUtils.contains(conn, resource, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(typeString), context);
+            return ConnectionUtils.contains(conn, resource, RDF.TYPE, vf.createIRI(typeString), context);
         }
     }
 

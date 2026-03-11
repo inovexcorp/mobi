@@ -31,7 +31,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.mobi.exception.MobiException;
-import com.mobi.ontologies.rdfs.Resource;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.security.policy.api.AttributeDesignator;
@@ -46,6 +45,7 @@ import com.mobi.security.policy.api.xacml.XACML;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.After;
@@ -59,7 +59,6 @@ import org.wso2.balana.AbstractPolicy;
 import java.io.InputStream;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -75,15 +74,15 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
     private BalanaPDP pdp;
     private BalanaPRP prp;
 
-    private IRI policy1 = VALUE_FACTORY.createIRI("http://mobi.com/policies/policy1");
-    private IRI policy2 = VALUE_FACTORY.createIRI("http://mobi.com/policies/policy2");
-    private IRI policy3 = VALUE_FACTORY.createIRI("http://mobi.com/policies/policy3");
-    private IRI policy4 = VALUE_FACTORY.createIRI("http://mobi.com/policies/policy4");
-    private IRI userX = VALUE_FACTORY.createIRI("http://mobi.com/users/UserX");
-    private IRI resource = VALUE_FACTORY.createIRI("http://mobi.com/catalog-local");
-    private IRI distributedCatalog = VALUE_FACTORY.createIRI("http://mobi.com/catalog-distributed");
-    private IRI createAction = VALUE_FACTORY.createIRI("http://mobi.com/ontologies/policy#Create");
-    private Literal actionType = VALUE_FACTORY.createLiteral("http://mobi.com/ontologies/ontology-editor#OntologyRecord");
+    private final IRI policy1 = VALUE_FACTORY.createIRI("http://mobi.com/policies/policy1");
+    private final IRI policy2 = VALUE_FACTORY.createIRI("http://mobi.com/policies/policy2");
+    private final IRI policy3 = VALUE_FACTORY.createIRI("http://mobi.com/policies/policy3");
+    private final IRI policy4 = VALUE_FACTORY.createIRI("http://mobi.com/policies/policy4");
+    private final IRI userX = VALUE_FACTORY.createIRI("http://mobi.com/users/UserX");
+    private final IRI resource = VALUE_FACTORY.createIRI("http://mobi.com/catalog-local");
+    private final IRI distributedCatalog = VALUE_FACTORY.createIRI("http://mobi.com/catalog-distributed");
+    private final IRI createAction = VALUE_FACTORY.createIRI("http://mobi.com/ontologies/policy#Create");
+    private final Literal actionType = VALUE_FACTORY.createLiteral("http://mobi.com/ontologies/ontology-editor#OntologyRecord");
     private JAXBContext jaxbContext;
 
     @Mock
@@ -135,8 +134,8 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
     public void simplePermitTest() throws Exception {
         // Setup:
         loadPolicy(policy1);
-        BalanaRequest request = new BalanaRequest.Builder(Arrays.asList(userX), Arrays.asList(resource),
-                Arrays.asList(createAction), OffsetDateTime.now(), VALUE_FACTORY, jaxbContext).build();
+        BalanaRequest request = new BalanaRequest.Builder(Collections.singletonList(userX), Collections.singletonList(resource),
+                Collections.singletonList(createAction), OffsetDateTime.now(), VALUE_FACTORY, jaxbContext).build();
 
         Response result = pdp.evaluate(request);
         assertEquals(Decision.PERMIT, result.getDecision());
@@ -149,8 +148,8 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
     public void simpleFilterOnePermit() throws Exception {
         // Setup:
         loadPolicy(policy4);
-        BalanaRequest request = new BalanaRequest.Builder(Arrays.asList(userX),
-                Arrays.asList(resource), Arrays.asList(createAction), OffsetDateTime.now(), VALUE_FACTORY,
+        BalanaRequest request = new BalanaRequest.Builder(Collections.singletonList(userX),
+                Collections.singletonList(resource), Collections.singletonList(createAction), OffsetDateTime.now(), VALUE_FACTORY,
                 jaxbContext).build();
 
         Set<String> result = pdp.filter(request, getValueFactory().createIRI(XACML.POLICY_PERMIT_OVERRIDES));
@@ -162,8 +161,8 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
     public void simpleFilterOneDeny() throws Exception {
         // Setup:
         loadPolicy(policy4);
-        BalanaRequest request = new BalanaRequest.Builder(Arrays.asList(userX),
-                Arrays.asList(distributedCatalog), Arrays.asList(createAction), OffsetDateTime.now(), VALUE_FACTORY,
+        BalanaRequest request = new BalanaRequest.Builder(Collections.singletonList(userX),
+                Collections.singletonList(distributedCatalog), Collections.singletonList(createAction), OffsetDateTime.now(), VALUE_FACTORY,
                 jaxbContext).build();
 
         Set<String> result = pdp.filter(request, getValueFactory().createIRI(XACML.POLICY_PERMIT_OVERRIDES));
@@ -174,9 +173,9 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
     public void simpleFilterOneNotApplicable() throws Exception {
         // Setup:
         loadPolicy(policy1);
-        BalanaRequest request = new BalanaRequest.Builder(Arrays.asList(userX),
-                Arrays.asList(VALUE_FACTORY.createIRI("http://mobi.com/madeup-catalog")),
-                Arrays.asList(createAction), OffsetDateTime.now(), VALUE_FACTORY,
+        BalanaRequest request = new BalanaRequest.Builder(Collections.singletonList(userX),
+                Collections.singletonList(VALUE_FACTORY.createIRI("http://mobi.com/madeup-catalog")),
+                Collections.singletonList(createAction), OffsetDateTime.now(), VALUE_FACTORY,
                 jaxbContext).build();
 
         Set<String> result = pdp.filter(request, getValueFactory().createIRI(XACML.POLICY_PERMIT_OVERRIDES));
@@ -188,8 +187,8 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
     public void missingAttributeTest() throws Exception {
         // Setup:
         loadPolicy(policy2);
-        BalanaRequest.Builder builder = new BalanaRequest.Builder(Arrays.asList(userX), Arrays.asList(resource), Arrays.asList(createAction), OffsetDateTime.now(), VALUE_FACTORY, jaxbContext);
-        builder.addActionAttr(Resource.type_IRI, actionType);
+        BalanaRequest.Builder builder = new BalanaRequest.Builder(Collections.singletonList(userX), Collections.singletonList(resource), Collections.singletonList(createAction), OffsetDateTime.now(), VALUE_FACTORY, jaxbContext);
+        builder.addActionAttr(RDF.TYPE.stringValue(), actionType);
 
         Response result = pdp.evaluate(builder.build());
         assertEquals(Decision.DENY, result.getDecision());
@@ -202,8 +201,8 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
     public void unsupportedCategoryInRuleTest() throws Exception {
         // Setup:
         loadPolicy(policy3);
-        BalanaRequest.Builder builder = new BalanaRequest.Builder(Arrays.asList(userX), Arrays.asList(resource), Arrays.asList(createAction), OffsetDateTime.now(), VALUE_FACTORY, jaxbContext);
-        builder.addActionAttr(Resource.type_IRI, actionType);
+        BalanaRequest.Builder builder = new BalanaRequest.Builder(Collections.singletonList(userX), Collections.singletonList(resource), Collections.singletonList(createAction), OffsetDateTime.now(), VALUE_FACTORY, jaxbContext);
+        builder.addActionAttr(RDF.TYPE.stringValue(), actionType);
 
         Response result = pdp.evaluate(builder.build());
         assertEquals(Decision.DENY, result.getDecision());
@@ -215,7 +214,7 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
     @Test
     public void noPolicyTest() throws Exception {
         // Setup:
-        BalanaRequest request = new BalanaRequest.Builder(Arrays.asList(userX), Arrays.asList(resource), Arrays.asList(createAction), OffsetDateTime.now(), VALUE_FACTORY, jaxbContext).build();
+        BalanaRequest request = new BalanaRequest.Builder(Collections.singletonList(userX), Collections.singletonList(resource), Collections.singletonList(createAction), OffsetDateTime.now(), VALUE_FACTORY, jaxbContext).build();
 
         Response result = pdp.evaluate(request);
         assertEquals(Status.OK, result.getStatus());

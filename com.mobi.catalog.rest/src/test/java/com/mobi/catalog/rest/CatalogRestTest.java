@@ -302,25 +302,25 @@ public class CatalogRestTest extends MobiRestTestCXF {
         headCommit = commitFactory.createNew(vf.createIRI(HEAD_IRI));
         testInProgressCommit = inProgressCommitFactory.createNew(vf.createIRI(COMMIT_IRIS[0]));
         testBranch = branchFactory.createNew(vf.createIRI(BRANCH_IRI));
-        testBranch.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue()));
-        testBranch.setProperty(vf.createLiteral(USER_IRI), vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
+        testBranch.setProperty(vf.createLiteral("Title"), DCTERMS.TITLE);
+        testBranch.setProperty(vf.createLiteral(USER_IRI), DCTERMS.PUBLISHER);
         testBranch.setHead(testCommits.get(0));
         testMasterBranch = masterBranchFactory.createNew(vf.createIRI(MASTER_BRANCH_IRI));
-        testMasterBranch.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue()));
-        testMasterBranch.setProperty(vf.createLiteral(USER_IRI), vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
+        testMasterBranch.setProperty(vf.createLiteral("Title"), DCTERMS.TITLE);
+        testMasterBranch.setProperty(vf.createLiteral(USER_IRI), DCTERMS.PUBLISHER);
         testMasterBranch.setHead(testCommits.get(0));
         testUserBranch = userBranchFactory.createNew(vf.createIRI(BRANCH_IRI + "/user"));
-        testUserBranch.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue()));
-        testUserBranch.setProperty(vf.createLiteral(USER_IRI), vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
+        testUserBranch.setProperty(vf.createLiteral("Title"), DCTERMS.TITLE);
+        testUserBranch.setProperty(vf.createLiteral(USER_IRI), DCTERMS.PUBLISHER);
         testDistribution = distributionFactory.createNew(vf.createIRI(DISTRIBUTION_IRI));
-        testDistribution.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        testDistribution.setProperty(vf.createLiteral("Title"), DCTERMS.TITLE);
         testVersion = versionFactory.createNew(vf.createIRI(VERSION_IRI));
-        testVersion.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        testVersion.setProperty(vf.createLiteral("Title"), DCTERMS.TITLE);
         testVersion.setVersionedDistribution(Collections.singleton(testDistribution));
         testTag = tagFactory.createNew(vf.createIRI(VERSION_IRI));
         testTag.setCommit(testCommits.get(0));
         testRecord = recordFactory.createNew(vf.createIRI(RECORD_IRI));
-        testRecord.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        testRecord.setProperty(vf.createLiteral("Title"), DCTERMS.TITLE);
         testUnversionedRecord = unversionedRecordFactory.createNew(vf.createIRI(RECORD_IRI));
         testUnversionedRecord.setUnversionedDistribution(Collections.singleton(testDistribution));
         testVersionedRecord = versionedRecordFactory.createNew(vf.createIRI(RECORD_IRI));
@@ -336,7 +336,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         compiledResource = mf.createEmptyModel();
         compiledResourceWithChanges = mf.createEmptyModel();
         compiledResourceWithChanges.addAll(compiledResource);
-        compiledResourceWithChanges.add(vf.createIRI("http://example.com"), vf.createIRI(DCTERMS.TITLE.stringValue()),
+        compiledResourceWithChanges.add(vf.createIRI("http://example.com"), DCTERMS.TITLE,
                 vf.createLiteral("Title"));
 
         when(bNodeService.deskolemize(any(Model.class))).thenAnswer(i -> i.getArgument(0, Model.class));
@@ -1230,7 +1230,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
                 .mapToObj(i -> DISTRIBUTION_IRI + i)
                 .map(s -> distributionFactory.createNew(vf.createIRI(s)))
                 .collect(Collectors.toSet());
-        distributions.forEach(distribution -> distribution.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue())));
+        distributions.forEach(distribution -> distribution.setProperty(vf.createLiteral("Title"), DCTERMS.TITLE));
         when(distributionManager.getUnversionedDistributions(any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(distributions);
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/distributions")
@@ -1522,7 +1522,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
                 .mapToObj(i -> VERSION_IRI + i)
                 .map(s -> versionFactory.createNew(vf.createIRI(s)))
                 .collect(Collectors.toSet());
-        versions.forEach(version -> version.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue())));
+        versions.forEach(version -> version.setProperty(vf.createLiteral("Title"), DCTERMS.TITLE));
         when(versionManager.getVersions(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), conn)).thenReturn(versions);
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions")
@@ -1957,7 +1957,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
                 .mapToObj(i -> DISTRIBUTION_IRI + i)
                 .map(s -> distributionFactory.createNew(vf.createIRI(s)))
                 .collect(Collectors.toSet());
-        distributions.forEach(distribution -> distribution.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue())));
+        distributions.forEach(distribution -> distribution.setProperty(vf.createLiteral("Title"), DCTERMS.TITLE));
         when(distributionManager.getVersionedDistributions(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(VERSION_IRI)), any(RepositoryConnection.class))).thenReturn(distributions);
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
@@ -2310,7 +2310,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void getBranchesWithUserFilterTest() {
         // Setup:
-        testUserBranch.setProperty(vf.createLiteral(USER_IRI + "/0"), vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
+        testUserBranch.setProperty(vf.createLiteral(USER_IRI + "/0"), DCTERMS.PUBLISHER);
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")
                 .queryParam("sort", DCTERMS.TITLE.stringValue())
@@ -2338,7 +2338,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
                 .mapToObj(i -> BRANCH_IRI + i)
                 .map(s -> branchFactory.createNew(vf.createIRI(s)))
                 .collect(Collectors.toSet());
-        branches.forEach(branch -> branch.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue())));
+        branches.forEach(branch -> branch.setProperty(vf.createLiteral("Title"), DCTERMS.TITLE));
         when(branchManager.getBranches(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(RepositoryConnection.class))).thenReturn(branches);
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")

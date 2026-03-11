@@ -34,7 +34,6 @@ import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.api.record.statistic.Statistic;
 import com.mobi.catalog.api.record.statistic.StatisticDefinition;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
@@ -182,19 +181,19 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
         IRI catalogIdIRI = vf.createIRI(config.get(RecordCreateSettings.CATALOG_ID));
         record.setCatalog(catalogFactory.createNew(catalogIdIRI));
 
-        record.setProperty(titleLiteral, vf.createIRI(_Thing.title_IRI));
-        record.setProperty(issuedLiteral, vf.createIRI(_Thing.issued_IRI));
-        record.setProperty(modifiedLiteral, vf.createIRI(_Thing.modified_IRI));
-        record.setProperties(publishers, vf.createIRI(_Thing.publisher_IRI));
+        record.setProperty(titleLiteral, DCTERMS.TITLE);
+        record.setProperty(issuedLiteral, DCTERMS.ISSUED);
+        record.setProperty(modifiedLiteral, DCTERMS.MODIFIED);
+        record.setProperties(publishers, DCTERMS.PUBLISHER);
         if (config.get(RecordCreateSettings.RECORD_DESCRIPTION) != null
                 && StringUtils.isNotEmpty(config.get(RecordCreateSettings.RECORD_DESCRIPTION))) {
             record.setProperty(vf.createLiteral(config.get(RecordCreateSettings.RECORD_DESCRIPTION)),
-                    vf.createIRI(_Thing.description_IRI));
+                    DCTERMS.DESCRIPTION);
         }
         if (config.get(RecordCreateSettings.RECORD_MARKDOWN) != null
                 && StringUtils.isNotEmpty(config.get(RecordCreateSettings.RECORD_MARKDOWN))) {
             record.setProperty(vf.createLiteral(config.get(RecordCreateSettings.RECORD_MARKDOWN)),
-                    vf.createIRI(DCTERMS.ABSTRACT.stringValue()));
+                    DCTERMS.ABSTRACT);
         }
         if (!config.get(RecordCreateSettings.RECORD_KEYWORDS).isEmpty()) {
             record.setKeyword(config.get(RecordCreateSettings.RECORD_KEYWORDS).stream()

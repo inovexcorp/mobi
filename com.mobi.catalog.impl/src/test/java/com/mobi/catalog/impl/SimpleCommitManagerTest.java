@@ -48,7 +48,6 @@ import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
 import com.mobi.ontologies.provo.InstantaneousEvent;
@@ -1480,7 +1479,7 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     private String getModifiedIriValue(IRI entity, RepositoryConnection conn) {
         RepositoryResult<Statement> statements = conn.getStatements(entity,
-                getValueFactory().createIRI(_Thing.modified_IRI), null);
+                DCTERMS.MODIFIED, null);
 
         String modifiedIri = statements.next().toString();
         statements.close();

@@ -166,7 +166,7 @@ public class StateRestTest extends MobiRestTestCXF {
     public void createStateWithoutApplicationTest() {
         // Setup:
         Model state = mf.createEmptyModel();
-        state.add(vf.createIRI("http://example.com"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
+        state.add(vf.createIRI("http://example.com"), DCTERMS.TITLE, vf.createLiteral("Title"));
 
         Response response = target().path("states").request().post(Entity.json(modelToJsonld(state)));
         assertEquals(201, response.getStatus());
@@ -183,7 +183,7 @@ public class StateRestTest extends MobiRestTestCXF {
     public void createStateWithApplicationTest() {
         // Setup:
         Model state = mf.createEmptyModel();
-        state.add(vf.createIRI("http://example.com"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
+        state.add(vf.createIRI("http://example.com"), DCTERMS.TITLE, vf.createLiteral("Title"));
 
         Response response = target().path("states").queryParam("application", "app")
                 .request().post(Entity.json(modelToJsonld(state)));
@@ -252,7 +252,7 @@ public class StateRestTest extends MobiRestTestCXF {
     public void updateStateTest() {
         // Setup:
         Model state = mf.createEmptyModel();
-        state.add(vf.createIRI("http://example.com"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
+        state.add(vf.createIRI("http://example.com"), DCTERMS.TITLE, vf.createLiteral("Title"));
 
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().put(Entity.json(modelToJsonld(state)));
@@ -275,7 +275,7 @@ public class StateRestTest extends MobiRestTestCXF {
     public void updateStateThatDoesNotExistTest() {
         // Setup:
         Model state = mf.createEmptyModel();
-        state.add(vf.createIRI("http://example.com"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
+        state.add(vf.createIRI("http://example.com"), DCTERMS.TITLE, vf.createLiteral("Title"));
         doThrow(new IllegalArgumentException()).when(stateManager).updateState(any(Resource.class), any(Model.class));
 
         Response response = target().path("states/" + encode(stateId.stringValue()))
@@ -287,7 +287,7 @@ public class StateRestTest extends MobiRestTestCXF {
     public void updateStateThatIsNotYoursTest() {
         // Setup:
         Model state = mf.createEmptyModel();
-        state.add(vf.createIRI("http://example.com"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
+        state.add(vf.createIRI("http://example.com"), DCTERMS.TITLE, vf.createLiteral("Title"));
         when(stateManager.stateExistsForUser(any(Resource.class), anyString())).thenReturn(false);
 
         Response response = target().path("states/" + encode(stateId.stringValue()))
@@ -299,7 +299,7 @@ public class StateRestTest extends MobiRestTestCXF {
     public void updateStateExceptionThrownTest() {
         // Setup:
         Model state = mf.createEmptyModel();
-        state.add(vf.createIRI("http://example.com"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
+        state.add(vf.createIRI("http://example.com"), DCTERMS.TITLE, vf.createLiteral("Title"));
         doThrow(new MobiException()).when(stateManager).updateState(any(Resource.class), any(Model.class));
 
         Response response = target().path("states/" + encode(stateId.stringValue()))

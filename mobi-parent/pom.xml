@@ -710,6 +710,7 @@
                         <configuration>
                             <configLocation>../google_checks.xml</configLocation>
                             <consoleOutput>true</consoleOutput>
+                            <excludeGeneratedSources>true</excludeGeneratedSources>
                         </configuration>
                         <goals>
                             <goal>check</goal>
@@ -850,6 +851,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
+                        <version>3.4.0</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>

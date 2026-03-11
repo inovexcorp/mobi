@@ -63,6 +63,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
@@ -144,12 +145,12 @@ public class MappingRest {
                     content = {
                             @Content(mediaType = MediaType.MULTIPART_FORM_DATA, encoding = {
                                     @Encoding(name = "keywords", explode = true)
-                                }, schema = @Schema(implementation = MappingFileUpload.class)
+                                    }, schema = @Schema(implementation = MappingFileUpload.class)
                             )
                     }
             )
     )
-    @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = MappingRecord.TYPE))
+    @ActionAttributes(@AttributeValue(id = RDF.NAMESPACE + "type", value = MappingRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
     public Response upload(@Context HttpServletRequest servletRequest) {
         Map<String, List<Class<?>>> fields = new HashMap<>();

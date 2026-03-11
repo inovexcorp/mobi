@@ -103,13 +103,12 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         }
 
         user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com#user"));
-        IRI titleIRI = VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue());
         record = versionedRDFRecordFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/records#versioned-rdf-record"));
         ontologyRecord = ontologyRecordFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/records#ontology-record"));
         sourceBranch = branchFactory.createNew(VALUE_FACTORY.createIRI("http://test.com#source-branch"));
-        sourceBranch.addProperty(VALUE_FACTORY.createLiteral("Source"), titleIRI);
+        sourceBranch.addProperty(VALUE_FACTORY.createLiteral("Source"), DCTERMS.TITLE);
         targetBranch = branchFactory.createNew(VALUE_FACTORY.createIRI("http://test.com#target-branch"));
-        targetBranch.addProperty(VALUE_FACTORY.createLiteral("Target"), titleIRI);
+        targetBranch.addProperty(VALUE_FACTORY.createLiteral("Target"), DCTERMS.TITLE);
         commit = commitFactory.createNew(VALUE_FACTORY.createIRI("http://test.com#commit"));
         sourceBranch.setHead(commit);
         targetBranch.setHead(commit);

@@ -27,15 +27,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.security.policy.api.AttributeDesignator;
 import com.mobi.security.policy.api.Request;
-import com.mobi.vocabularies.xsd.XSD;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.model.vocabulary.XSD;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
@@ -47,6 +47,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.time.OffsetDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,22 +57,21 @@ public class MobiPIPTest extends OrmEnabledTestCase {
     private MobiPIP pip;
     private MemoryRepositoryWrapper repo;
 
-    private IRI subjectCategory = VALUE_FACTORY.createIRI("http://test.com/category-subject");
-    private IRI resourceCategory = VALUE_FACTORY.createIRI("http://test.com/category-resource");
-    private IRI actionCategory = VALUE_FACTORY.createIRI("http://test.com/category-action");
-    private IRI parentId = VALUE_FACTORY.createIRI("http://test.com/parent");
-    private IRI subjectId = VALUE_FACTORY.createIRI("http://test.com/subject");
-    private IRI resourceId = VALUE_FACTORY.createIRI("http://test.com/resource");
-    private IRI actionId = VALUE_FACTORY.createIRI("http://test.com/action");
-    private IRI prop1Id = VALUE_FACTORY.createIRI("http://test.com/prop1");
-    private IRI prop2Id = VALUE_FACTORY.createIRI("http://test.com/prop2");
-    private IRI pathPropId = VALUE_FACTORY.createIRI("http://test.com/path");
-    private IRI datatypeId = VALUE_FACTORY.createIRI("http://test.com/prop");
-    private IRI titleIRI = VALUE_FACTORY.createIRI(_Thing.title_IRI);
+    private final IRI subjectCategory = VALUE_FACTORY.createIRI("http://test.com/category-subject");
+    private final IRI resourceCategory = VALUE_FACTORY.createIRI("http://test.com/category-resource");
+    private final IRI actionCategory = VALUE_FACTORY.createIRI("http://test.com/category-action");
+    private final IRI parentId = VALUE_FACTORY.createIRI("http://test.com/parent");
+    private final IRI subjectId = VALUE_FACTORY.createIRI("http://test.com/subject");
+    private final IRI resourceId = VALUE_FACTORY.createIRI("http://test.com/resource");
+    private final IRI actionId = VALUE_FACTORY.createIRI("http://test.com/action");
+    private final IRI prop1Id = VALUE_FACTORY.createIRI("http://test.com/prop1");
+    private final IRI prop2Id = VALUE_FACTORY.createIRI("http://test.com/prop2");
+    private final IRI pathPropId = VALUE_FACTORY.createIRI("http://test.com/path");
+    private final IRI datatypeId = VALUE_FACTORY.createIRI("http://test.com/prop");
     private IRI pathId;
-    private Map<String, Literal> attrs = createAttrs();
+    private final Map<String, Literal> attrs = createAttrs();
 
-    private OffsetDateTime time = OffsetDateTime.now();
+    private final OffsetDateTime time = OffsetDateTime.now();
 
     @Mock
     private AttributeDesignator designator;
@@ -85,7 +85,7 @@ public class MobiPIPTest extends OrmEnabledTestCase {
         repo.setDelegate(new SailRepository(new MemoryStore()));
 
         pathId = VALUE_FACTORY.createIRI(MobiPIP.PROP_PATH_NAMESPACE + "("
-                + ResourceUtils.encode("^<" + pathPropId.stringValue() + ">/<" + titleIRI.stringValue() + ">") + ")");
+                + ResourceUtils.encode("^<" + pathPropId.stringValue() + ">/<" + DCTERMS.TITLE.stringValue() + ">") + ")");
 
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(subjectId, prop1Id, VALUE_FACTORY.createLiteral(true));
@@ -93,7 +93,7 @@ public class MobiPIPTest extends OrmEnabledTestCase {
             conn.add(resourceId, prop1Id, VALUE_FACTORY.createLiteral(2));
             conn.add(parentId, pathPropId, subjectId);
             conn.add(parentId, pathPropId, resourceId);
-            conn.add(parentId, titleIRI, VALUE_FACTORY.createLiteral("Title"));
+            conn.add(parentId, DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Title"));
         }
 
         closeable = MockitoAnnotations.openMocks(this);
@@ -104,11 +104,11 @@ public class MobiPIPTest extends OrmEnabledTestCase {
         when(request.getSubjectCategory()).thenReturn(subjectCategory);
         when(request.getResourceCategory()).thenReturn(resourceCategory);
         when(request.getActionCategory()).thenReturn(actionCategory);
-        when(request.getSubjectIds()).thenReturn(Arrays.asList(subjectId));
+        when(request.getSubjectIds()).thenReturn(Collections.singletonList(subjectId));
         when(request.getSubjectAttrs()).thenReturn(attrs);
-        when(request.getResourceIds()).thenReturn(Arrays.asList(resourceId));
+        when(request.getResourceIds()).thenReturn(Collections.singletonList(resourceId));
         when(request.getResourceAttrs()).thenReturn(attrs);
-        when(request.getActionIds()).thenReturn(Arrays.asList(actionId));
+        when(request.getActionIds()).thenReturn(Collections.singletonList(actionId));
         when(request.getActionAttrs()).thenReturn(attrs);
         when(request.getRequestTime()).thenReturn(time);
 
@@ -137,8 +137,8 @@ public class MobiPIPTest extends OrmEnabledTestCase {
         List<Literal> result = pip.findAttribute(designator, request);
         assertEquals(1, result.size());
         Literal value = result.get(0);
-        assertEquals(VALUE_FACTORY.createIRI(XSD.BOOLEAN), value.getDatatype());
-        assertEquals(true, value.booleanValue());
+        assertEquals(XSD.BOOLEAN, value.getDatatype());
+        assertTrue(value.booleanValue());
     }
 
     @Test
@@ -154,7 +154,7 @@ public class MobiPIPTest extends OrmEnabledTestCase {
     @Test
     public void findAttributeSubjectMissingPropTest() throws Exception {
         // Setup:
-        when(designator.attributeId()).thenReturn(titleIRI);
+        when(designator.attributeId()).thenReturn(DCTERMS.TITLE);
 
         List<Literal> result = pip.findAttribute(designator, request);
         assertEquals(0, result.size());
@@ -170,7 +170,7 @@ public class MobiPIPTest extends OrmEnabledTestCase {
         List<Literal> result = pip.findAttribute(designator, request);
         assertEquals(2, result.size());
         result.forEach(literal -> {
-            assertEquals(VALUE_FACTORY.createIRI(XSD.INT), literal.getDatatype());
+            assertEquals(XSD.INT, literal.getDatatype());
             assertTrue(Arrays.asList(1, 2).contains(literal.intValue()));
         });
     }
@@ -189,7 +189,7 @@ public class MobiPIPTest extends OrmEnabledTestCase {
     @Test
     public void findAttributeResourceMissingPropTest() throws Exception {
         // Setup:
-        when(designator.attributeId()).thenReturn(titleIRI);
+        when(designator.attributeId()).thenReturn(DCTERMS.TITLE);
 
         List<Literal> result = pip.findAttribute(designator, request);
         assertEquals(0, result.size());

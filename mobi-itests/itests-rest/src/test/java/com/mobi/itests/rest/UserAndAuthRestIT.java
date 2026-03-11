@@ -150,7 +150,7 @@ public class UserAndAuthRestIT extends KarafTestSupport {
         IRI userState = vf.createIRI("http://mobi.com/states#e7eb17e0-4c26-4433-816e-2fb0a9608c42");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(ConnectionUtils.contains(conn, user, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(User.TYPE)));
+            assertTrue(ConnectionUtils.contains(conn, user, RDF.TYPE, vf.createIRI(User.TYPE)));
             assertTrue(ConnectionUtils.containsContext(conn, inProgressCommit));
             assertTrue(ConnectionUtils.containsContext(conn, inProgressAdditions));
             assertTrue(ConnectionUtils.containsContext(conn, inProgressDeletions));
@@ -165,7 +165,7 @@ public class UserAndAuthRestIT extends KarafTestSupport {
         }
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertFalse(ConnectionUtils.contains(conn, user, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(User.TYPE)));
+            assertFalse(ConnectionUtils.contains(conn, user, RDF.TYPE, vf.createIRI(User.TYPE)));
             assertFalse(ConnectionUtils.containsContext(conn, inProgressCommit));
             assertFalse(ConnectionUtils.containsContext(conn, inProgressAdditions));
             assertFalse(ConnectionUtils.containsContext(conn, inProgressDeletions));

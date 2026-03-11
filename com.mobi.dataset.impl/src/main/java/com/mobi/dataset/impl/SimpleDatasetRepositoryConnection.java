@@ -59,15 +59,16 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
 public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapper implements DatasetConnection {
 
-    private Resource datasetResource;
-    private String repositoryId;
-    private ValueFactory valueFactory;
-    private Resource systemDefaultNG;
+    private final Resource datasetResource;
+    private final String repositoryId;
+    private final ValueFactory valueFactory;
+    private final Resource systemDefaultNG;
 
     private long batchSize = 10000;
 
@@ -96,19 +97,21 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     static {
         try {
             GET_GRAPHS_QUERY = IOUtils.toString(
-                    SimpleDatasetManager.class.getResourceAsStream("/get-graphs.rq"),
+                    Objects.requireNonNull(SimpleDatasetManager.class.getResourceAsStream("/get-graphs.rq")),
                     StandardCharsets.UTF_8
             );
             GET_NAMED_GRAPHS_QUERY = IOUtils.toString(
-                    SimpleDatasetManager.class.getResourceAsStream("/get-named-graphs.rq"),
+                    Objects.requireNonNull(SimpleDatasetManager.class.getResourceAsStream("/get-named-graphs.rq")),
                     StandardCharsets.UTF_8
             );
             GET_DEFAULT_NAMED_GRAPHS_QUERY = IOUtils.toString(
-                    SimpleDatasetManager.class.getResourceAsStream("/get-default-named-graphs.rq"),
+                    Objects.requireNonNull(SimpleDatasetManager.class
+                            .getResourceAsStream("/get-default-named-graphs.rq")),
                     StandardCharsets.UTF_8
             );
             GET_OPERATION_DATASET_GRAPHS = IOUtils.toString(
-                    SimpleDatasetManager.class.getResourceAsStream("/get-operation-dataset-graphs.rq"),
+                    Objects.requireNonNull(SimpleDatasetManager.class
+                            .getResourceAsStream("/get-operation-dataset-graphs.rq")),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {
@@ -343,7 +346,8 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
-    public Query prepareQuery(QueryLanguage language, String query, String baseURI) throws RepositoryException, MalformedQueryException {
+    public Query prepareQuery(QueryLanguage language, String query, String baseURI) throws RepositoryException,
+            MalformedQueryException {
         throw new NotImplementedException(NOT_YET_IMPLEMENTED);
     }
 
@@ -355,8 +359,8 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
-    public TupleQuery prepareTupleQuery(QueryLanguage language, String query, String baseURI) throws RepositoryException,
-            MalformedQueryException {
+    public TupleQuery prepareTupleQuery(QueryLanguage language, String query, String baseURI) throws
+            RepositoryException, MalformedQueryException {
         TupleQuery tupleQuery = getDelegate().prepareTupleQuery(language, query, baseURI);
         tupleQuery.setDataset(getOperationDataset());
         return tupleQuery;
@@ -378,8 +382,8 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
-    public GraphQuery prepareGraphQuery(QueryLanguage language, String query, String baseURI) throws RepositoryException,
-            MalformedQueryException {
+    public GraphQuery prepareGraphQuery(QueryLanguage language, String query, String baseURI) throws
+            RepositoryException, MalformedQueryException {
         GraphQuery graphQuery = getDelegate().prepareGraphQuery(language, query, baseURI);
         graphQuery.setDataset(getOperationDataset());
         return graphQuery;
@@ -399,8 +403,8 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
-    public BooleanQuery prepareBooleanQuery(QueryLanguage language, String query, String baseURI) throws RepositoryException,
-            MalformedQueryException {
+    public BooleanQuery prepareBooleanQuery(QueryLanguage language, String query, String baseURI) throws
+            RepositoryException, MalformedQueryException {
         throw new NotImplementedException(NOT_YET_IMPLEMENTED);
     }
 
@@ -410,7 +414,8 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
-    public Update prepareUpdate(QueryLanguage language, String update, String baseURI) throws RepositoryException, MalformedQueryException {
+    public Update prepareUpdate(QueryLanguage language, String update, String baseURI) throws RepositoryException,
+            MalformedQueryException {
         throw new NotImplementedException(NOT_YET_IMPLEMENTED);
     }
 
@@ -667,7 +672,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     private static class DatasetGraphResultWrapper extends RepositoryResult<Resource> {
 
-        private TupleQueryResult queryResult;
+        private final TupleQueryResult queryResult;
 
         DatasetGraphResultWrapper(TupleQueryResult queryResult) {
             super(new RepositoryResult<>(new EmptyIteration<>())); // TODO:

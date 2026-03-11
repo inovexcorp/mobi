@@ -176,7 +176,7 @@ public class UserRestTest extends MobiRestTestCXF {
         email = thingFactory.createNew(vf.createIRI("mailto:example@example.com"));
 
         role = roleFactory.createNew(vf.createIRI("http://mobi.com/roles/user"));
-        role.setProperty(vf.createLiteral("user"), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        role.setProperty(vf.createLiteral("user"), DCTERMS.TITLE);
         roles = Collections.singleton(role);
 
         user = userFactory.createNew(vf.createIRI("http://mobi.com/users/" + UsernameTestFilter.USERNAME), role.getModel());
@@ -187,7 +187,7 @@ public class UserRestTest extends MobiRestTestCXF {
 
         group = groupFactory.createNew(vf.createIRI("http://mobi.com/groups/testGroup"), role.getModel());
         adminRole = roleFactory.createNew(vf.createIRI("http://mobi.com/roles/admin"), role.getModel());
-        adminRole.setProperty(vf.createLiteral("admin"), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        adminRole.setProperty(vf.createLiteral("admin"), DCTERMS.TITLE);
         group.setHasGroupRole(Collections.singleton(adminRole));
         group.setMember(Collections.singleton(user));
         groups = Collections.singleton(group);

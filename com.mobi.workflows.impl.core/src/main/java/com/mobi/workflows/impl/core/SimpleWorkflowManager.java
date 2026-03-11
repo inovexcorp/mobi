@@ -41,7 +41,6 @@ import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.token.TokenManager;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
 import com.mobi.ontologies.provo.EntityFactory;
@@ -97,6 +96,7 @@ import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDF4J;
 import org.eclipse.rdf4j.query.BindingSet;
@@ -938,7 +938,7 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
 
             // Sets user on activity to the creator when automatically triggered
             log.trace("Collecting creator of Workflow");
-            userId = (Resource) workflowRecord.getProperty(vf.createIRI(_Thing.publisher_IRI)).orElseThrow(() ->
+            userId = (Resource) workflowRecord.getProperty(DCTERMS.PUBLISHER).orElseThrow(() ->
                     new IllegalStateException("Workflow Record must have a dct:publisher set"));
 
             user = getUser(userId, conn);

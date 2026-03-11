@@ -33,7 +33,6 @@ import com.mobi.catalog.api.ontologies.mcat.VersionFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecordFactory;
 import com.mobi.exception.MobiException;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.sse.SSEUtils;
@@ -132,12 +131,12 @@ public class SimpleVersionManager implements VersionManager {
         OffsetDateTime now = OffsetDateTime.now();
 
         T version = factory.createNew(vf.createIRI(Catalogs.VERSION_NAMESPACE + UUID.randomUUID()));
-        version.setProperty(vf.createLiteral(title), vf.createIRI(_Thing.title_IRI));
+        version.setProperty(vf.createLiteral(title), DCTERMS.TITLE);
         if (description != null) {
-            version.setProperty(vf.createLiteral(description), vf.createIRI(_Thing.description_IRI));
+            version.setProperty(vf.createLiteral(description), DCTERMS.DESCRIPTION);
         }
-        version.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.issued_IRI));
-        version.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.modified_IRI));
+        version.setProperty(vf.createLiteral(now), DCTERMS.ISSUED);
+        version.setProperty(vf.createLiteral(now), DCTERMS.MODIFIED);
 
         return version;
     }

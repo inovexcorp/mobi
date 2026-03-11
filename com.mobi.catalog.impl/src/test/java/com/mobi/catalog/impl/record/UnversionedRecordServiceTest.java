@@ -37,12 +37,12 @@ import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Distribution;
 import com.mobi.catalog.api.ontologies.mcat.UnversionedRecord;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryException;
 import org.junit.After;
@@ -93,7 +93,7 @@ public class UnversionedRecordServiceTest extends OrmEnabledTestCase {
         user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/user"));
 
         testRecord = recordFactory.createNew(testIRI);
-        testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), DCTERMS.TITLE);
         testRecord.setCatalog(catalogFactory.createNew(catalogId));
         Set<Distribution> dists = new HashSet<>();
         Distribution dist1 = distributionFactory.createNew(VALUE_FACTORY.createIRI("urn:dist1"));
