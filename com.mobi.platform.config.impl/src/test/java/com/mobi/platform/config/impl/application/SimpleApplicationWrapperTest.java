@@ -123,11 +123,9 @@ public class SimpleApplicationWrapperTest extends OrmEnabledTestCase {
         Resource appIri = VALUE_FACTORY.createIRI(namespace + config.id());
         conn.getStatements(appIri, null, null).forEach(appModel::add);
         assertFalse(appModel.isEmpty());
-        assertTrue(appModel.contains(appIri, VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(Application.TYPE)));
-        assertTrue(appModel.contains(appIri, VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()),
-                VALUE_FACTORY.createLiteral(config.title())));
-        assertTrue(appModel.contains(appIri, VALUE_FACTORY.createIRI(DCTERMS.DESCRIPTION.stringValue()),
-                VALUE_FACTORY.createLiteral(config.description())));
+        assertTrue(appModel.contains(appIri, RDF.TYPE, VALUE_FACTORY.createIRI(Application.TYPE)));
+        assertTrue(appModel.contains(appIri, DCTERMS.TITLE, VALUE_FACTORY.createLiteral(config.title())));
+        assertTrue(appModel.contains(appIri, DCTERMS.DESCRIPTION, VALUE_FACTORY.createLiteral(config.description())));
         conn.close();
     }
 
@@ -136,7 +134,7 @@ public class SimpleApplicationWrapperTest extends OrmEnabledTestCase {
         // Setup:
         wrapper.applicationId = "id";
         RepositoryConnection conn = repo.getConnection();
-        conn.add(VALUE_FACTORY.createIRI(namespace + "id"), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(Application.TYPE));
+        conn.add(VALUE_FACTORY.createIRI(namespace + "id"), RDF.TYPE, VALUE_FACTORY.createIRI(Application.TYPE));
 
         wrapper.stop();
         assertFalse(ConnectionUtils.contains(conn, VALUE_FACTORY.createIRI(namespace + "id"), null, null));
@@ -148,7 +146,7 @@ public class SimpleApplicationWrapperTest extends OrmEnabledTestCase {
         // Setup:
         wrapper.applicationId = "id";
         RepositoryConnection conn = repo.getConnection();
-        conn.add(VALUE_FACTORY.createIRI(namespace + "id"), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(Application.TYPE));
+        conn.add(VALUE_FACTORY.createIRI(namespace + "id"), RDF.TYPE, VALUE_FACTORY.createIRI(Application.TYPE));
         when(config.id()).thenReturn("new");
         when(config.title()).thenReturn("Title");
         when(config.description()).thenReturn("Description");
@@ -160,11 +158,9 @@ public class SimpleApplicationWrapperTest extends OrmEnabledTestCase {
         Model appModel = MODEL_FACTORY.createEmptyModel();
         conn.getStatements(appIri, null, null).forEach(appModel::add);
         assertFalse(appModel.isEmpty());
-        assertTrue(appModel.contains(appIri, VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(Application.TYPE)));
-        assertTrue(appModel.contains(appIri, VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()),
-                VALUE_FACTORY.createLiteral(config.title().toString())));
-        assertTrue(appModel.contains(appIri, VALUE_FACTORY.createIRI(DCTERMS.DESCRIPTION.stringValue()),
-                VALUE_FACTORY.createLiteral(config.description())));
+        assertTrue(appModel.contains(appIri, RDF.TYPE, VALUE_FACTORY.createIRI(Application.TYPE)));
+        assertTrue(appModel.contains(appIri, DCTERMS.TITLE, VALUE_FACTORY.createLiteral(config.title().toString())));
+        assertTrue(appModel.contains(appIri, DCTERMS.DESCRIPTION, VALUE_FACTORY.createLiteral(config.description())));
         conn.close();
     }
 
@@ -180,10 +176,10 @@ public class SimpleApplicationWrapperTest extends OrmEnabledTestCase {
     public void getApplicationTest() throws Exception {
         wrapper.applicationId = "id";
         RepositoryConnection conn = repo.getConnection();
-        conn.add(VALUE_FACTORY.createIRI(namespace + "id"), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(Application.TYPE));
+        conn.add(VALUE_FACTORY.createIRI(namespace + "id"), RDF.TYPE, VALUE_FACTORY.createIRI(Application.TYPE));
 
         Application app = wrapper.getApplication();
         assertNotEquals(app, null);
-        assertTrue(app.getModel().contains(VALUE_FACTORY.createIRI(namespace + "id"), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(Application.TYPE)));
+        assertTrue(app.getModel().contains(VALUE_FACTORY.createIRI(namespace + "id"), RDF.TYPE, VALUE_FACTORY.createIRI(Application.TYPE)));
     }
 }

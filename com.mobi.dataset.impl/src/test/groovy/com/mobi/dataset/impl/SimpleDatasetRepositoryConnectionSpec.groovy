@@ -30,6 +30,8 @@ import org.eclipse.rdf4j.model.IRI
 import org.eclipse.rdf4j.model.Resource
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory
+import org.eclipse.rdf4j.model.vocabulary.OWL
+import org.eclipse.rdf4j.model.vocabulary.RDF
 import org.eclipse.rdf4j.query.QueryLanguage
 import org.eclipse.rdf4j.query.QueryResults
 import org.eclipse.rdf4j.repository.RepositoryConnection
@@ -579,8 +581,8 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
     def "remove(s) without a context will remove data from the sdng"() {
         setup:
         def s = vf.createIRI("http://test.com/someThing")
-        def p = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI)
-        def o = vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
+        def p = RDF.TYPE
+        def o = OWL.THING
         def stmt = vf.createStatement(s, p, o)
         def dataset = datasetsInFile[2]
         def sdng = vf.createIRI("http://mobi.com/dataset/test2_system_dng")
@@ -597,8 +599,8 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
     def "remove(s) with a context will remove data from that graph"() {
         setup:
         def s = vf.createIRI("http://mobi.com/dataset/test2/graph1")
-        def p = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI)
-        def o = vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
+        def p = RDF.TYPE
+        def o = OWL.THING
         def c = vf.createIRI("http://mobi.com/dataset/test2/graph1")
         def stmt = vf.createStatement(s, p, o, c)
         def dataset = datasetsInFile[2]
@@ -615,8 +617,8 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
     def "remove(s) for a graph not in the dataset will not remove the dataset graph statement"() {
         setup:
         def s = vf.createIRI("http://mobi.com/dataset/test3/graph1")
-        def p = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI)
-        def o = vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
+        def p = RDF.TYPE
+        def o = OWL.THING
         def c = vf.createIRI("http://mobi.com/dataset/test3/graph1")
         def stmt = vf.createStatement(s, p, o, c)
         def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetsInFile[2], "system", vf)
@@ -645,13 +647,13 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
 
         where:
         s | p                                                                                                           | o
-        vf.createIRI("http://mobi.com/dataset/test2/graph1") | vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI) | vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
-        vf.createIRI("http://mobi.com/dataset/test2/graph1") | vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI) | null
-        vf.createIRI("http://mobi.com/dataset/test2/graph1") | null                                                     | vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
+        vf.createIRI("http://mobi.com/dataset/test2/graph1") | RDF.TYPE | OWL.THING
+        vf.createIRI("http://mobi.com/dataset/test2/graph1") | RDF.TYPE | null
+        vf.createIRI("http://mobi.com/dataset/test2/graph1") | null                                                     | OWL.THING
         vf.createIRI("http://mobi.com/dataset/test2/graph1") | null                                                     | null
-        null | vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI)                                                 | vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
-        null | null                                                                                                     | vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
-        null | vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI)                                                 | null
+        null | RDF.TYPE                                                 | OWL.THING
+        null | null                                                                                                     | OWL.THING
+        null | RDF.TYPE                                                 | null
         null | null                                                                                                     | null
     }
 
@@ -674,27 +676,27 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
 
         where:
         s | p                                                                                                | o
-        vf.createIRI("http://test.com/someThing") | vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI) | vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
-        vf.createIRI("http://test.com/someThing") | vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI) | null
-        vf.createIRI("http://test.com/someThing") | null                                                     | vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
+        vf.createIRI("http://test.com/someThing") | RDF.TYPE | OWL.THING
+        vf.createIRI("http://test.com/someThing") | RDF.TYPE | null
+        vf.createIRI("http://test.com/someThing") | null                                                     | OWL.THING
         vf.createIRI("http://test.com/someThing") | null                                                     | null
-        null | vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI)                                      | vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
-        null | null                                                                                          | vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
-        null | vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI)                                      | null
+        null | RDF.TYPE                                      | OWL.THING
+        null | null                                                                                          | OWL.THING
+        null | RDF.TYPE                                      | null
         null | null                                                                                          | null
     }
 
     def "remove(model, c...) will remove the necessary graph data"() {
         setup:
         def s1 = vf.createIRI("http://mobi.com/dataset/test2/graph1")
-        def p1 = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI)
-        def o1 = vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
+        def p1 = RDF.TYPE
+        def o1 = OWL.THING
         def s2 = vf.createIRI("http://mobi.com/dataset/test2/graph2")
-        def p2 = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI)
-        def o2 = vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
+        def p2 = RDF.TYPE
+        def o2 = OWL.THING
         def s3 = vf.createIRI("http://mobi.com/dataset/test2/graph3")
-        def p3 = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI)
-        def o3 = vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
+        def p3 = RDF.TYPE
+        def o3 = OWL.THING
 
         def c1 = vf.createIRI("http://mobi.com/dataset/test2/graph1")
         def c2 = vf.createIRI("http://mobi.com/dataset/test2/graph2")
@@ -1061,7 +1063,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         setup:
         def dataset = datasetsInFile[2]
         def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
-        def filter = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI)
+        def filter = RDF.TYPE
         def graphs = [
                 vf.createIRI("http://mobi.com/dataset/test2/graph1"),
                 vf.createIRI("http://mobi.com/dataset/test2/graph2"),
@@ -1081,7 +1083,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         setup:
         def dataset = datasetsInFile[2]
         def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
-        def filter = vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
+        def filter = OWL.THING
         def graphs = [
                 vf.createIRI("http://mobi.com/dataset/test2/graph1"),
                 vf.createIRI("http://mobi.com/dataset/test2/graph2"),

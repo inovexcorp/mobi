@@ -58,8 +58,8 @@ public class SimpleApplicationWrapper implements ApplicationWrapper {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleApplicationWrapper.class);
 
     protected String applicationId;
-    final ValueFactory factory = new ValidatingValueFactory();
-    final ModelFactory modelFactory = new DynamicModelFactory();
+    final ValueFactory vf = new ValidatingValueFactory();
+    final ModelFactory mf = new DynamicModelFactory();
 
     @Reference(target = "(id=system)")
     OsgiRepository repository;
@@ -69,26 +69,25 @@ public class SimpleApplicationWrapper implements ApplicationWrapper {
 
     @Activate
     protected void start(final ApplicationConfig config) {
-        LOG.trace("Starting \"" + config.id() + "\" application...");
+        LOG.trace("Starting \"{}\" application...", config.id());
 
         validateConfig(config);
         this.applicationId = config.id();
 
-        Application application = appFactory.createNew(factory.createIRI(NAMESPACE + applicationId));
-        application.setProperty(factory.createLiteral(config.title()), factory.createIRI(DCTERMS.TITLE.stringValue()));
+        Application application = appFactory.createNew(vf.createIRI(NAMESPACE + applicationId));
+        application.setProperty(vf.createLiteral(config.title()), DCTERMS.TITLE);
         if (config.description() != null && !config.description().equals("")) {
-            application.setProperty(factory.createLiteral(config.description()),
-                    factory.createIRI(DCTERMS.DESCRIPTION.stringValue()));
+            application.setProperty(vf.createLiteral(config.description()), DCTERMS.DESCRIPTION);
         }
 
         try (RepositoryConnection conn = repository.getConnection()) {
             if (ConnectionUtils.contains(conn, application.getResource(), null, null)) {
-                LOG.warn("Replacing existing application \"" + applicationId + "\".");
+                LOG.warn("Replacing existing application \"{}\".", applicationId);
                 conn.remove(application.getResource(), null, null);
             }
             conn.add(application.getModel());
         }
-        LOG.debug("Application \"" + applicationId + "\" started.");
+        LOG.debug("Application \"{}\" started.", applicationId);
     }
 
     @Modified
@@ -99,11 +98,11 @@ public class SimpleApplicationWrapper implements ApplicationWrapper {
 
     @Deactivate
     protected void stop() {
-        LOG.trace("Stopping \"" + applicationId + "\" application...");
+        LOG.trace("Stopping \"{}\" application...", applicationId);
         try (RepositoryConnection conn = repository.getConnection()) {
-            conn.remove(factory.createIRI(NAMESPACE + applicationId), null, null);
+            conn.remove(vf.createIRI(NAMESPACE + applicationId), null, null);
         }
-        LOG.debug("Application \"" + applicationId + "\" stopped.");
+        LOG.debug("Application \"{}\" stopped.", applicationId);
     }
 
     @Override
@@ -126,9 +125,9 @@ public class SimpleApplicationWrapper implements ApplicationWrapper {
     @Override
     public Application getApplication() {
         try (RepositoryConnection conn = repository.getConnection()) {
-            Model appModel = modelFactory.createEmptyModel();
-            conn.getStatements(factory.createIRI(NAMESPACE + applicationId), null, null).forEach(appModel::add);
-            return appFactory.getExisting(factory.createIRI(NAMESPACE + applicationId), appModel).orElseThrow(() ->
+            Model appModel = mf.createEmptyModel();
+            conn.getStatements(vf.createIRI(NAMESPACE + applicationId), null, null).forEach(appModel::add);
+            return appFactory.getExisting(vf.createIRI(NAMESPACE + applicationId), appModel).orElseThrow(() ->
                     new IllegalStateException("Unable to retrieve application: " + NAMESPACE + applicationId));
         }
     }

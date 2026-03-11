@@ -57,8 +57,7 @@
                         <Bundle-Name>Mobi RDF ORM Ontologies</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            com.mobi.ontologies.*,
-                            com.mobi.vocabularies.xsd
+                            com.mobi.ontologies.*
                         </Export-Package>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
@@ -79,18 +78,6 @@
                         <inherited>false</inherited>
                         <configuration>
                             <generates>
-                                <ontology>
-                                    <ontologyFile>${project.basedir}/src/main/resources/rdfs.ttl</ontologyFile>
-                                    <outputPackage>com.mobi.ontologies.rdfs</outputPackage>
-                                </ontology>
-                                <ontology>
-                                    <ontologyFile>${project.basedir}/src/main/resources/dcelements_ontology.ttl</ontologyFile>
-                                    <outputPackage>com.mobi.ontologies.dcelements</outputPackage>
-                                </ontology>
-                                <ontology>
-                                    <ontologyFile>${project.basedir}/src/main/resources/dcterms_ontology.ttl</ontologyFile>
-                                    <outputPackage>com.mobi.ontologies.dcterms</outputPackage>
-                                </ontology>
                                 <ontology>
                                     <ontologyFile>${project.basedir}/src/main/resources/foaf.owl</ontologyFile>
                                     <outputPackage>com.mobi.ontologies.foaf</outputPackage>

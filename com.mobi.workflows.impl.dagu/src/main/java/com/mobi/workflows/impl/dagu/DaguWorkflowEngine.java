@@ -59,6 +59,7 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.component.annotations.Activate;
@@ -501,7 +502,7 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
 
     private <T extends Thing> List<OrmFactory<? extends T>> getOrmFactories(Resource id, Model model,
                                                                               Class<T> clazz) {
-        List<Resource> types = model.filter(id, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null)
+        List<Resource> types = model.filter(id, RDF.TYPE, null)
                 .stream()
                 .map(Statements::objectResource)
                 .filter(Optional::isPresent)

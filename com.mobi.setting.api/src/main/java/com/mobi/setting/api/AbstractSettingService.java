@@ -39,6 +39,7 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.query.GraphQuery;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -172,7 +173,7 @@ public abstract class AbstractSettingService<T extends Setting> implements Setti
     public Resource getSettingType(Setting setting) {
         LOGGER.debug("Retrieving setting type for " + setting.getResource().stringValue());
         List<Resource> types = setting.getModel().filter(setting.getResource(),
-                vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null)
+                RDF.TYPE, null)
                 .stream()
                 .map(Statements::objectResource)
                 .filter(Optional::isPresent)
@@ -350,7 +351,7 @@ public abstract class AbstractSettingService<T extends Setting> implements Setti
     }
 
     private void checkRepoForSetting(Resource resource, RepositoryConnection conn) {
-        if (!ConnectionUtils.contains(conn, resource, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI),
+        if (!ConnectionUtils.contains(conn, resource, RDF.TYPE,
                 vf.createIRI(Setting.TYPE), context)) {
             throw new IllegalArgumentException("Setting " + resource + " could not be found");
         }
@@ -358,7 +359,7 @@ public abstract class AbstractSettingService<T extends Setting> implements Setti
 
     private void validateNew(Resource resource, Resource type) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            if (ConnectionUtils.contains(conn, resource, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI),
+            if (ConnectionUtils.contains(conn, resource, RDF.TYPE,
                     type, context)) {
                 throw new IllegalArgumentException(type.stringValue() + " " + resource + " already exists in repo.");
             }

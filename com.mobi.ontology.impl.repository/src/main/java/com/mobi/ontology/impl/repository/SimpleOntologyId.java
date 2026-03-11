@@ -109,12 +109,12 @@ public class SimpleOntologyId implements OntologyId {
 
         ValueFactory vf = new ValidatingValueFactory();
         if (builder.versionIRI != null) {
-            this.ontologyIRI = vf.createIRI(builder.ontologyIRI.stringValue());
-            this.versionIRI = vf.createIRI(builder.versionIRI.stringValue());
-            this.identifier = vf.createIRI(builder.versionIRI.stringValue());
+            this.ontologyIRI = builder.ontologyIRI;
+            this.versionIRI = builder.versionIRI;
+            this.identifier = builder.versionIRI;
         } else if (builder.ontologyIRI != null) {
-            this.ontologyIRI = vf.createIRI(builder.ontologyIRI.stringValue());
-            this.identifier = vf.createIRI(builder.ontologyIRI.stringValue());
+            this.ontologyIRI = builder.ontologyIRI;
+            this.identifier = builder.ontologyIRI;
         } else if (builder.identifier != null) {
             this.identifier = builder.identifier;
         } else {

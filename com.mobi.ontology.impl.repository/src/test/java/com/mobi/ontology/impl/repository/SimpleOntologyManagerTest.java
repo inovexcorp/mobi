@@ -204,7 +204,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         when(ontologyCreationService.createOntologyFromCommit(any(), any())).thenReturn(nonSimpleOntology);
 
         model = MODEL_FACTORY.createEmptyModel();
-        model.add(VALUE_FACTORY.createIRI("urn:ontologyIRI"), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(OWL.ONTOLOGY.stringValue()));
+        model.add(VALUE_FACTORY.createIRI("urn:ontologyIRI"), RDF.TYPE, OWL.ONTOLOGY);
         Path path = Files.createTempFile(null, null);
         Rio.write(model, Files.newOutputStream(path), RDFFormat.RDFXML);
         file = path.toFile();

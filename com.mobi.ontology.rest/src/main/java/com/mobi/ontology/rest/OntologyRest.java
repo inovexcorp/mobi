@@ -302,7 +302,7 @@ public class OntologyRest {
             )
     )
     @RolesAllowed("user")
-    @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = OntologyRecord.TYPE))
+    @ActionAttributes(@AttributeValue(id = RDF.NAMESPACE + "type", value = OntologyRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
     public Response uploadFile(@Context HttpServletRequest servletRequest) {
         Map<String, List<Class<?>>> fields = new HashMap<>();

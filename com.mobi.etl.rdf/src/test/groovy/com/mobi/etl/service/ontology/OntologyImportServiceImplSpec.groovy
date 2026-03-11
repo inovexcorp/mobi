@@ -30,17 +30,17 @@ import com.mobi.catalog.api.ontologies.mcat.MasterBranch
 import com.mobi.catalog.api.versioning.VersioningManager
 import com.mobi.catalog.config.CatalogConfigProvider
 import com.mobi.jaas.api.ontologies.usermanagement.User
-import com.mobi.ontologies.owl.Ontology
-import com.mobi.ontologies.rdfs.Resource
 import com.mobi.ontology.core.api.OntologyManager
 import com.mobi.repository.api.OsgiRepository
 import org.eclipse.rdf4j.model.IRI
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory
+import org.eclipse.rdf4j.model.vocabulary.OWL
+import org.eclipse.rdf4j.model.vocabulary.RDF
 import org.eclipse.rdf4j.repository.RepositoryConnection
 import org.eclipse.rdf4j.rio.RDFFormat
 import org.eclipse.rdf4j.rio.Rio
-import spock.lang.Specification
+import spock.lang.Specification 
 
 class OntologyImportServiceImplSpec extends Specification {
 
@@ -68,10 +68,8 @@ class OntologyImportServiceImplSpec extends Specification {
             vf.createIRI("http://test.org/property"), vf.createLiteral(true))
     def stmt3 = vf.createStatement(vf.createIRI("http://test.org/ontology-record-3"),
             vf.createIRI("http://test.org/property"), vf.createLiteral(true))
-    def ontStmt1 = vf.createStatement(vf.createIRI("urn:ont1"), vf.createIRI(Resource.type_IRI),
-            vf.createIRI(Ontology.TYPE))
-    def ontStmt2 = vf.createStatement(vf.createIRI("urn:ont2"), vf.createIRI(Resource.type_IRI),
-            vf.createIRI(Ontology.TYPE))
+    def ontStmt1 = vf.createStatement(vf.createIRI("urn:ont1"), RDF.TYPE, OWL.ONTOLOGY)
+    def ontStmt2 = vf.createStatement(vf.createIRI("urn:ont2"), RDF.TYPE, OWL.ONTOLOGY)
 
     def setup() {
         service.versioningManager = versioningManager

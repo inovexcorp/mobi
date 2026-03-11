@@ -43,7 +43,6 @@ import com.mobi.explorable.dataset.rest.jaxb.ClassDetails;
 import com.mobi.explorable.dataset.rest.jaxb.InstanceDetails;
 import com.mobi.explorable.dataset.rest.jaxb.PropertyDetails;
 import com.mobi.explorable.dataset.rest.jaxb.RestrictionDetails;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
@@ -72,6 +71,7 @@ import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
@@ -706,7 +706,7 @@ public class ExplorableDatasetRest {
      * @return entity label
      */
     private String findLabelToDisplay(Model model, IRI iri) {
-        return findPropertyToDisplay(model, iri, RDFS.LABEL.stringValue(), _Thing.title_IRI);
+        return findPropertyToDisplay(model, iri, RDFS.LABEL, DCTERMS.TITLE);
     }
 
     /**
@@ -718,7 +718,7 @@ public class ExplorableDatasetRest {
      * @return entity label
      */
     private String findDescriptionToDisplay(Model model, IRI iri) {
-        return findPropertyToDisplay(model, iri, RDFS.COMMENT.stringValue(), _Thing.description_IRI);
+        return findPropertyToDisplay(model, iri, RDFS.COMMENT, DCTERMS.DESCRIPTION);
     }
 
     /**
@@ -730,13 +730,13 @@ public class ExplorableDatasetRest {
      * @param dcProp   DCTERMS defined property to get the value of
      * @return entity value
      */
-    private String findPropertyToDisplay(Model model, IRI iri, String rdfsProp, String dcProp) {
+    private String findPropertyToDisplay(Model model, IRI iri, IRI rdfsProp, IRI dcProp) {
         if (model.size() > 0) {
-            Optional<Statement> rdfs = model.filter(null, factory.createIRI(rdfsProp), null).stream().findFirst();
+            Optional<Statement> rdfs = model.filter(null, rdfsProp, null).stream().findFirst();
             if (rdfs.isPresent()) {
                 return rdfs.get().getObject().stringValue();
             } else {
-                Optional<Statement> dcterm = model.filter(null, factory.createIRI(dcProp), null).stream().findFirst();
+                Optional<Statement> dcterm = model.filter(null, dcProp, null).stream().findFirst();
                 return dcterm.map(statement -> statement.getObject().stringValue()).orElseGet(() -> splitCamelCase(iri
                         .getLocalName()));
             }

@@ -368,10 +368,8 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         assertEquals(1, preferences.size());
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            conn.remove((Resource) null, VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()),
-                    VALUE_FACTORY.createIRI(TestComplexPreference.TYPE));
-            conn.remove((Resource) null, VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()),
-                    VALUE_FACTORY.createIRI(Preference.TYPE));
+            conn.remove((Resource) null, RDF.TYPE, VALUE_FACTORY.createIRI(TestComplexPreference.TYPE));
+            conn.remove((Resource) null, RDF.TYPE, VALUE_FACTORY.createIRI(Preference.TYPE));
         }
 
         preferences = service.getSettings(user);

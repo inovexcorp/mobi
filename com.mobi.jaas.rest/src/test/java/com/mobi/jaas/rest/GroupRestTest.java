@@ -126,7 +126,7 @@ public class GroupRestTest extends MobiRestTestCXF {
         roleFactory = getRequiredOrmFactory(Role.class);
 
         role = roleFactory.createNew(vf.createIRI("http://mobi.com/roles/user"));
-        role.setProperty(vf.createLiteral("user"), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        role.setProperty(vf.createLiteral("user"), DCTERMS.TITLE);
         roles = Collections.singleton(role);
 
         user = userFactory.createNew(vf.createIRI("http://mobi.com/users/testUser"), role.getModel());
@@ -135,8 +135,8 @@ public class GroupRestTest extends MobiRestTestCXF {
 
         group = groupFactory.createNew(vf.createIRI("http://mobi.com/groups/testGroup"), role.getModel());
         group.setHasGroupRole(roles);
-        group.setProperty(vf.createLiteral("testGroup"), vf.createIRI(DCTERMS.TITLE.stringValue()));
-        group.setProperty(vf.createLiteral("This is a description"), vf.createIRI(DCTERMS.DESCRIPTION.stringValue()));
+        group.setProperty(vf.createLiteral("testGroup"), DCTERMS.TITLE);
+        group.setProperty(vf.createLiteral("This is a description"), DCTERMS.DESCRIPTION);
         group.setMember(Collections.singleton(user));
         groups = Collections.singleton(group);
 

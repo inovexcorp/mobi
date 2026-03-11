@@ -51,7 +51,6 @@ import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.api.builder.OntologyIdentifier;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontology.core.api.DataProperty;
 import com.mobi.ontology.core.api.ObjectProperty;
 import com.mobi.ontology.core.api.Ontology;
@@ -72,6 +71,7 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
@@ -574,7 +574,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     @Test
     public void createInstanceTest() {
         //Setup:
-        ObjectNode instance = mapper.createObjectNode().put("@id", NEW_INSTANCE_ID_STR).set(_Thing.title_IRI,
+        ObjectNode instance = mapper.createObjectNode().put("@id", NEW_INSTANCE_ID_STR).set(DCTERMS.TITLE.stringValue(),
                 mapper.createArrayNode().add(mapper.createObjectNode().put("@value", "title")));
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances").request()
@@ -586,7 +586,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     @Test
     public void createInstanceTestWhenIRIAlreadyTaken() {
         //Setup:
-        ObjectNode instance = mapper.createObjectNode().put("@id", INSTANCE_ID_STR).set(_Thing.title_IRI,
+        ObjectNode instance = mapper.createObjectNode().put("@id", INSTANCE_ID_STR).set(DCTERMS.TITLE.stringValue(),
                 mapper.createArrayNode().add(mapper.createObjectNode().put("@value", "title")));
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances").request()
@@ -598,7 +598,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     public void createInstanceTestWithNoDatasetConnectionTestIllegalArgumentThrown() {
         //Setup:
         when(datasetManager.getConnection(recordId)).thenThrow(new IllegalArgumentException());
-        ObjectNode instance = mapper.createObjectNode().put("@id", NEW_INSTANCE_ID_STR).set(_Thing.title_IRI,
+        ObjectNode instance = mapper.createObjectNode().put("@id", NEW_INSTANCE_ID_STR).set(DCTERMS.TITLE.stringValue(),
                 mapper.createArrayNode().add(mapper.createObjectNode().put("@value", "title")));
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances").request()
@@ -610,7 +610,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     public void createInstanceTestWithNoDatasetConnectionTestIllegalStateThrown() {
         //Setup:
         when(datasetManager.getConnection(recordId)).thenThrow(new IllegalStateException());
-        ObjectNode instance = mapper.createObjectNode().put("@id", NEW_INSTANCE_ID_STR).set(_Thing.title_IRI,
+        ObjectNode instance = mapper.createObjectNode().put("@id", NEW_INSTANCE_ID_STR).set(DCTERMS.TITLE.stringValue(),
                 mapper.createArrayNode().add(mapper.createObjectNode().put("@value", "title")));
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances").request()
@@ -679,7 +679,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
         //Setup:
         ArrayNode array = mapper.createArrayNode();
         array.add(mapper.createObjectNode().put("@value", "title"));
-        ObjectNode instance = mapper.createObjectNode().put("@id", INSTANCE_ID_STR).set(_Thing.title_IRI, array);
+        ObjectNode instance = mapper.createObjectNode().put("@id", INSTANCE_ID_STR).set(DCTERMS.TITLE.stringValue(), array);
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(INSTANCE_ID_STR)).request().put(Entity.json(instance.toString()));
@@ -696,7 +696,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
         //Setup:
         ArrayNode array = mapper.createArrayNode();
         array.add(mapper.createObjectNode().put("@value", "title"));
-        ObjectNode instance = mapper.createObjectNode().put("@id", INSTANCE_ID_STR).set(_Thing.title_IRI, array);
+        ObjectNode instance = mapper.createObjectNode().put("@id", INSTANCE_ID_STR).set(DCTERMS.TITLE.stringValue(), array);
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(REIFIED_ID)).request().put(Entity.json(instance.toString()));
@@ -712,7 +712,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     public void updateInstanceTestWhenNotFound() {
         //Setup:
         ObjectNode instance = mapper.createObjectNode().put("@id", INSTANCE_ID_STR)
-                .set(_Thing.title_IRI, mapper.createObjectNode().put("@value", "title"));
+                .set(DCTERMS.TITLE.stringValue(), mapper.createObjectNode().put("@value", "title"));
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(MISSING_ID)).request().put(Entity.json(instance.toString()));
@@ -723,7 +723,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     public void updateInstanceTestWithNoDatasetConnectionTestIllegalArgumentThrown() {
         //Setup:
         ObjectNode instance = mapper.createObjectNode().put("@id", INSTANCE_ID_STR)
-                .set(_Thing.title_IRI, mapper.createObjectNode().put("@value", "title"));
+                .set(DCTERMS.TITLE.stringValue(), mapper.createObjectNode().put("@value", "title"));
         when(datasetManager.getConnection(recordId)).thenThrow(new IllegalArgumentException());
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
@@ -735,7 +735,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     public void updateInstanceTestWithNoDatasetConnectionTestIllegalStateThrown() {
         //Setup:
         ObjectNode instance = mapper.createObjectNode().put("@id", INSTANCE_ID_STR)
-                .set(_Thing.title_IRI, mapper.createObjectNode().put("@value", "title"));
+                .set(DCTERMS.TITLE.stringValue(), mapper.createObjectNode().put("@value", "title"));
         when(datasetManager.getConnection(recordId)).thenThrow(new IllegalStateException());
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"

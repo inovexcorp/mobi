@@ -38,8 +38,8 @@ import com.mobi.ontology.core.api.DataProperty;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.vocabularies.xsd.XSD;
 import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.vocabulary.XSD;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.junit.After;
@@ -119,17 +119,17 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
         when(ontology.getDataProperty(VALUE_FACTORY.createIRI("http://mobi.com/ontologies/uhtc/formula"))).thenReturn(Optional.of(formulaProperty));
         when(ontology.getDataPropertyRange(formulaProperty)).thenReturn(Collections.emptySet());
         when(ontology.getDataProperty(VALUE_FACTORY.createIRI("http://mobi.com/ontologies/uhtc/density"))).thenReturn(Optional.of(densityProperty));
-        when(ontology.getDataPropertyRange(densityProperty)).thenReturn(Collections.singleton(VALUE_FACTORY.createIRI(XSD.DOUBLE)));
+        when(ontology.getDataPropertyRange(densityProperty)).thenReturn(Collections.singleton(XSD.DOUBLE));
         when(ontology.getDataProperty(VALUE_FACTORY.createIRI("http://mobi.com/ontologies/uhtc/latticeParameter"))).thenReturn(Optional.of(latticeParameterProperty));
-        when(ontology.getDataPropertyRange(latticeParameterProperty)).thenReturn(Collections.singleton(VALUE_FACTORY.createIRI(XSD.FLOAT)));
+        when(ontology.getDataPropertyRange(latticeParameterProperty)).thenReturn(Collections.singleton(XSD.FLOAT));
         when(ontology.getDataProperty(VALUE_FACTORY.createIRI("http://mobi.com/ontologies/uhtc/source"))).thenReturn(Optional.of(sourceProperty));
-        when(ontology.getDataPropertyRange(sourceProperty)).thenReturn(Collections.singleton(VALUE_FACTORY.createIRI(XSD.ANYURI)));
+        when(ontology.getDataPropertyRange(sourceProperty)).thenReturn(Collections.singleton(XSD.ANYURI));
         when(ontology.getDataProperty(VALUE_FACTORY.createIRI("http://mobi.com/ontologies/uhtc/tested"))).thenReturn(Optional.of(testedProperty));
-        when(ontology.getDataPropertyRange(testedProperty)).thenReturn(Collections.singleton(VALUE_FACTORY.createIRI(XSD.BOOLEAN)));
+        when(ontology.getDataPropertyRange(testedProperty)).thenReturn(Collections.singleton(XSD.BOOLEAN));
         when(ontology.getDataProperty(VALUE_FACTORY.createIRI("http://mobi.com/ontologies/uhtc/count"))).thenReturn(Optional.of(countProperty));
-        when(ontology.getDataPropertyRange(countProperty)).thenReturn(Collections.singleton(VALUE_FACTORY.createIRI(XSD.INTEGER)));
+        when(ontology.getDataPropertyRange(countProperty)).thenReturn(Collections.singleton(XSD.INTEGER));
         when(ontology.getDataProperty(VALUE_FACTORY.createIRI("http://mobi.com/ontologies/uhtc/dateRecorded"))).thenReturn(Optional.of(dateRecordedProperty));
-        when(ontology.getDataPropertyRange(dateRecordedProperty)).thenReturn(Collections.singleton(VALUE_FACTORY.createIRI(XSD.DATE_TIME)));
+        when(ontology.getDataPropertyRange(dateRecordedProperty)).thenReturn(Collections.singleton(XSD.DATETIME));
         when(om.retrieveOntology(any(), any(), any())).thenReturn(Optional.of(ontology));
     }
 

@@ -46,7 +46,6 @@ import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.api.record.statistic.Statistic;
 import com.mobi.catalog.api.record.statistic.StatisticDefinition;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
@@ -56,6 +55,7 @@ import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.query.QueryEvaluationException;
 import org.eclipse.rdf4j.query.QueryLanguage;
 import org.eclipse.rdf4j.query.TupleQuery;
@@ -123,7 +123,7 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
         user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/user"));
 
         testRecord = recordFactory.createNew(testIRI);
-        testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), DCTERMS.TITLE);
         testRecord.setCatalog(catalogFactory.createNew(catalogId));
 
         closeable = MockitoAnnotations.openMocks(this);

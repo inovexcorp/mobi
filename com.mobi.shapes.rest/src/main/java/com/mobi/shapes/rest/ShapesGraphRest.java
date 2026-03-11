@@ -219,7 +219,7 @@ public class ShapesGraphRest {
             )
     )
     @RolesAllowed("user")
-    @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = ShapesGraphRecord.TYPE))
+    @ActionAttributes(@AttributeValue(id = RDF.NAMESPACE + "type", value = ShapesGraphRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
     public Response uploadFile(@Context HttpServletRequest servletRequest) {
         Map<String, List<Class<?>>> fields = new HashMap<>();
@@ -539,8 +539,8 @@ public class ShapesGraphRest {
 
             if (OntologyModels.findFirstOntologyIRI(uploadedModel).isEmpty()) {
                 OntologyModels.findFirstOntologyIRI(currentModel)
-                        .ifPresent(iri -> uploadedModel.add(iri, vf.createIRI(RDF.TYPE.stringValue()),
-                                vf.createIRI(OWL.ONTOLOGY.stringValue())));
+                        .ifPresent(iri -> uploadedModel.add(iri, RDF.TYPE,
+                                OWL.ONTOLOGY));
             }
 
             Difference diff = differenceManager.getDiff(currentModel, uploadedModel);

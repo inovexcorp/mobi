@@ -34,7 +34,6 @@ import static org.mockito.Mockito.when;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
 import com.mobi.prov.api.ProvenanceService;
@@ -47,6 +46,8 @@ import com.mobi.server.api.Mobi;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.model.vocabulary.PROV;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.junit.After;
@@ -110,7 +111,7 @@ public class CatalogProvUtilsImplTest extends OrmEnabledTestCase {
         when(connProv.getStatements(recordIRI, null, null)).thenReturn(resultEntity);
 
         record = recordFactory.createNew(recordIRI);
-        record.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        record.setProperty(VALUE_FACTORY.createLiteral("Test Record"), DCTERMS.TITLE);
 
         injectOrmFactoryReferencesIntoService(utils);
         utils.mobi = mobi;
@@ -219,11 +220,11 @@ public class CatalogProvUtilsImplTest extends OrmEnabledTestCase {
 
         utils.endDeleteActivity(deleteActivity, record);
         verify(provenanceService).updateActivity(deleteActivity);
-        assertTrue(deleteActivity.getModel().contains(deleteActivity.getResource(), VALUE_FACTORY.createIRI(Activity.endedAtTime_IRI), null));
+        assertTrue(deleteActivity.getModel().contains(deleteActivity.getResource(), PROV.ENDED_AT_TIME, null));
         assertEquals(1, deleteActivity.getInvalidated().size());
         Entity resultEntity = deleteActivity.getInvalidated().iterator().next();
-        assertTrue(resultEntity.getModel().contains(resultEntity.getResource(), VALUE_FACTORY.createIRI(Entity.invalidatedAtTime_IRI), null));
-        assertTrue(resultEntity.getModel().contains(resultEntity.getResource(), VALUE_FACTORY.createIRI(_Thing.title_IRI), VALUE_FACTORY.createLiteral("Test Record")));
+        assertTrue(resultEntity.getModel().contains(resultEntity.getResource(), PROV.INVALIDATED_AT_TIME, null));
+        assertTrue(resultEntity.getModel().contains(resultEntity.getResource(), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Test Record")));
     }
 
     @Test

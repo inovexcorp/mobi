@@ -812,11 +812,11 @@ public class RestUtilsTest {
         model.add(vf.createIRI("http://example.com/test/2"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("true"));
         model.add(vf.createIRI("http://example.com/test/2"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("false"));
 
-        typedModel.add(vf.createIRI("http://example.com/test/0"), vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI("urn:test"));
+        typedModel.add(vf.createIRI("http://example.com/test/0"), RDF.TYPE, vf.createIRI("urn:test"));
         typedModel.add(vf.createIRI("http://example.com/test/0"), testPropIRI, vf.createLiteral("VALUE 1"));
-        typedModel.add(vf.createIRI("http://example.com/test/1"), vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI("urn:test"));
+        typedModel.add(vf.createIRI("http://example.com/test/1"), RDF.TYPE, vf.createIRI("urn:test"));
         typedModel.add(vf.createIRI("http://example.com/test/1"), testPropIRI, vf.createLiteral("VALUE 2"));
-        typedModel.add(vf.createIRI("http://example.com/test/2"), vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI("urn:test"));
+        typedModel.add(vf.createIRI("http://example.com/test/2"), RDF.TYPE, vf.createIRI("urn:test"));
         typedModel.add(vf.createIRI("http://example.com/test/2"), testPropIRI, vf.createLiteral("VALUE 3"));
     }
 

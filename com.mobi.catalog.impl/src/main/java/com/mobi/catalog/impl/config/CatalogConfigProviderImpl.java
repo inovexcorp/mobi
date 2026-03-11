@@ -27,13 +27,14 @@ import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.config.CatalogConfig;
 import com.mobi.catalog.config.CatalogConfigProvider;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.repository.api.OsgiRepository;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -74,15 +75,17 @@ public class CatalogConfigProviderImpl implements CatalogConfigProvider {
         localCatalogIRI = vf.createIRI(catalogConfig.iri() + "-local");
         this.limitedSize = catalogConfig.limit();
         try (RepositoryConnection conn = repository.getConnection()) {
-            IRI typeIRI = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
+            IRI typeIRI = RDF.TYPE;
             if (!ConnectionUtils.contains(conn, distributedCatalogIRI, typeIRI, vf.createIRI(Catalog.TYPE))) {
                 log.debug("Initializing the distributed Mobi Catalog.");
-                addCatalogToRepo(distributedCatalogIRI, catalogConfig.title() + " (Distributed)", catalogConfig.description(), conn);
+                addCatalogToRepo(distributedCatalogIRI, catalogConfig.title() + " (Distributed)",
+                        catalogConfig.description(), conn);
             }
 
             if (!ConnectionUtils.contains(conn, localCatalogIRI, typeIRI, vf.createIRI(Catalog.TYPE))) {
                 log.debug("Initializing the local Mobi Catalog.");
-                addCatalogToRepo(localCatalogIRI, catalogConfig.title() + " (Local)", catalogConfig.description(), conn);
+                addCatalogToRepo(localCatalogIRI, catalogConfig.title() + " (Local)", catalogConfig.description(),
+                        conn);
             }
         }
     }
@@ -113,7 +116,8 @@ public class CatalogConfigProviderImpl implements CatalogConfigProvider {
     }
 
     /**
-     * Integer used for limit for limited-results endpoint
+     * Integer used for limit for limited-results endpoint.
+     *
      * @return Integer used for limit for limited-results endpoint
      */
     @Override
@@ -133,10 +137,10 @@ public class CatalogConfigProviderImpl implements CatalogConfigProvider {
         OffsetDateTime now = OffsetDateTime.now();
 
         Catalog catalog = catalogFactory.createNew(catalogId);
-        catalog.setProperty(vf.createLiteral(title), vf.createIRI(_Thing.title_IRI));
-        catalog.setProperty(vf.createLiteral(description), vf.createIRI(_Thing.description_IRI));
-        catalog.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.issued_IRI));
-        catalog.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.modified_IRI));
+        catalog.setProperty(vf.createLiteral(title), DCTERMS.TITLE);
+        catalog.setProperty(vf.createLiteral(description), DCTERMS.DESCRIPTION);
+        catalog.setProperty(vf.createLiteral(now), DCTERMS.ISSUED);
+        catalog.setProperty(vf.createLiteral(now), DCTERMS.MODIFIED);
 
         conn.add(catalog.getModel(), catalogId);
     }

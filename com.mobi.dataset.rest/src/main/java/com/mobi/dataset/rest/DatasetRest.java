@@ -82,6 +82,7 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
@@ -283,7 +284,7 @@ public class DatasetRest {
                     ),
             }
     )
-    @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = DatasetRecord.TYPE))
+    @ActionAttributes(@AttributeValue(id = RDF.NAMESPACE + "type", value = DatasetRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
     public Response createDatasetRecord(
             @Context HttpServletRequest servletRequest,

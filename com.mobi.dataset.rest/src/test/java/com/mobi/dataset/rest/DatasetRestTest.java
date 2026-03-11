@@ -184,11 +184,11 @@ public class DatasetRestTest extends MobiRestTestCXF {
         OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
 
         record1 = datasetRecordFactory.createNew(vf.createIRI("http://example.com/record1"));
-        record1.setProperty(vf.createLiteral("A"), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        record1.setProperty(vf.createLiteral("A"), DCTERMS.TITLE);
         record2 = datasetRecordFactory.createNew(vf.createIRI("http://example.com/record2"));
-        record2.setProperty(vf.createLiteral("B"), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        record2.setProperty(vf.createLiteral("B"), DCTERMS.TITLE);
         record3 = datasetRecordFactory.createNew(vf.createIRI("http://example.com/record3"));
-        record3.setProperty(vf.createLiteral("C"), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        record3.setProperty(vf.createLiteral("C"), DCTERMS.TITLE);
         user = userFactory.createNew(vf.createIRI("http://example.com/" + UsernameTestFilter.USERNAME));
         commit = commitFactory.createNew(commitIRI);
         branch = branchFactory.createNew(branchIRI);

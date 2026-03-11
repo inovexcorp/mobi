@@ -53,7 +53,6 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.persistence.utils.BatchGraphInserter;
 import com.mobi.persistence.utils.Bindings;
@@ -71,6 +70,7 @@ import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.query.Binding;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.QueryResults;
@@ -382,8 +382,8 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      */
     protected MasterBranch createMasterBranch(VersionedRDFRecord record) {
         MasterBranch branch = createBranch("MASTER", "The master branch.");
-        Optional<Value> publisher = record.getProperty(vf.createIRI(_Thing.publisher_IRI));
-        branch.setProperty(publisher.get(), vf.createIRI(_Thing.publisher_IRI));
+        Optional<Value> publisher = record.getProperty(DCTERMS.PUBLISHER);
+        branch.setProperty(publisher.get(), DCTERMS.PUBLISHER);
         record.setMasterBranch(branch);
         Set<Branch> branches = record.getBranch_resource().stream()
                 .map(branchFactory::createNew)
@@ -405,11 +405,11 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         OffsetDateTime now = OffsetDateTime.now();
 
         MasterBranch branch = masterBranchFactory.createNew(vf.createIRI(Catalogs.BRANCH_NAMESPACE + UUID.randomUUID()));
-        branch.setProperty(vf.createLiteral(title), vf.createIRI(_Thing.title_IRI));
-        branch.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.issued_IRI));
-        branch.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.modified_IRI));
+        branch.setProperty(vf.createLiteral(title), DCTERMS.TITLE);
+        branch.setProperty(vf.createLiteral(now), DCTERMS.ISSUED);
+        branch.setProperty(vf.createLiteral(now), DCTERMS.MODIFIED);
         if (description != null) {
-            branch.setProperty(vf.createLiteral(description), vf.createIRI(_Thing.description_IRI));
+            branch.setProperty(vf.createLiteral(description), DCTERMS.DESCRIPTION);
         }
         return branch;
     }
@@ -431,7 +431,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
             throw new IllegalStateException("Branch " + branchId + " is the master Branch and cannot be removed.");
         }
         conn.begin();
-        record.setProperty(vf.createLiteral(OffsetDateTime.now()), vf.createIRI(_Thing.modified_IRI));
+        record.setProperty(vf.createLiteral(OffsetDateTime.now()), DCTERMS.MODIFIED);
         thingManager.updateObject(record, conn);
         List<Resource> deletedCommits = removeBranch(versionedRDFRecordId, branch, conn);
         mergeRequestManager.cleanMergeRequests(versionedRDFRecordId, branchId, getBranchTitle(branch),
@@ -690,7 +690,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     }
 
     private String getBranchTitle(Branch branch) {
-        return branch.getProperty(vf.createIRI(_Thing.title_IRI)).orElseThrow(() ->
+        return branch.getProperty(DCTERMS.TITLE).orElseThrow(() ->
                 new IllegalStateException("Branch " + branch.getResource() + " does not have a title")).stringValue();
     }
 }

@@ -23,20 +23,37 @@ package com.mobi.workflows.impl.core.record;
  * #L%
  */
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
 import static junit.framework.TestCase.fail;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import com.mobi.catalog.api.*;
+import com.mobi.catalog.api.BranchManager;
+import com.mobi.catalog.api.CatalogProvUtils;
+import com.mobi.catalog.api.CommitManager;
+import com.mobi.catalog.api.DifferenceManager;
+import com.mobi.catalog.api.RevisionManager;
+import com.mobi.catalog.api.ThingManager;
+import com.mobi.catalog.api.VersionManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
-import com.mobi.catalog.api.ontologies.mcat.*;
+import com.mobi.catalog.api.ontologies.mcat.Branch;
+import com.mobi.catalog.api.ontologies.mcat.Catalog;
+import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.ontologies.mcat.MasterBranch;
 import com.mobi.catalog.api.ontologies.mcat.Record;
+import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
@@ -45,7 +62,6 @@ import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
@@ -174,10 +190,10 @@ public class SimpleWorkflowRecordServiceTest extends OrmEnabledTestCase {
         headCommit = commitFactory.createNew(commitIRI);
         branch = branchFactory.createNew(branchIRI);
         branch.setHead(headCommit);
-        branch.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        branch.setProperty(VALUE_FACTORY.createLiteral("Test Record"), DCTERMS.TITLE);
 
         Model deletions = MODEL_FACTORY.createEmptyModel();
-        deletions.add(VALUE_FACTORY.createIRI("http://test.com#sub"), VALUE_FACTORY.createIRI(_Thing.description_IRI),
+        deletions.add(VALUE_FACTORY.createIRI("http://test.com#sub"), DCTERMS.DESCRIPTION,
                 VALUE_FACTORY.createLiteral("Description"));
         difference = new Difference.Builder()
                 .additions(MODEL_FACTORY.createEmptyModel())
@@ -185,7 +201,7 @@ public class SimpleWorkflowRecordServiceTest extends OrmEnabledTestCase {
                 .build();
 
         testRecord = recordFactory.createNew(testIRI);
-        testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), DCTERMS.TITLE);
         testRecord.setCatalog(catalogFactory.createNew(catalogId));
         testRecord.setBranch(Collections.singleton(branch));
         testRecord.setBranch(Collections.singleton(branch));
@@ -309,15 +325,15 @@ public class SimpleWorkflowRecordServiceTest extends OrmEnabledTestCase {
             workflowRecord = recordService.create(user, config, connection);
         }
 
-        Optional<Value> optTitle = workflowRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        Optional<Value> optTitle = workflowRecord.getProperty(DCTERMS.TITLE);
         assertTrue(optTitle.isPresent());
         assertEquals("TestTitle", optTitle.get().stringValue());
-        Optional<Value> optDescription = workflowRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.description_IRI));
+        Optional<Value> optDescription = workflowRecord.getProperty(DCTERMS.DESCRIPTION);
         assertTrue(optDescription.isPresent());
         assertEquals("TestTitle", optDescription.get().stringValue());
-        assertTrue(workflowRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.modified_IRI)).isPresent());
-        assertTrue(workflowRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).isPresent());
-        Set<Value> publishers = workflowRecord.getProperties(VALUE_FACTORY.createIRI(_Thing.publisher_IRI));
+        assertTrue(workflowRecord.getProperty(DCTERMS.MODIFIED).isPresent());
+        assertTrue(workflowRecord.getProperty(DCTERMS.ISSUED).isPresent());
+        Set<Value> publishers = workflowRecord.getProperties(DCTERMS.PUBLISHER);
         assertEquals(users.size(), publishers.size());
         Optional<Resource> optCatalogId = workflowRecord.getCatalog_resource();
         assertTrue(optCatalogId.isPresent());
@@ -369,15 +385,15 @@ public class SimpleWorkflowRecordServiceTest extends OrmEnabledTestCase {
             workflowRecord = recordService.create(user, config, connection);
         }
 
-        Optional<Value> optTitle = workflowRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        Optional<Value> optTitle = workflowRecord.getProperty(DCTERMS.TITLE);
         assertTrue(optTitle.isPresent());
         assertEquals("TestTitle", optTitle.get().stringValue());
-        Optional<Value> optDescription = workflowRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.description_IRI));
+        Optional<Value> optDescription = workflowRecord.getProperty(DCTERMS.DESCRIPTION);
         assertTrue(optDescription.isPresent());
         assertEquals("TestTitle", optDescription.get().stringValue());
-        assertTrue(workflowRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.modified_IRI)).isPresent());
-        assertTrue(workflowRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).isPresent());
-        Set<Value> publishers = workflowRecord.getProperties(VALUE_FACTORY.createIRI(_Thing.publisher_IRI));
+        assertTrue(workflowRecord.getProperty(DCTERMS.MODIFIED).isPresent());
+        assertTrue(workflowRecord.getProperty(DCTERMS.ISSUED).isPresent());
+        Set<Value> publishers = workflowRecord.getProperties(DCTERMS.PUBLISHER);
         assertEquals(users.size(), publishers.size());
         Optional<Resource> optCatalogId = workflowRecord.getCatalog_resource();
         assertTrue(optCatalogId.isPresent());
@@ -429,15 +445,15 @@ public class SimpleWorkflowRecordServiceTest extends OrmEnabledTestCase {
             workflowRecord = recordService.create(user, config, connection);
         }
 
-        Optional<Value> optTitle = workflowRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        Optional<Value> optTitle = workflowRecord.getProperty(DCTERMS.TITLE);
         assertTrue(optTitle.isPresent());
         assertEquals("TestTitle", optTitle.get().stringValue());
-        Optional<Value> optDescription = workflowRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.description_IRI));
+        Optional<Value> optDescription = workflowRecord.getProperty(DCTERMS.DESCRIPTION);
         assertTrue(optDescription.isPresent());
         assertEquals("TestTitle", optDescription.get().stringValue());
-        assertTrue(workflowRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.modified_IRI)).isPresent());
-        assertTrue(workflowRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).isPresent());
-        Set<Value> publishers = workflowRecord.getProperties(VALUE_FACTORY.createIRI(_Thing.publisher_IRI));
+        assertTrue(workflowRecord.getProperty(DCTERMS.MODIFIED).isPresent());
+        assertTrue(workflowRecord.getProperty(DCTERMS.ISSUED).isPresent());
+        Set<Value> publishers = workflowRecord.getProperties(DCTERMS.PUBLISHER);
         assertEquals(users.size(), publishers.size());
         Optional<Resource> optCatalogId = workflowRecord.getCatalog_resource();
         assertTrue(optCatalogId.isPresent());

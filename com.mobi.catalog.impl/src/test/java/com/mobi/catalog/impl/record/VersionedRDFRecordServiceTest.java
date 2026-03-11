@@ -74,7 +74,6 @@ import com.mobi.catalog.impl.SimpleRevisionManager;
 import com.mobi.catalog.impl.SimpleThingManager;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
@@ -221,10 +220,10 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         headCommit = commitFactory.createNew(commitIRI);
         branch = branchFactory.createNew(branchIRI);
         branch.setHead(headCommit);
-        branch.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        branch.setProperty(VALUE_FACTORY.createLiteral("Test Record"), DCTERMS.TITLE);
 
         Model deletions = MODEL_FACTORY.createEmptyModel();
-        deletions.add(VALUE_FACTORY.createIRI("http://test.com#sub"), VALUE_FACTORY.createIRI(_Thing.description_IRI),
+        deletions.add(VALUE_FACTORY.createIRI("http://test.com#sub"), DCTERMS.DESCRIPTION,
                 VALUE_FACTORY.createLiteral("Description"), deletionsIRI);
 
         difference = new Difference.Builder()
@@ -236,7 +235,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         tag.setVersionedDistribution(Collections.singleton(distributionFactory.createNew(distributionIRI)));
 
         testRecord = recordFactory.createNew(testIRI);
-        testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), DCTERMS.TITLE);
         testRecord.setCatalog(catalogFactory.createNew(catalogId));
         testRecord.setBranch(Collections.singleton(branch));
         testRecord.setVersion(Collections.singleton(tag));
@@ -541,7 +540,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     public void exportSpecificBranch() throws Exception {
         Branch doNotWriteBranch = branchFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/branches#branch2"));
         doNotWriteBranch.setHead(headCommit);
-        doNotWriteBranch.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        doNotWriteBranch.setProperty(VALUE_FACTORY.createLiteral("Test Record"), DCTERMS.TITLE);
         testRecord.addBranch(doNotWriteBranch);
 
         Set<Resource> branchesToExport = new HashSet<>();

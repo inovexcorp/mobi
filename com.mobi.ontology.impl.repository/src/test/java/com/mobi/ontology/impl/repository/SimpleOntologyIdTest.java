@@ -77,9 +77,9 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
         versionIRI = vf.createIRI(versionIRIString);
         identifierIRI = vf.createIRI(identifierString);
 
-        ontologyType = vf.createIRI(OWL.ONTOLOGY.stringValue());
-        typeIRI = vf.createIRI(RDF.TYPE.stringValue());
-        versionIRIPred = vf.createIRI(OWL.VERSIONIRI.stringValue());
+        ontologyType = OWL.ONTOLOGY;
+        typeIRI = RDF.TYPE;
+        versionIRIPred = OWL.VERSIONIRI;
     }
 
     @After

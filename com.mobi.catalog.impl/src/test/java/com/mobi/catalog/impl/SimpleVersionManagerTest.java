@@ -42,7 +42,6 @@ import com.mobi.catalog.api.ontologies.mcat.Tag;
 import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
@@ -212,7 +211,7 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
         // Setup:
         Version version = versionFactory.createNew(ManagerTestConstants.VERSION_IRI);
         version.getModel().add(ManagerTestConstants.VERSION_IRI, DCTERMS.TITLE, VALUE_FACTORY.createLiteral("New Title"));
-        version.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.now().minusDays(1)), VALUE_FACTORY.createIRI(_Thing.modified_IRI));
+        version.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.now().minusDays(1)), DCTERMS.MODIFIED);
         String previousModifiedValue = ManagerTestConstants.getModifiedIriValue(version);
 
         try (RepositoryConnection conn = repo.getConnection()) {
@@ -230,7 +229,7 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
         // Setup:
         Tag tag = tagFactory.createNew(ManagerTestConstants.TAG_IRI);
         tag.getModel().add(ManagerTestConstants.TAG_IRI, DCTERMS.TITLE, VALUE_FACTORY.createLiteral("New Title"));
-        tag.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.now().minusDays(1)), VALUE_FACTORY.createIRI(_Thing.modified_IRI));
+        tag.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.now().minusDays(1)), DCTERMS.MODIFIED);
         String previousModifiedValue = ManagerTestConstants.getModifiedIriValue(tag);
 
         try (RepositoryConnection conn = repo.getConnection()) {

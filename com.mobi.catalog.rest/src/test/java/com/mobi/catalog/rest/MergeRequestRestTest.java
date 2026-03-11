@@ -23,7 +23,6 @@ package com.mobi.catalog.rest;
  * #L%
  */
 
-import static com.mobi.ontologies.rdfs.Resource.type_IRI;
 import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
@@ -74,7 +73,6 @@ import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
 import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
 import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter;
@@ -98,6 +96,8 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
@@ -247,10 +247,10 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
 
         comment1 = commentFactory.createNew(vf.createIRI("http://mobi.com/test/comments#1"));
         comment1.setOnMergeRequest(request1);
-        comment1.setProperty(vf.createLiteral("2018-11-05T13:40:55.257-07:00"), vf.createIRI(_Thing.issued_IRI));
-        comment1.setProperty(vf.createLiteral("2018-11-05T13:40:55.257-07:00"), vf.createIRI(_Thing.modified_IRI));
-        comment1.setProperty(user.getResource(), vf.createIRI(_Thing.creator_IRI));
-        comment1.setProperty(vf.createLiteral("Comment1"), vf.createIRI(_Thing.description_IRI));
+        comment1.setProperty(vf.createLiteral("2018-11-05T13:40:55.257-07:00"), DCTERMS.ISSUED);
+        comment1.setProperty(vf.createLiteral("2018-11-05T13:40:55.257-07:00"), DCTERMS.MODIFIED);
+        comment1.setProperty(user.getResource(), DCTERMS.CREATOR);
+        comment1.setProperty(vf.createLiteral("Comment1"), DCTERMS.DESCRIPTION);
         comment2 = commentFactory.createNew(vf.createIRI("http://mobi.com/test/comments#2"));
         comment2.setOnMergeRequest(request1);
         comment3 = commentFactory.createNew(vf.createIRI("http://mobi.com/test/comments#3"));
@@ -979,7 +979,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     public void retrieveMergeRequestStatusClosedTest() {
         Mockito.doReturn(false).when(rest).checkMergeRequestManagePermissions(any(), any());
         try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(request1.getResource(), vf.createIRI(type_IRI), vf.createIRI(ClosedMergeRequest.TYPE));
+            conn.add(request1.getResource(), RDF.TYPE, vf.createIRI(ClosedMergeRequest.TYPE));
         }
         Response response = target().path(String.format("merge-requests/%s/status", encode(request1.getResource().stringValue())))
                 .request().get();
@@ -992,7 +992,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     public void retrieveMergeRequestStatusAcceptedTest() {
         Mockito.doReturn(false).when(rest).checkMergeRequestManagePermissions(any(), any());
         try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(request1.getResource(), vf.createIRI(type_IRI), vf.createIRI(AcceptedMergeRequest.TYPE));
+            conn.add(request1.getResource(), RDF.TYPE, vf.createIRI(AcceptedMergeRequest.TYPE));
         }
         Response response = target().path(String.format("merge-requests/%s/status", encode(request1.getResource().stringValue())))
                 .request().get();
@@ -1005,7 +1005,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     public void retrieveMergeRequestStatusOpenTest() {
         Mockito.doReturn(false).when(rest).checkMergeRequestManagePermissions(any(), any());
         try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(request1.getResource(), vf.createIRI(type_IRI), vf.createIRI(MergeRequest.TYPE));
+            conn.add(request1.getResource(), RDF.TYPE, vf.createIRI(MergeRequest.TYPE));
         }
         Response response = target().path(String.format("merge-requests/%s/status", encode(request1.getResource().stringValue())))
                 .request().get();
@@ -1018,7 +1018,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     public void retrieveMergeRequestStatusNoAssociatedState() {
         Mockito.doReturn(false).when(rest).checkMergeRequestManagePermissions(any(), any());
         try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(request1.getResource(), vf.createIRI(type_IRI), vf.createIRI("urn:invalid"));
+            conn.add(request1.getResource(), RDF.TYPE, vf.createIRI("urn:invalid"));
         }
         Response response = target().path(String.format("merge-requests/%s/status", encode(request1.getResource().stringValue())))
                 .request().get();
@@ -1284,8 +1284,8 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         ArgumentCaptor<Comment> commentArgumentCaptor = ArgumentCaptor.forClass(Comment.class);
         verify(requestManager).updateComment(eq(comment1.getResource()), commentArgumentCaptor.capture());
         Comment comment = commentArgumentCaptor.getValue();
-        assertNotEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)), Optional.empty());
-        assertEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)).get().stringValue(), updateCommentText);
+        assertNotEquals(comment.getProperty(DCTERMS.DESCRIPTION), Optional.empty());
+        assertEquals(comment.getProperty(DCTERMS.DESCRIPTION).get().stringValue(), updateCommentText);
         assertEquals(200, response.getStatus());
     }
 
@@ -1309,8 +1309,8 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         ArgumentCaptor<Comment> commentArgumentCaptor = ArgumentCaptor.forClass(Comment.class);
         verify(requestManager).updateComment(eq(comment1.getResource()), commentArgumentCaptor.capture());
         Comment comment = commentArgumentCaptor.getValue();
-        assertNotEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)), Optional.empty());
-        assertEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)).get().stringValue(), largeComment);
+        assertNotEquals(comment.getProperty(DCTERMS.DESCRIPTION), Optional.empty());
+        assertEquals(comment.getProperty(DCTERMS.DESCRIPTION).get().stringValue(), largeComment);
         assertEquals(400, response.getStatus());
     }
 
@@ -1324,8 +1324,8 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         ArgumentCaptor<Comment> commentArgumentCaptor = ArgumentCaptor.forClass(Comment.class);
         verify(requestManager).updateComment(eq(comment1.getResource()), commentArgumentCaptor.capture());
         Comment comment = commentArgumentCaptor.getValue();
-        assertNotEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)), Optional.empty());
-        assertEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)).get().stringValue(), updateCommentText);
+        assertNotEquals(comment.getProperty(DCTERMS.DESCRIPTION), Optional.empty());
+        assertEquals(comment.getProperty(DCTERMS.DESCRIPTION).get().stringValue(), updateCommentText);
         assertEquals(500, response.getStatus());
     }
 
@@ -1549,7 +1549,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     @Test
     public void checkMergeRequestPermissionsCreatorTest() {
         MergeRequest mergeRequest = Mockito.mock(MergeRequest.class);
-        when(mergeRequest.getProperty(vf.createIRI(_Thing.creator_IRI))).thenReturn(Optional.of(vf.createIRI("urn:user1")));
+        when(mergeRequest.getProperty(DCTERMS.CREATOR)).thenReturn(Optional.of(vf.createIRI("urn:user1")));
 
         when(requestManager.getMergeRequest(any())).thenReturn(Optional.of(mergeRequest));
 
@@ -1563,7 +1563,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     @Test
     public void checkMergeRequestPermissionsCreatorAccessDeniedTest() {
         MergeRequest mergeRequest = Mockito.mock(MergeRequest.class);
-        when(mergeRequest.getProperty(vf.createIRI(_Thing.creator_IRI))).thenReturn(Optional.of(vf.createIRI("urn:user1")));
+        when(mergeRequest.getProperty(DCTERMS.CREATOR)).thenReturn(Optional.of(vf.createIRI("urn:user1")));
 
         when(requestManager.getMergeRequest(any())).thenReturn(Optional.of(mergeRequest));
 
@@ -1577,7 +1577,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     @Test
     public void checkMergeRequestPermissionsPepAccessDeniedFalseTest() {
         MergeRequest mergeRequest = Mockito.mock(MergeRequest.class);
-        when(mergeRequest.getProperty(vf.createIRI(_Thing.creator_IRI))).thenReturn(Optional.of(vf.createIRI("urn:user1")));
+        when(mergeRequest.getProperty(DCTERMS.CREATOR)).thenReturn(Optional.of(vf.createIRI("urn:user1")));
         when(mergeRequest.getOnRecord_resource()).thenReturn(Optional.of(vf.createIRI("urn:onRecord")));
 
         when(requestManager.getMergeRequest(any())).thenReturn(Optional.of(mergeRequest));
@@ -1600,7 +1600,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     @Test
     public void checkMergeRequestPermissionsPepAccessDeniedTrueTest() {
         MergeRequest mergeRequest = Mockito.mock(MergeRequest.class);
-        when(mergeRequest.getProperty(vf.createIRI(_Thing.creator_IRI))).thenReturn(Optional.of(vf.createIRI("urn:user1")));
+        when(mergeRequest.getProperty(DCTERMS.CREATOR)).thenReturn(Optional.of(vf.createIRI("urn:user1")));
         when(mergeRequest.getOnRecord_resource()).thenReturn(Optional.of(vf.createIRI("urn:onRecord")));
 
         when(requestManager.getMergeRequest(any())).thenReturn(Optional.of(mergeRequest));

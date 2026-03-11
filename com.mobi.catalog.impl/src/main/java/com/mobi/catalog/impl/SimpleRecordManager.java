@@ -45,7 +45,6 @@ import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.util.SearchResults;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.ConnectionUtils;
@@ -63,6 +62,8 @@ import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.query.TupleQuery;
@@ -545,7 +546,7 @@ public class SimpleRecordManager implements RecordManager {
     @Override
     public <T extends Record> void updateRecord(Resource catalogId, T newRecord, RepositoryConnection conn) {
         validateRecord(catalogId, newRecord.getResource(), recordFactory.getTypeIRI(), conn);
-        newRecord.setProperty(vf.createLiteral(OffsetDateTime.now()), vf.createIRI(_Thing.modified_IRI));
+        newRecord.setProperty(vf.createLiteral(OffsetDateTime.now()), DCTERMS.MODIFIED);
         thingManager.updateObject(newRecord, conn);
     }
 
@@ -668,9 +669,9 @@ public class SimpleRecordManager implements RecordManager {
      * Creates the base for the sorting options Object.
      */
     private void createRecordSortingOptions() {
-        sortingOptions.put(vf.createIRI(_Thing.modified_IRI), MODIFIED);
-        sortingOptions.put(vf.createIRI(_Thing.issued_IRI), "issued");
-        sortingOptions.put(vf.createIRI(_Thing.title_IRI), "title");
+        sortingOptions.put(DCTERMS.MODIFIED, MODIFIED);
+        sortingOptions.put(DCTERMS.ISSUED, "issued");
+        sortingOptions.put(DCTERMS.TITLE, "title");
     }
 
     private PaginatedSearchResults<Record> executeFindRecords(Resource catalogId,
@@ -699,9 +700,9 @@ public class SimpleRecordManager implements RecordManager {
                         );
                     }
                 })
-                .orElseGet(() -> new ResourceSortKey(vf.createIRI(_Thing.modified_IRI))); // Provide default if empty
+                .orElseGet(() -> new ResourceSortKey(DCTERMS.MODIFIED)); // Provide default if empty
         StringBuilder binding = new StringBuilder();
-        if (sortByParam.resource().equals(vf.createIRI(_Thing.title_IRI))) {
+        if (sortByParam.resource().equals(DCTERMS.TITLE)) {
             binding.append("lcase(?").append(sortingOptions.getOrDefault(sortByParam.resource(), MODIFIED)).append(")");
         } else {
             binding.append("?").append(sortingOptions.getOrDefault(sortByParam.resource(), MODIFIED));
@@ -756,7 +757,7 @@ public class SimpleRecordManager implements RecordManager {
      */
     private OrmFactory<? extends Record> getFactory(Resource recordId, RepositoryConnection conn, boolean exactOnly) {
         List<Resource> types = QueryResults.asList(
-                conn.getStatements(recordId, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null))
+                conn.getStatements(recordId, RDF.TYPE, null))
                 .stream()
                 .map(Statements::objectResource)
                 .filter(Optional::isPresent)

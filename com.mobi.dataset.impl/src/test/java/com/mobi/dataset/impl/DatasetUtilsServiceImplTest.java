@@ -32,13 +32,13 @@ import static org.mockito.Mockito.when;
 
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.ontology.dataset.Dataset;
-import com.mobi.ontologies.rdfs.Resource;
 import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -124,7 +124,7 @@ public class DatasetUtilsServiceImplTest extends OrmEnabledTestCase {
                     VALUE_FACTORY.createIRI(Dataset.systemDefaultNamedGraph_IRI),
                     DATASET_SDNG, DATASET_IRI));
             assertTrue(ConnectionUtils.contains(conn, DATASET_IRI,
-                    VALUE_FACTORY.createIRI(Resource.type_IRI),
+                    RDF.TYPE,
                     VALUE_FACTORY.createIRI(Dataset.TYPE),
                     DATASET_IRI));
         }
@@ -167,7 +167,7 @@ public class DatasetUtilsServiceImplTest extends OrmEnabledTestCase {
                     DATASET_SDNG,
                     DATASET_IRI));
             assertTrue(ConnectionUtils.contains(conn, DATASET_IRI,
-                    VALUE_FACTORY.createIRI(Resource.type_IRI),
+                    RDF.TYPE,
                     VALUE_FACTORY.createIRI(Dataset.TYPE),
                     DATASET_IRI));
         }

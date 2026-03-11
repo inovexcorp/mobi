@@ -71,6 +71,7 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.After;
 import org.junit.Before;
@@ -168,7 +169,7 @@ public class CommitRestTest extends MobiRestTestCXF {
 
     @Before
     public void setupMocks() throws Exception {
-        typeIRI = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
+        typeIRI = RDF.TYPE;
         recordFactory = getRequiredOrmFactory(Record.class);
         OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
         OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
@@ -181,7 +182,7 @@ public class CommitRestTest extends MobiRestTestCXF {
                 .collect(Collectors.toList());
 
         testRecord = recordFactory.createNew(vf.createIRI(RECORD_IRI));
-        testRecord.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        testRecord.setProperty(vf.createLiteral("Title"), DCTERMS.TITLE);
 
         user = userFactory.createNew(vf.createIRI(USER_IRI));
 

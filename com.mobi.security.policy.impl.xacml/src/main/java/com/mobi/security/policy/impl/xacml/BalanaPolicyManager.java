@@ -50,6 +50,7 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Activate;
@@ -118,14 +119,13 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
     @Activate
     @Modified
     protected void start(final PolicyManagerConfig config) {
-        typeIRI = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
+        typeIRI = RDF.TYPE;
         policyFileTypeIRI = vf.createIRI(PolicyFile.TYPE);
         protectedPolicies = new HashSet<>(List.of(
                 vf.createIRI("http://mobi.com/policies/admin-user-only-access-versioned-rdf-record")));
 
-        try {
-            LOG.debug("Setting up policy file directory");
-            VirtualFile file = this.vfs.resolveVirtualFile(config.policyFileLocation());
+        LOG.debug("Setting up policy file directory");
+        try (VirtualFile file = this.vfs.resolveVirtualFile(config.policyFileLocation())) {
             if (!file.exists()) {
                 if (config.createLocationIfNotExists()) {
                     LOG.debug("Directory does not exist. Creating it now.");
@@ -137,7 +137,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
                 throw new MobiException("Policy File Location " + config.policyFileLocation() + " is not a directory");
             }
             fileLocation = config.policyFileLocation();
-        } catch (VirtualFilesystemException e) {
+        } catch (Exception e) {
             throw new MobiException(e);
         }
 
@@ -218,40 +218,42 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
     @Override
     public void updatePolicy(XACMLPolicy newPolicy) {
         PolicyFile policyFile = validatePolicy(newPolicy.getId());
-        try {
-            BalanaPolicy balanaPolicy = getBalanaPolicy(newPolicy);
-            IRI filePath = getRetrievalURL(policyFile);
-            VirtualFile virtualFileOld = vfs.resolveVirtualFile(filePath.stringValue());
+        BalanaPolicy balanaPolicy = getBalanaPolicy(newPolicy);
+        IRI filePath = getRetrievalURL(policyFile);
+        try (VirtualFile virtualFileOld = vfs.resolveVirtualFile(filePath.stringValue())) {
             if (!virtualFileOld.exists()) {
                 throw new IllegalStateException("Policy file does not exist");
             }
-            VirtualFile virtualFileNew = vfs.resolveVirtualFile(balanaPolicy.toString().getBytes(), fileLocation);
-            LOG.debug("Updating policy file at " + filePath + " to file at " + virtualFileNew.getIdentifier());
-            setRelatedProperties(policyFile, balanaPolicy);
-            policyFile.setChecksum(getChecksum(balanaPolicy));
-            policyFile.setRetrievalURL(vf.createIRI(virtualFileNew.getIdentifier()));
-            policyFile.setFileName(virtualFileNew.getIdentifier() + ".xml");
-            if (!virtualFileNew.getIdentifier().equals(virtualFileOld.getIdentifier())) {
-                virtualFileOld.delete();
+            try (VirtualFile virtualFileNew = vfs.resolveVirtualFile(balanaPolicy.toString().getBytes(),
+                    fileLocation)) {
+                LOG.debug("Updating policy file at {} to file at {}", filePath, virtualFileNew.getIdentifier());
+                setRelatedProperties(policyFile, balanaPolicy);
+                policyFile.setChecksum(getChecksum(balanaPolicy));
+                policyFile.setRetrievalURL(vf.createIRI(virtualFileNew.getIdentifier()));
+                policyFile.setFileName(virtualFileNew.getIdentifier() + ".xml");
+                if (!virtualFileNew.getIdentifier().equals(virtualFileOld.getIdentifier())) {
+                    virtualFileOld.delete();
+                }
+                try (RepositoryConnection conn = repository.getConnection()) {
+                    conn.clear(newPolicy.getId());
+                    conn.add(policyFile.getModel(), newPolicy.getId());
+                }
+                policyCache.getPolicyCache()
+                        .ifPresent(cache -> cache.replace(newPolicy.getId().stringValue(), balanaPolicy));
+            } catch (IOException e) {
+                throw new IllegalStateException("Could not save XACML Policy to disk due to: ", e);
             }
-            try (RepositoryConnection conn = repository.getConnection()) {
-                conn.clear(newPolicy.getId());
-                conn.add(policyFile.getModel(), newPolicy.getId());
-            }
-            policyCache.getPolicyCache()
-                    .ifPresent(cache -> cache.replace(newPolicy.getId().stringValue(), balanaPolicy));
-        } catch (IOException e) {
-            throw new IllegalStateException("Could not save XACML Policy to disk due to: ", e);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to close virtual file for " + filePath.stringValue(), e);
         }
     }
 
     @Override
     public void deletePolicy(Resource policyId) {
         PolicyFile policyFile = validatePolicy(policyId);
-        try {
-            IRI filePath = getRetrievalURL(policyFile);
-            LOG.debug("Removing policy file at " + filePath);
-            VirtualFile file = vfs.resolveVirtualFile(filePath.stringValue());
+        IRI filePath = getRetrievalURL(policyFile);
+        LOG.debug("Removing policy file at {}", filePath);
+        try (VirtualFile file = vfs.resolveVirtualFile(filePath.stringValue())) {
             if (file.exists()) {
                 file.delete();
             }
@@ -262,6 +264,8 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
             systemPolicies.remove(policyId);
         } catch (VirtualFilesystemException e) {
             throw new IllegalStateException("Could not remove XACML Policy on disk due to: ", e);
+        } catch (Exception e) {
+            throw new MobiException(e);
         }
     }
 
@@ -440,7 +444,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
                             // after a Restore command of an older malformed backup
                             if (policyIdPaths.containsKey(systemPolicyId)
                                     && policyIdPaths.get(systemPolicyId).size() > 1) {
-                                LOG.info("Duplicate systemPolicyId for " + systemPolicyId.stringValue());
+                                LOG.info("Duplicate systemPolicyId for {}", systemPolicyId.stringValue());
                                 // Remove systemPolicyId graph
                                 conn.clear(systemPolicyId);
                                 // Delete each existing file on disk for the given systemPolicyId
@@ -449,10 +453,10 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
                                         LOG.info("Deleting file" + pathStr);
                                         boolean result = Files.deleteIfExists(Paths.get(pathStr));
                                         if (!result) {
-                                            LOG.error("Could not find file " + pathStr);
+                                            LOG.error("Could not find file {}", pathStr);
                                         }
                                     } catch (IOException e) {
-                                        LOG.error("Could not delete file " + pathStr);
+                                        LOG.error("Could not delete file {}", pathStr);
                                     }
                                 });
                             }
@@ -465,8 +469,8 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
                             } else {
                                 PolicyFile policy = validatePolicy(systemPolicyId);
                                 Optional<IRI> retrievalUrl = policy.getRetrievalURL();
-                                if (retrievalUrl.isEmpty() ||
-                                        !vfs.resolveVirtualFile(retrievalUrl.get().stringValue()).exists()) {
+                                if (retrievalUrl.isEmpty()
+                                        || !vfs.resolveVirtualFile(retrievalUrl.get().stringValue()).exists()) {
                                     VirtualFile file = vfs.resolveVirtualFile(Files.newInputStream(path), fileLocation);
                                     addPolicyFile(file, file.getIdentifier() + ".xml", getPolicyFromFile(file));
                                 }
@@ -502,8 +506,8 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
                 BalanaPolicy balanaPolicy = getPolicyFromFile(file);
                 if (!policyIdPaths.containsKey(balanaPolicy.getId())) {
                     addPolicyFile(file, file.getIdentifier() + ".xml", balanaPolicy);
-                } else if (!policyIdPaths.get(balanaPolicy.getId()).contains(file.getIdentifier())){
-                    LOG.info("Found duplicate policyId for " + balanaPolicy.getId().stringValue());
+                } else if (!policyIdPaths.get(balanaPolicy.getId()).contains(file.getIdentifier())) {
+                    LOG.info("Found duplicate policyId for {}", balanaPolicy.getId().stringValue());
                 }
                 policyIdPaths.putIfAbsent(balanaPolicy.getId(), new HashSet<>());
                 policyIdPaths.get(balanaPolicy.getId()).add(generatePath(file.getIdentifier()));
@@ -531,16 +535,11 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
                         AttributeDesignatorType attributeDesignator = matchType.getAttributeDesignator();
                         String value = matchType.getAttributeValue().getContent().get(0).toString();
                         switch (attributeDesignator.getAttributeId()) {
-                            case XACML.RESOURCE_ID:
-                                relatedResources.add(vf.createIRI(value));
-                                break;
-                            case XACML.SUBJECT_ID:
-                                relatedSubjects.add(vf.createIRI(value));
-                                break;
-                            case XACML.ACTION_ID:
-                                relatedActions.add(vf.createIRI(value));
-                                break;
-                            default:
+                            case XACML.RESOURCE_ID -> relatedResources.add(vf.createIRI(value));
+                            case XACML.SUBJECT_ID -> relatedSubjects.add(vf.createIRI(value));
+                            case XACML.ACTION_ID -> relatedActions.add(vf.createIRI(value));
+                            default -> {
+                            }
                         }
                     })));
         }

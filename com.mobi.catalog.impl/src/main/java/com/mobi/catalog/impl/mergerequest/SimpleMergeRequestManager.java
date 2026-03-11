@@ -73,6 +73,7 @@ import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -170,7 +171,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
                     .getResourceAsStream("/merge-request/get-merge-request-record-counts.rq")),
                     StandardCharsets.UTF_8
             );
-            TYPE_IRI = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
+            TYPE_IRI = RDF.TYPE;
             ACCEPTED_MERGE_REQUEST_IRI = vf.createIRI(AcceptedMergeRequest.TYPE);
             CLOSED_MERGE_REQUEST_IRI = vf.createIRI(ClosedMergeRequest.TYPE);
             TARGET_BRANCH_IRI = vf.createIRI(MergeRequest.targetBranch_IRI);
@@ -350,7 +351,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
         closedRequest.clearSourceCommit();
         closedRequest.clearTargetCommit();
         closedRequest.getProperty(TYPE_IRI)
-                .ifPresent(CLOSED_MERGE_REQUEST_IRI -> closedRequest.removeProperty(CLOSED_MERGE_REQUEST_IRI, TYPE_IRI));
+                .ifPresent(closedTypeIRI -> closedRequest.removeProperty(closedTypeIRI, TYPE_IRI));
         thingManager.updateObject(closedRequest, conn);
     }
 
@@ -382,7 +383,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
                                    List<Resource> deletedCommits, RepositoryConnection conn) {
         // Find all MRs for the Record (all statuses)
         MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder();
-        builder.setOnRecords(Arrays.asList(recordId));
+        builder.setOnRecords(Collections.singletonList(recordId));
         builder.setRequestStatus(null);
         List<MergeRequest> mergeRequests = getMergeRequests(builder.build(), conn);
 
@@ -399,9 +400,10 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     }
 
     /**
-     * Clear MergeRequest
+     * Clear MergeRequest.
      * - refers to the deleted Branch as a Target, remove the targetBranch value
      * - refers to the deleted Branch as a Source, remove the MR completely
+     *
      * @param mergeRequest A MergeRequest to clear
      * @param branchId A Resource of the branchId representing a deleted Branch
      * @param conn A RepositoryConnection to use for lookup
@@ -422,7 +424,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     }
 
     /**
-     * Clear ClosedMergeRequest
+     * Clear ClosedMergeRequest.
      * - refers to the deleted Branch as a Target, remove the targetBranch value and
      *   replace with the targetBranchTitle property
      * - refers to the deleted Branch as a Source, remove the sourceBranch value and
@@ -602,7 +604,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     @Override
     public void deleteMergeRequestsWithRecordId(Resource recordId, RepositoryConnection conn) {
         MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder();
-        builder.setOnRecords(Arrays.asList(recordId));
+        builder.setOnRecords(Collections.singletonList(recordId));
 
         List<MergeRequest> mergeRequests = getMergeRequests(builder.build(), conn);
         mergeRequests.forEach(mergeRequest -> deleteMergeRequest(mergeRequest.getResource(), conn));
@@ -678,14 +680,19 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
         LOG.trace("Fetching list of Merge Requests");
         // Create filters used for query from params
         StringBuilder filters = new StringBuilder();
-        if (params.getRequestStatus() != (null)) {
-            if (params.getRequestStatus().equals(REQUEST_STATUS_OPEN)) {
-                filters.append("FILTER NOT EXISTS { ?").append(REQUEST_ID_BINDING).append(" a mq:AcceptedMergeRequest . }\n ")
-                        .append("FILTER NOT EXISTS { ?").append(REQUEST_ID_BINDING).append(" a mq:ClosedMergeRequest . } ");
-            } else if (params.getRequestStatus().equals(REQUEST_STATUS_CL0SED)) {
-                filters.append("FILTER EXISTS { ?").append(REQUEST_ID_BINDING).append(" a mq:ClosedMergeRequest . } ");
-            } else if (params.getRequestStatus().equals(REQUEST_STATUS_ACCEPTED)) {
-                filters.append("FILTER EXISTS { ?").append(REQUEST_ID_BINDING).append(" a mq:AcceptedMergeRequest . } ");
+        if (params.getRequestStatus() != null) {
+            switch (params.getRequestStatus()) {
+                case REQUEST_STATUS_OPEN ->
+                        filters.append("FILTER NOT EXISTS { ?").append(REQUEST_ID_BINDING)
+                                .append(" a mq:AcceptedMergeRequest . }\n ")
+                                .append("FILTER NOT EXISTS { ?").append(REQUEST_ID_BINDING)
+                                .append(" a mq:ClosedMergeRequest . } ");
+                case REQUEST_STATUS_CL0SED ->
+                        filters.append("FILTER EXISTS { ?").append(REQUEST_ID_BINDING)
+                                .append(" a mq:ClosedMergeRequest . } ");
+                case REQUEST_STATUS_ACCEPTED ->
+                        filters.append("FILTER EXISTS { ?").append(REQUEST_ID_BINDING)
+                                .append(" a mq:AcceptedMergeRequest . } ");
             }
         }
 
@@ -919,7 +926,8 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     }
 
     @Override
-    public PaginatedSearchResults<UserCount> getAssignees(PaginatedSearchParams params, RepositoryConnection conn, Resource user) {
+    public PaginatedSearchResults<UserCount> getAssignees(PaginatedSearchParams params, RepositoryConnection conn,
+                                                          Resource user) {
         return getUserCounts(vf.createIRI(MergeRequest.assignee_IRI), params, conn, user);
     }
 

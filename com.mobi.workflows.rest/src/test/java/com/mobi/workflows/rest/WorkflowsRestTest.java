@@ -246,7 +246,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         commitId = vf.createIRI("http://mobi.com/commit");
         binaryFileId = vf.createIRI("http://mobi.com/binaryFile");
 
-        IRI titleIRI = vf.createIRI(DCTERMS.TITLE.stringValue());
+        IRI titleIRI = DCTERMS.TITLE;
         Model additions = mf.createEmptyModel();
         additions.add(catalogId, titleIRI, vf.createLiteral("Addition"));
         Model deletions = mf.createEmptyModel();

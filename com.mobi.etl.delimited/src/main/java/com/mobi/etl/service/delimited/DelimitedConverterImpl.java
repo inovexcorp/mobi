@@ -38,7 +38,6 @@ import com.mobi.exception.MobiException;
 import com.mobi.ontology.core.api.DataProperty;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.vocabularies.xsd.XSD;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
@@ -58,6 +57,8 @@ import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.model.vocabulary.XSD;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.WriterConfig;
@@ -298,8 +299,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
 
         Set<Resource> mapsTo = cm.getMapsTo_resource();
         mapsTo.forEach(resource ->
-                        convertedRDF.add(classInstance,
-                                valueFactory.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), resource));
+                        convertedRDF.add(classInstance, RDF.TYPE, resource));
         if (mapsTo.isEmpty()) {
             throw new MobiETLException("Invalid mapping configuration. Missing mapsTo property on "
                     + cm.getResource());
@@ -309,7 +309,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
 
         cm.getDataProperty().forEach(dataMapping -> {
             // Default datatype is xsd:string
-            final IRI[] datatype = {org.eclipse.rdf4j.model.vocabulary.XSD.STRING};
+            final IRI[] datatype = {XSD.STRING};
             Optional<Resource> datatypeOpt = dataMapping.getDatatypeSpec_resource();
             Optional<Value> languageOpt = dataMapping.getLanguageSpec();
             int columnIndex = dataMapping.getColumnIndex().iterator().next();
@@ -340,12 +340,12 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                         }
                         try {
                             // Validate URIs specifically
-                            if (Objects.equals(datatype[0].stringValue(), XSD.ANYURI)) {
+                            if (Objects.equals(datatype[0], XSD.ANYURI)) {
                                 valueFactory.createIRI(nextLine[columnIndex]);
                             }
                             // Transform any potential boolean values to lowercase as ValidatingValueFactory doesn't
                             // accept uppercase TRUE and FALSE
-                            if (Objects.equals(datatype[0].stringValue(), XSD.BOOLEAN)) {
+                            if (Objects.equals(datatype[0], XSD.BOOLEAN)) {
                                 literal = valueFactory.createLiteral(nextLine[columnIndex].toLowerCase(), datatype[0]);
                             } else {
                                 literal = valueFactory.createLiteral(nextLine[columnIndex], datatype[0]);
@@ -513,9 +513,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
     private ArrayList<ClassMapping> parseClassMappings(Model mappingModel) {
         ArrayList<ClassMapping> classMappings = new ArrayList<>();
 
-        Model classMappingModel = mappingModel.filter(null,
-                valueFactory.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI),
-                valueFactory.createIRI(ClassMapping.TYPE));
+        Model classMappingModel = mappingModel.filter(null, RDF.TYPE, valueFactory.createIRI(ClassMapping.TYPE));
         classMappingModel.subjects().forEach(cmSubject -> {
             classMappingFactory.getExisting(cmSubject, mappingModel).ifPresent(classMappings::add);
         });

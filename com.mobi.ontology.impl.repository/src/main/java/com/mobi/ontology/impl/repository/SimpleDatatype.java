@@ -24,16 +24,16 @@ package com.mobi.ontology.impl.repository;
  */
 
 import com.mobi.ontology.core.api.Datatype;
-import com.mobi.vocabularies.xsd.XSD;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
+import org.eclipse.rdf4j.model.vocabulary.XSD;
 
 import javax.annotation.Nonnull;
 
 
 public class SimpleDatatype implements Datatype {
 
-    private IRI iri;
+    private final IRI iri;
 
     public SimpleDatatype(@Nonnull IRI iri) {
         this.iri = iri;
@@ -42,37 +42,37 @@ public class SimpleDatatype implements Datatype {
 
     @Override
     public boolean isString() {
-        return iri.stringValue().equals(XSD.STRING);
+        return iri.equals(XSD.STRING);
     }
 
 
     @Override
     public boolean isInteger() {
-        return iri.stringValue().equals(XSD.INTEGER);
+        return iri.equals(XSD.INTEGER);
     }
 
 
     @Override
     public boolean isFloat()   {
-        return iri.stringValue().equals(XSD.FLOAT);
+        return iri.equals(XSD.FLOAT);
     }
 
 
     @Override
     public boolean isDouble() {
-        return iri.stringValue().equals(XSD.DOUBLE);
+        return iri.equals(XSD.DOUBLE);
     }
 
 
     @Override
     public boolean isBoolean() {
-        return iri.stringValue().equals(XSD.BOOLEAN);
+        return iri.equals(XSD.BOOLEAN);
     }
 
 
     @Override
     public boolean isRDFPlainLiteral() {
-        return iri.stringValue().equals(RDFS.LITERAL.stringValue());
+        return iri.equals(RDFS.LITERAL);
     }
 
 
@@ -87,8 +87,7 @@ public class SimpleDatatype implements Datatype {
             return true;
         }
 
-        if (obj instanceof Datatype) {
-            Datatype other = (Datatype) obj;
+        if (obj instanceof Datatype other) {
             return iri.equals(other.getIRI());
         }
 

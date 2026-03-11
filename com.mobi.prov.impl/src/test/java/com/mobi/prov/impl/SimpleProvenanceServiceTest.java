@@ -29,7 +29,6 @@ import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Mockito.when;
 
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
 import com.mobi.persistence.utils.ConnectionUtils;
@@ -40,9 +39,9 @@ import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
-import java.util.List;
 import junit.framework.TestCase;
 import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
@@ -53,6 +52,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 public class SimpleProvenanceServiceTest extends OrmEnabledTestCase {
@@ -169,7 +169,6 @@ public class SimpleProvenanceServiceTest extends OrmEnabledTestCase {
     @Test
     public void updateActivityTest() throws Exception {
         // Setup:
-        IRI titleIRI = VALUE_FACTORY.createIRI(_Thing.title_IRI);
         Activity activity = activityFactory.createNew(activityIRI);
         Entity generated = entityFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/generated"), activity.getModel());
         Entity invalidated = entityFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/invalidated"), activity.getModel());
@@ -180,10 +179,10 @@ public class SimpleProvenanceServiceTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(activity.getModel());
         }
-        activity.addProperty(VALUE_FACTORY.createLiteral("Activity"), titleIRI);
-        generated.addProperty(VALUE_FACTORY.createLiteral("Generated"), titleIRI);
-        invalidated.addProperty(VALUE_FACTORY.createLiteral("Invalidated"), titleIRI);
-        used.addProperty(VALUE_FACTORY.createLiteral("Used"), titleIRI);
+        activity.addProperty(VALUE_FACTORY.createLiteral("Activity"), DCTERMS.TITLE);
+        generated.addProperty(VALUE_FACTORY.createLiteral("Generated"), DCTERMS.TITLE);
+        invalidated.addProperty(VALUE_FACTORY.createLiteral("Invalidated"), DCTERMS.TITLE);
+        used.addProperty(VALUE_FACTORY.createLiteral("Used"), DCTERMS.TITLE);
 
         service.updateActivity(activity);
         try (RepositoryConnection conn = repo.getConnection()) {
@@ -200,7 +199,7 @@ public class SimpleProvenanceServiceTest extends OrmEnabledTestCase {
     public void updateActivityThatIsNotAnActivityTest() {
         // Setup:
         try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(activityIRI, VALUE_FACTORY.createIRI(_Thing.title_IRI), VALUE_FACTORY.createLiteral("Title"));
+            conn.add(activityIRI, DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Title"));
         }
 
         service.updateActivity(activityFactory.createNew(activityIRI));

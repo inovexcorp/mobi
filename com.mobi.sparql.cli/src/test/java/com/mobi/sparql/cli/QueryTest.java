@@ -31,9 +31,9 @@ import com.mobi.catalog.api.builder.Difference;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
-import com.mobi.vocabularies.xsd.XSD;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.util.Models;
+import org.eclipse.rdf4j.model.vocabulary.XSD;
 import org.eclipse.rdf4j.query.parser.ParsedUpdate;
 import org.eclipse.rdf4j.query.parser.sparql.SPARQLParser;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -269,7 +269,7 @@ public class QueryTest extends OrmEnabledTestCase {
                     VALUE_FACTORY.createLiteral("Fundamentals of Compiler Design"));
             conn.add(VALUE_FACTORY.createIRI("http://example/book1"),
                     VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
-                    VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)));
+                    VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", XSD.DATETIME));
             conn.add(VALUE_FACTORY.createIRI("http://example/book2"),
                     VALUE_FACTORY.createIRI("http://example.org/ns#price"),
                     VALUE_FACTORY.createLiteral(42));
@@ -281,7 +281,7 @@ public class QueryTest extends OrmEnabledTestCase {
                     VALUE_FACTORY.createLiteral("Edmund Wells"));
             conn.add(VALUE_FACTORY.createIRI("http://example/book2"),
                     VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
-                    VALUE_FACTORY.createLiteral("1948-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)));
+                    VALUE_FACTORY.createLiteral("1948-01-01T00:00:00-02:00", XSD.DATETIME));
             conn.add(VALUE_FACTORY.createIRI("http://example/book3"),
                     VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
                     VALUE_FACTORY.createLiteral("SPARQL 1.1 Tutorial"));
@@ -308,7 +308,7 @@ public class QueryTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createLiteral("Fundamentals of Compiler Design"));
         expectedDeletes.add(VALUE_FACTORY.createIRI("http://example/book1"),
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
-                VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)));
+                VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", XSD.DATETIME));
 
         assertTrue(Models.isomorphic(expectedInserts, result.getAdditions()));
         assertTrue(Models.isomorphic(expectedDeletes, result.getDeletions()));
@@ -323,7 +323,7 @@ public class QueryTest extends OrmEnabledTestCase {
                     VALUE_FACTORY.createIRI("http://example/bookStore"));
             conn.add(VALUE_FACTORY.createIRI("http://example/book1"),
                     VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
-                    VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                    VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", XSD.DATETIME),
                     VALUE_FACTORY.createIRI("http://example/bookStore"));
             conn.add(VALUE_FACTORY.createIRI("http://example/book2"),
                     VALUE_FACTORY.createIRI("http://example.org/ns#price"),
@@ -339,7 +339,7 @@ public class QueryTest extends OrmEnabledTestCase {
                     VALUE_FACTORY.createIRI("http://example/bookStore"));
             conn.add(VALUE_FACTORY.createIRI("http://example/book2"),
                     VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
-                    VALUE_FACTORY.createLiteral("1948-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                    VALUE_FACTORY.createLiteral("1948-01-01T00:00:00-02:00", XSD.DATETIME),
                     VALUE_FACTORY.createIRI("http://example/bookStore"));
             conn.add(VALUE_FACTORY.createIRI("http://example/book3"),
                     VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
@@ -372,7 +372,7 @@ public class QueryTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createIRI("http://example/bookStore2"));
         expectedInserts.add(VALUE_FACTORY.createIRI("http://example/book1"),
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
-                VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", XSD.DATETIME),
                 VALUE_FACTORY.createIRI("http://example/bookStore2"));
 
         Model expectedDeletes = MODEL_FACTORY.createEmptyModel();
@@ -390,7 +390,7 @@ public class QueryTest extends OrmEnabledTestCase {
                     VALUE_FACTORY.createIRI("http://example/bookStore"));
             conn.add(VALUE_FACTORY.createIRI("http://example/book1"),
                     VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
-                    VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                    VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", XSD.DATETIME),
                     VALUE_FACTORY.createIRI("http://example/bookStore"));
             conn.add(VALUE_FACTORY.createIRI("http://example/book2"),
                     VALUE_FACTORY.createIRI("http://example.org/ns#price"),
@@ -406,7 +406,7 @@ public class QueryTest extends OrmEnabledTestCase {
                     VALUE_FACTORY.createIRI("http://example/bookStore"));
             conn.add(VALUE_FACTORY.createIRI("http://example/book2"),
                     VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
-                    VALUE_FACTORY.createLiteral("1948-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                    VALUE_FACTORY.createLiteral("1948-01-01T00:00:00-02:00", XSD.DATETIME),
                     VALUE_FACTORY.createIRI("http://example/bookStore"));
             conn.add(VALUE_FACTORY.createIRI("http://example/book3"),
                     VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
@@ -418,7 +418,7 @@ public class QueryTest extends OrmEnabledTestCase {
                     VALUE_FACTORY.createIRI("http://example/bookStore2"));
             conn.add(VALUE_FACTORY.createIRI("http://example/book4"),
                     VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
-                    VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                    VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", XSD.DATETIME),
                     VALUE_FACTORY.createIRI("http://example/bookStore2"));
         }
 
@@ -443,7 +443,7 @@ public class QueryTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createIRI("http://example/bookStore"));
         expectedInserts.add(VALUE_FACTORY.createIRI("http://example/book1"),
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
-                VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", XSD.DATETIME),
                 VALUE_FACTORY.createIRI("http://example/bookStore"));
         expectedInserts.add(VALUE_FACTORY.createIRI("http://example/book4"),
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
@@ -451,7 +451,7 @@ public class QueryTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createIRI("http://example/bookStore2"));
         expectedInserts.add(VALUE_FACTORY.createIRI("http://example/book4"),
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
-                VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", XSD.DATETIME),
                 VALUE_FACTORY.createIRI("http://example/bookStore2"));
 
         Model expectedDeletes = MODEL_FACTORY.createEmptyModel();
@@ -469,7 +469,7 @@ public class QueryTest extends OrmEnabledTestCase {
                     VALUE_FACTORY.createIRI("http://example/bookStore"));
             conn.add(VALUE_FACTORY.createIRI("http://example/book1"),
                     VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
-                    VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                    VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", XSD.DATETIME),
                     VALUE_FACTORY.createIRI("http://example/bookStore"));
             conn.add(VALUE_FACTORY.createIRI("http://example/book2"),
                     VALUE_FACTORY.createIRI("http://example.org/ns#price"),
@@ -485,7 +485,7 @@ public class QueryTest extends OrmEnabledTestCase {
                     VALUE_FACTORY.createIRI("http://example/bookStore"));
             conn.add(VALUE_FACTORY.createIRI("http://example/book2"),
                     VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
-                    VALUE_FACTORY.createLiteral("1948-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                    VALUE_FACTORY.createLiteral("1948-01-01T00:00:00-02:00", XSD.DATETIME),
                     VALUE_FACTORY.createIRI("http://example/bookStore"));
             conn.add(VALUE_FACTORY.createIRI("http://example/book3"),
                     VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
@@ -497,7 +497,7 @@ public class QueryTest extends OrmEnabledTestCase {
                     VALUE_FACTORY.createIRI("http://example/bookStore2"));
             conn.add(VALUE_FACTORY.createIRI("http://example/book4"),
                     VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
-                    VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                    VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", XSD.DATETIME),
                     VALUE_FACTORY.createIRI("http://example/bookStore2"));
         }
 
@@ -522,7 +522,7 @@ public class QueryTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createIRI("http://example/bookStore"));
         expectedDeletes.add(VALUE_FACTORY.createIRI("http://example/book1"),
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
-                VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", XSD.DATETIME),
                 VALUE_FACTORY.createIRI("http://example/bookStore"));
         expectedDeletes.add(VALUE_FACTORY.createIRI("http://example/book4"),
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
@@ -530,7 +530,7 @@ public class QueryTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createIRI("http://example/bookStore2"));
         expectedDeletes.add(VALUE_FACTORY.createIRI("http://example/book4"),
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
-                VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", XSD.DATETIME),
                 VALUE_FACTORY.createIRI("http://example/bookStore2"));
 
         Model expectedInserts = MODEL_FACTORY.createEmptyModel();
@@ -580,7 +580,7 @@ public class QueryTest extends OrmEnabledTestCase {
                     VALUE_FACTORY.createIRI("http://example/bookStore"));
             conn.add(VALUE_FACTORY.createIRI("http://example/book1"),
                     VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
-                    VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                    VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", XSD.DATETIME),
                     VALUE_FACTORY.createIRI("http://example/bookStore"));
             conn.add(VALUE_FACTORY.createIRI("http://example/book1"),
                     VALUE_FACTORY.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
@@ -626,7 +626,7 @@ public class QueryTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createIRI("http://example/bookStore2"));
         expectedInserts.add(VALUE_FACTORY.createIRI("http://example/book1"),
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
-                VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", XSD.DATETIME),
                 VALUE_FACTORY.createIRI("http://example/bookStore2"));
         expectedInserts.add(VALUE_FACTORY.createIRI("http://example/book1"),
                 VALUE_FACTORY.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
@@ -640,7 +640,7 @@ public class QueryTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createIRI("http://example/bookStore"));
         expectedDeletes.add(VALUE_FACTORY.createIRI("http://example/book1"),
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
-                VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", XSD.DATETIME),
                 VALUE_FACTORY.createIRI("http://example/bookStore"));
         expectedDeletes.add(VALUE_FACTORY.createIRI("http://example/book1"),
                 VALUE_FACTORY.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
@@ -660,7 +660,7 @@ public class QueryTest extends OrmEnabledTestCase {
                     VALUE_FACTORY.createIRI("http://example/bookStore"));
             conn.add(VALUE_FACTORY.createIRI("http://example/book1"),
                     VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
-                    VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                    VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", XSD.DATETIME),
                     VALUE_FACTORY.createIRI("http://example/bookStore"));
             conn.add(VALUE_FACTORY.createIRI("http://example/book1"),
                     VALUE_FACTORY.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
@@ -706,7 +706,7 @@ public class QueryTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createIRI("http://example/bookStore2"));
         expectedInserts.add(VALUE_FACTORY.createIRI("http://example/book1"),
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
-                VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", XSD.DATETIME),
                 VALUE_FACTORY.createIRI("http://example/bookStore2"));
         expectedInserts.add(VALUE_FACTORY.createIRI("http://example/book1"),
                 VALUE_FACTORY.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
@@ -720,7 +720,7 @@ public class QueryTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createIRI("http://example/bookStore"));
         expectedDeletes.add(VALUE_FACTORY.createIRI("http://example/book1"),
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
-                VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", XSD.DATETIME),
                 VALUE_FACTORY.createIRI("http://example/bookStore"));
         expectedDeletes.add(VALUE_FACTORY.createIRI("http://example/book1"),
                 VALUE_FACTORY.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),

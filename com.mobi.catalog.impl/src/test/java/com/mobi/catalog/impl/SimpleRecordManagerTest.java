@@ -53,7 +53,6 @@ import com.mobi.catalog.api.record.config.RecordExportSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
@@ -887,7 +886,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
         // Setup:
         Record record = recordFactory.createNew(ManagerTestConstants.RECORD_IRI);
         record.setKeyword(Stream.of(VALUE_FACTORY.createLiteral("keyword1")).collect(Collectors.toSet()));
-        record.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.now().minusDays(1)), VALUE_FACTORY.createIRI(_Thing.modified_IRI));
+        record.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.now().minusDays(1)), DCTERMS.MODIFIED);
         String previousModifiedValue = ManagerTestConstants.getModifiedIriValue(record);
 
         try (RepositoryConnection conn = repo.getConnection()) {
@@ -904,7 +903,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
         // Setup:
         UnversionedRecord record = unversionedRecordFactory.createNew(ManagerTestConstants.UNVERSIONED_RECORD_IRI);
         record.setKeyword(Stream.of(VALUE_FACTORY.createLiteral("keyword1")).collect(Collectors.toSet()));
-        record.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.now().minusDays(1)), VALUE_FACTORY.createIRI(_Thing.modified_IRI));
+        record.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.now().minusDays(1)), DCTERMS.MODIFIED);
         String previousModifiedValue = ManagerTestConstants.getModifiedIriValue(record);
 
         try (RepositoryConnection conn = repo.getConnection()) {
@@ -921,7 +920,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
         // Setup:
         VersionedRecord record = versionedRecordFactory.createNew(ManagerTestConstants.VERSIONED_RECORD_IRI);
         record.setKeyword(Stream.of(VALUE_FACTORY.createLiteral("keyword1")).collect(Collectors.toSet()));
-        record.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.now().minusDays(1)), VALUE_FACTORY.createIRI(_Thing.modified_IRI));
+        record.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.now().minusDays(1)), DCTERMS.MODIFIED);
         String previousModifiedValue = ManagerTestConstants.getModifiedIriValue(record);
 
         try (RepositoryConnection conn = repo.getConnection()) {
@@ -938,7 +937,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
         // Setup:
         VersionedRDFRecord record = versionedRDFRecordFactory.createNew(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI);
         record.setKeyword(Stream.of(VALUE_FACTORY.createLiteral("keyword1")).collect(Collectors.toSet()));
-        record.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.now().minusDays(1)), VALUE_FACTORY.createIRI(_Thing.modified_IRI));
+        record.setProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.now().minusDays(1)), DCTERMS.MODIFIED);
         String previousModifiedValue = ManagerTestConstants.getModifiedIriValue(record);
 
         try (RepositoryConnection conn = repo.getConnection()) {

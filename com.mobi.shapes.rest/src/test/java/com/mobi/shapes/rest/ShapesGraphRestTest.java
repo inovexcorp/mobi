@@ -204,7 +204,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
         inProgressCommit = inProgressCommitFactory.createNew(inProgressCommitId);
 
-        IRI titleIRI = vf.createIRI(DCTERMS.TITLE.stringValue());
+        IRI titleIRI = DCTERMS.TITLE;
         Model additions = mf.createEmptyModel();
         additions.add(catalogId, titleIRI, vf.createLiteral("Addition"));
         Model deletions = mf.createEmptyModel();

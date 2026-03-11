@@ -309,7 +309,7 @@ public class UserRest {
 
         try {
             Model userModel = jsonldToModel(newUserStr);
-            Set<Resource> subjects = userModel.filter(null, vf.createIRI(RDF.TYPE.stringValue()),
+            Set<Resource> subjects = userModel.filter(null, RDF.TYPE,
                     vf.createIRI(User.TYPE)).subjects();
             if (subjects.size() < 1) {
                 throw ErrorUtils.sendError("User must have an ID", Response.Status.BAD_REQUEST);

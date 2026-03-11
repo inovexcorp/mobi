@@ -182,7 +182,7 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
         when(user.getResource()).thenReturn(USER_IRI);
         when(user.getUsername()).thenReturn(Optional.of(VALUE_FACTORY.createLiteral(USERNAME)));
         Model model = MODEL_FACTORY.createEmptyModel();
-        model.add(user.getResource(), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(User.TYPE));
+        model.add(user.getResource(), RDF.TYPE, VALUE_FACTORY.createIRI(User.TYPE));
         when(user.getModel()).thenReturn(model);
 
         when(aUserFactory.getTypeIRI()).thenReturn(VALUE_FACTORY.createIRI(AUser.TYPE));
@@ -194,7 +194,7 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
 
         when(group.getResource()).thenReturn(GROUP_IRI);
         Model groupModel = MODEL_FACTORY.createEmptyModel();
-        groupModel.add(group.getResource(), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(Group.TYPE));
+        groupModel.add(group.getResource(), RDF.TYPE, VALUE_FACTORY.createIRI(Group.TYPE));
         when(group.getModel()).thenReturn(groupModel);
         when(aGroupFactory.getTypeIRI()).thenReturn(VALUE_FACTORY.createIRI(AGroup.TYPE));
         when(aGroupFactory.getType()).thenReturn(AGroup.class);
@@ -209,9 +209,9 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
 
         engineManager = new SimpleEngineManager();
         engineManager.addEngine(engine);
-        engineManager.setRepository(repository);
-        engineManager.setRoleFactory(roleFactory);
-        engineManager.setOrmFactoryRegistry(factoryRegistry);
+        engineManager.repository = repository;
+        engineManager.roleFactory = roleFactory;
+        engineManager.factoryRegistry = factoryRegistry;
         engineManager.start();
     }
 
@@ -547,8 +547,7 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetSpecificExternalUserFactory() {
-        user.getModel().add(user.getResource(), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()),
-                VALUE_FACTORY.createIRI(AUser.TYPE));
+        user.getModel().add(user.getResource(), RDF.TYPE, VALUE_FACTORY.createIRI(AUser.TYPE));
         assertEquals(aUserFactory, engineManager.getSpecificExternalUserFactory(user));
     }
 
@@ -559,8 +558,7 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetSpecificExternalGroupFactory() {
-        group.getModel().add(group.getResource(), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()),
-                VALUE_FACTORY.createIRI(AGroup.TYPE));
+        group.getModel().add(group.getResource(), RDF.TYPE, VALUE_FACTORY.createIRI(AGroup.TYPE));
         assertEquals(aGroupFactory, engineManager.getSpecificExternalGroupFactory(group));
     }
 
@@ -572,8 +570,7 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
     @Test
     public void testMergeUser() {
         ExternalUser externalUser = externalUserOrmFactory.createNew(VALUE_FACTORY.createIRI("urn:newIRI"));
-        externalUser.getModel().add(user.getResource(), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()),
-                VALUE_FACTORY.createIRI(AUser.TYPE));
+        externalUser.getModel().add(user.getResource(), RDF.TYPE, VALUE_FACTORY.createIRI(AUser.TYPE));
         SimpleEngineManager spyManager = spy(engineManager);
         doReturn(externalUserOrmFactory).when(spyManager).getSpecificExternalUserFactory(externalUser);
         User resultingUser = spyManager.mergeUser(externalUser, user);
@@ -584,8 +581,7 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
     @Test
     public void testMergeGroup() {
         ExternalGroup externalGroup = externalGroupFactory.createNew(VALUE_FACTORY.createIRI("urn:newIRI"));
-        externalGroup.getModel().add(group.getResource(), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()),
-                VALUE_FACTORY.createIRI(AGroup.TYPE));
+        externalGroup.getModel().add(group.getResource(), RDF.TYPE, VALUE_FACTORY.createIRI(AGroup.TYPE));
         SimpleEngineManager spyManager = spy(engineManager);
         doReturn(externalGroupFactory).when(spyManager).getSpecificExternalGroupFactory(externalGroup);
         Group resultingGroup = spyManager.mergeGroup(externalGroup, group);
