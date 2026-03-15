@@ -92,7 +92,6 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
     private IRI branchIRI;
     private IRI catalogIRI;
     private IRI ontologyIRI;
-    private Model localModel;
 
     private static HttpUrlStreamHandler httpUrlStreamHandler;
 
@@ -144,8 +143,6 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
         branchIRI = vf.createIRI("urn:branchIRI");
         ontologyIRI = vf.createIRI("urn:ontologyIRI");
 
-        localModel = Models.createModel(getClass().getResourceAsStream("/Ontology.ttl"));
-
         repo = spy(new MemoryRepositoryWrapper());
         repo.setDelegate(new SailRepository(new MemoryStore()));
         when(repo.getRepositoryID()).thenReturn("repoCacheId");
@@ -180,6 +177,17 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
     public void reset() throws Exception {
         closeable.close();
         httpUrlStreamHandler.resetConnections();
+    }
+
+    // disableWebImports
+
+    @Test
+    public void disableWebImportsTest() {
+        when(importsResolverConfig.disableWebImports()).thenReturn(true);
+        resolver.activate(importsResolverConfig);
+        IRI iri = vf.createIRI("http://www.w3.org/2004/02/skos/core");
+        Optional<File> result = resolver.retrieveOntologyFromWebFile(iri);
+        assertFalse(result.isPresent());
     }
 
     // retrieveOntologyFromWebFile(Resource resource)
