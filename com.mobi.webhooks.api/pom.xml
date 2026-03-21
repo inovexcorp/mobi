@@ -66,7 +66,7 @@
                         <Bundle-Name>Mobi Webhooks API</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            com.mobi.webhooks.api.*
+                            com.mobi.webhooks.api*
                         </Export-Package>
                         <_metatype>*</_metatype>
                         <build>${maven.build.timestamp}</build>
@@ -90,7 +90,7 @@
                             <generates>
                                 <ontology>
                                     <ontologyFile>${project.basedir}/src/main/resources/webhooks.ttl</ontologyFile>
-                                    <outputPackage>com.mobi.webhooks.ontology.webhooks</outputPackage>
+                                    <outputPackage>com.mobi.webhooks.api.ontology.webhooks</outputPackage>
                                     <ontologyName>Webhooks</ontologyName>
                                 </ontology>
                             </generates>
