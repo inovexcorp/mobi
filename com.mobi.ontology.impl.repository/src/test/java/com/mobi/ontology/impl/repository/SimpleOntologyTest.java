@@ -1142,6 +1142,37 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void asTurtleContainsStandardPrefixesTest() {
+        String result = new String(ontology.asTurtle().toByteArray());
+        assertTrue(result.contains("@prefix owl:"));
+        assertTrue(result.contains("@prefix rdf:"));
+        assertTrue(result.contains("@prefix rdfs:"));
+        assertTrue(result.contains("@prefix dct:"));
+        assertTrue(result.contains("@prefix dc:"));
+        assertTrue(result.contains("@prefix skos:"));
+        assertTrue(result.contains("@prefix sh:"));
+    }
+
+    @Test
+    public void asRdfXmlContainsStandardPrefixesTest() {
+        String result = new String(ontology.asRdfXml().toByteArray());
+        assertTrue(result.contains("xmlns:owl="));
+        assertTrue(result.contains("xmlns:rdf="));
+        assertTrue(result.contains("xmlns:rdfs="));
+        assertTrue(result.contains("xmlns:dct="));
+        assertTrue(result.contains("xmlns:dc="));
+        assertTrue(result.contains("xmlns:skos="));
+        assertTrue(result.contains("xmlns:sh="));
+    }
+
+    @Test
+    public void asJsonLDDoesNotContainStandardPrefixesTest() {
+        String result = new String(ontology.asJsonLD(false).toByteArray());
+        assertFalse(result.contains("\"owl\":"));
+        assertFalse(result.contains("\"sh\":"));
+    }
+
+    @Test
     public void testGetSubClassesOf() throws Exception {
         // Setup:
         Set<Resource> expectedSubjects = Stream.of(vf.createIRI("http://mobi.com/ontology#Class1a"), vf.createIRI("http://mobi.com/ontology#Class1b"),
@@ -1931,6 +1962,29 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
 
         getGraphQueryResultStreamHelper(rdfFormat);
         getGraphQueryResultStreamParameterHelper(rdfFormat);
+    }
+
+    @Test
+    public void testGetGraphQueryResultsStreamTurtleContainsPrefixes() throws Exception {
+        OutputStream stream = queryOntology.getGraphQueryResultsStream(
+                "construct {?s ?p ?o} where { ?s ?p ?o . }", true, RDFFormat.TURTLE, false);
+        String result = stream.toString();
+        assertTrue(result.contains("@prefix owl:"));
+        assertTrue(result.contains("@prefix rdf:"));
+        assertTrue(result.contains("@prefix rdfs:"));
+        assertTrue(result.contains("@prefix dct:"));
+        assertTrue(result.contains("@prefix dc:"));
+        assertTrue(result.contains("@prefix skos:"));
+        assertTrue(result.contains("@prefix sh:"));
+    }
+
+    @Test
+    public void testGetGraphQueryResultsStreamJsonLdDoesNotContainPrefixes() throws Exception {
+        OutputStream stream = queryOntology.getGraphQueryResultsStream(
+                "construct {?s ?p ?o} where { ?s ?p ?o . }", true, RDFFormat.JSONLD, false);
+        String result = stream.toString();
+        assertFalse(result.contains("\"owl\":"));
+        assertFalse(result.contains("\"sh\":"));
     }
 
     @Test
