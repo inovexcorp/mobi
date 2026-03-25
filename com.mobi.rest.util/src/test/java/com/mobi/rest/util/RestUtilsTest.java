@@ -12,12 +12,12 @@ package com.mobi.rest.util;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -66,6 +66,7 @@ import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -75,6 +76,7 @@ import org.mockito.MockitoAnnotations;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
@@ -160,7 +162,7 @@ public class RestUtilsTest {
         expectedRdfxml = IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/test.xml")), StandardCharsets.UTF_8);
         expectedGroupedRdfxml = IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/grouped-test.xml")),
                 StandardCharsets.UTF_8);
-        expectedTrig= IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/test.trig")), StandardCharsets.UTF_8);
+        expectedTrig = IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/test.trig")), StandardCharsets.UTF_8);
 
         closeable = MockitoAnnotations.openMocks(this);
         when(context.getProperty(AuthenticationProps.USERNAME)).thenReturn("tester");
@@ -234,14 +236,16 @@ public class RestUtilsTest {
     public void modelToStringWithRDFFormatTest() {
         assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToString(model, RDFFormat.JSONLD)));
         assertEquals(expectedTurtle, RestUtils.modelToString(model, RDFFormat.TURTLE));
-        assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToString(model, RDFFormat.RDFXML)));
+        assertEquals(stringToModel(expectedRdfxml, RDFFormat.RDFXML),
+                     stringToModel(RestUtils.modelToString(model, RDFFormat.RDFXML), RDFFormat.RDFXML));
     }
 
     @Test
     public void modelToStringTest() {
         assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToString(model, "jsonld")));
         assertEquals(expectedTurtle, RestUtils.modelToString(model, "turtle"));
-        assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToString(model, "rdf/xml")));
+        assertEquals(stringToModel(expectedRdfxml, RDFFormat.RDFXML),
+                     stringToModel(RestUtils.modelToString(model, "rdf/xml"), RDFFormat.RDFXML));
         assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToString(model, "something")));
     }
 
@@ -249,20 +253,23 @@ public class RestUtilsTest {
     public void modelToSkolemizedStringWithRDFFormatTest() {
         assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToSkolemizedString(model, RDFFormat.JSONLD, service)));
         assertEquals(expectedTurtle, RestUtils.modelToSkolemizedString(model, RDFFormat.TURTLE, service));
-        assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToSkolemizedString(model, RDFFormat.RDFXML, service)));
+        assertEquals(stringToModel(expectedRdfxml, RDFFormat.RDFXML),
+                     stringToModel(RestUtils.modelToSkolemizedString(model, RDFFormat.RDFXML, service), RDFFormat.RDFXML));
+
     }
 
     @Test
     public void modelToSkolemizedStringTest() {
         assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToSkolemizedString(model, "jsonld", service)));
         assertEquals(expectedTurtle, RestUtils.modelToSkolemizedString(model, "turtle", service));
-        assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToSkolemizedString(model, "rdf/xml", service)));
+        assertEquals(stringToModel(expectedRdfxml, RDFFormat.RDFXML),
+                     stringToModel(RestUtils.modelToSkolemizedString(model, "rdf/xml", service), RDFFormat.RDFXML));
         assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToSkolemizedString(model, "something", service)));
     }
 
     @Test
     public void groupedModelToOutputStreamTest() throws IOException {
-        RDFFormat[] formatArray = new RDFFormat[] {RDFFormat.RDFXML, RDFFormat.JSONLD, RDFFormat.TURTLE};
+        RDFFormat[] formatArray = new RDFFormat[]{RDFFormat.RDFXML, RDFFormat.JSONLD, RDFFormat.TURTLE};
         for (RDFFormat format : formatArray) {
             Path file = Files.createTempFile("test", format.getDefaultFileExtension());
             OutputStream os = new ByteArrayOutputStream();
@@ -273,8 +280,7 @@ public class RestUtilsTest {
             switch (format.getName()) {
                 case "JSON-LD" -> assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(result));
                 case "Turtle" -> assertEquals(expectedGroupedTurtle, result);
-                case "RDF/XML" -> assertEquals(expectedGroupedRdfxml, result);
-            }
+                case "RDF/XML" -> assertEquals(stringToModel(expectedGroupedRdfxml, RDFFormat.RDFXML), stringToModel(result, RDFFormat.RDFXML));            }
             Files.deleteIfExists(file);
         }
     }
@@ -283,14 +289,16 @@ public class RestUtilsTest {
     public void groupedModelToStringWithRDFFormatTest() {
         assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToString(model, RDFFormat.JSONLD)));
         assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToString(model, RDFFormat.TURTLE));
-        assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToString(model, RDFFormat.RDFXML)));
+        assertEquals(stringToModel(expectedGroupedRdfxml, RDFFormat.RDFXML),
+                stringToModel(RestUtils.groupedModelToString(model, RDFFormat.RDFXML), RDFFormat.RDFXML));
     }
 
     @Test
     public void groupedModelToStringTest() {
         assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToString(model, "jsonld")));
         assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToString(model, "turtle"));
-        assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToString(model, "rdf/xml")));
+        assertEquals(stringToModel(expectedGroupedRdfxml, RDFFormat.RDFXML),
+                stringToModel(RestUtils.groupedModelToString(model, "rdf/xml"), RDFFormat.RDFXML));
         assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToString(model, "something")));
     }
 
@@ -298,14 +306,16 @@ public class RestUtilsTest {
     public void groupedModelToSkolemizedStringWithRDFFormatTest() {
         assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToSkolemizedString(model, RDFFormat.JSONLD, service)));
         assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToSkolemizedString(model, RDFFormat.TURTLE, service));
-        assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToSkolemizedString(model, RDFFormat.RDFXML, service)));
+        assertEquals(stringToModel(expectedGroupedRdfxml, RDFFormat.RDFXML),
+                stringToModel(RestUtils.groupedModelToSkolemizedString(model, RDFFormat.RDFXML, service), RDFFormat.RDFXML));
     }
 
     @Test
     public void groupedModelToSkolemizedStringTest() {
         assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToSkolemizedString(model, "jsonld", service)));
         assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToSkolemizedString(model, "turtle", service));
-        assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToSkolemizedString(model, "rdf/xml", service)));
+        assertEquals(stringToModel(expectedGroupedRdfxml, RDFFormat.RDFXML),
+                stringToModel(RestUtils.groupedModelToSkolemizedString(model, "rdf/xml", service), RDFFormat.RDFXML));
         assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToSkolemizedString(model, "something", service)));
     }
 
@@ -670,11 +680,11 @@ public class RestUtilsTest {
         RepositoryConnection conn = mock(RepositoryConnection.class);
         Map<BNode, IRI> bNodesMap = new HashMap<>();
         Model compiledModel = mock(Model.class);
-        
+
         when(compiledResourceManager.getCompiledResource(recordId, branchId, commitId, conn)).thenReturn(compiledModel);
-        
+
         RestUtils.getCurrentModel(recordId, branchId, commitId, bNodesMap, conn, bNodeService, compiledResourceManager);
-        
+
         // Verify that the deterministicSkolemize method of bNodeService was called with the correct arguments
         verify(bNodeService).deterministicSkolemize(eq(compiledModel), eq(bNodesMap));
     }
@@ -765,10 +775,10 @@ public class RestUtilsTest {
     @Test
     public void parseExceptionForHTML() {
         String htmlResponse = """
-                <html>
-                   <head><title>503 Service Temporarily Unavailable</title></head>
-                   <body><center><h1>503 Service Temporarily Unavailable</h1></center></body>
-               </html>""";
+                 <html>
+                    <head><title>503 Service Temporarily Unavailable</title></head>
+                    <body><center><h1>503 Service Temporarily Unavailable</h1></center></body>
+                </html>""";
 
         IllegalStateException e = new IllegalStateException(htmlResponse);
         IllegalStateException ex = RestUtils.parseExceptionForHTML(e);
@@ -778,9 +788,9 @@ public class RestUtilsTest {
     @Test
     public void parseExceptionForInvalidHTMLTest() {
         String htmlResponse = """
-                <html>
-                   <body><center><h1>invalid</h1></center></body>
-               </html>""";
+                 <html>
+                    <body><center><h1>invalid</h1></center></body>
+                </html>""";
 
         IllegalStateException e = new IllegalStateException(htmlResponse);
         IllegalStateException ex = RestUtils.parseExceptionForHTML(e);
@@ -830,6 +840,14 @@ public class RestUtilsTest {
 
     private String removeWhitespace(String s) {
         return s.replaceAll("\\s+", "");
+    }
+
+    private Model stringToModel(String rdf, RDFFormat format) {
+        try {
+            return Rio.parse(new StringReader(rdf), "", format);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private Set<Thing> getTestThings(Map<IRI, String> predicateValues) {

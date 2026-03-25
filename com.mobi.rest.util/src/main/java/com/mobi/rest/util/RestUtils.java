@@ -12,17 +12,18 @@ package com.mobi.rest.util;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
 
+import static com.mobi.persistence.utils.rio.Rio.write;
 import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_OVERRIDES;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -38,6 +39,7 @@ import com.mobi.catalog.api.CompiledResourceManager;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.Modify;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
+import com.mobi.catalog.api.RecordPrefixManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -77,6 +79,7 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFParser;
+import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.helpers.BasicParserSettings;
 import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
@@ -203,7 +206,11 @@ public class RestUtils {
         long start = System.currentTimeMillis();
         try {
             StringWriter sw = new StringWriter();
-            Rio.write(model, sw, format);
+            if (!format.equals(RDFFormat.JSONLD)) {
+                RecordPrefixManager.STANDARD_PREFIXES.forEach(model::setNamespace);
+            }
+            RDFWriter writer = Rio.createWriter(format, sw);
+            Rio.write(model, writer);
             return sw.toString();
         } finally {
             LOG.trace("modelToString took {}ms", System.currentTimeMillis() - start);
@@ -225,11 +232,11 @@ public class RestUtils {
      * Gets a {@link Model} of the provided {@link InputStream}. Deterministically skolemizes any BNode in the model.
      *
      * @param fileInputStream The {@link InputStream} to process.
-     * @param fileExtension The extension of the file associated with the fileInputStream.
-     * @param bNodesMap The {@link Map} of BNodes to their deterministically skolemized IRIs. Will be populated in
-     *                  method.
-     * @param modelFactory The {@link ModelFactory} used to create the model.
-     * @param bNodeService The {@link BNodeService} used for skolemization.
+     * @param fileExtension   The extension of the file associated with the fileInputStream.
+     * @param bNodesMap       The {@link Map} of BNodes to their deterministically skolemized IRIs. Will be populated in
+     *                        method.
+     * @param modelFactory    The {@link ModelFactory} used to create the model.
+     * @param bNodeService    The {@link BNodeService} used for skolemization.
      * @return A {@link Model} with deterministically skolemized BNodes.
      * @throws IOException When an error occurs processing the {@link InputStream}
      */
@@ -262,8 +269,8 @@ public class RestUtils {
      * @return A {@link Model} with deterministically skolemized BNodes.
      */
     public static Model getCurrentModel(Resource recordId, Resource branchId, Resource commitId,
-            Map<BNode, IRI> bNodesMap, RepositoryConnection conn, BNodeService bNodeService,
-            CompiledResourceManager compiledResourceManager) {
+                                        Map<BNode, IRI> bNodesMap, RepositoryConnection conn, BNodeService bNodeService,
+                                        CompiledResourceManager compiledResourceManager) {
         // Load existing ontology into a skolemized model
         return bNodeService.deterministicSkolemize(
                 compiledResourceManager.getCompiledResource(recordId, branchId, commitId, conn), bNodesMap);
@@ -274,15 +281,15 @@ public class RestUtils {
      * provided Resource. If that User does not have an InProgressCommit, a new one will be created and that Resource
      * will be returned.
      *
-     * @param user     the User with the InProgressCommit
-     * @param recordId the Resource identifying the Record with the InProgressCommit
-     * @param conn     A repository connection for lookup.
+     * @param user           the User with the InProgressCommit
+     * @param recordId       the Resource identifying the Record with the InProgressCommit
+     * @param conn           A repository connection for lookup.
      * @param commitManager  The {@link CommitManager} instance for managing commits.
      * @param configProvider The {@link CatalogConfigProvider} instance for providing catalog configurations.
      * @return a Resource which identifies the InProgressCommit associated with the User for the Record
      */
     public static Resource getInProgressCommitIRI(User user, Resource recordId, RepositoryConnection conn,
-            CommitManager commitManager, CatalogConfigProvider configProvider) {
+                                                  CommitManager commitManager, CatalogConfigProvider configProvider) {
         Optional<InProgressCommit> optional = commitManager.getInProgressCommitOpt(configProvider.getLocalCatalogIRI(),
                 recordId, user, conn);
         if (optional.isPresent()) {
@@ -319,13 +326,21 @@ public class RestUtils {
         long start = System.currentTimeMillis();
         try {
             StringWriter sw = new StringWriter();
-            Rio.write(new SkolemizedStatementIterable(model, service), sw, format);
+            RDFWriter writer = Rio.createWriter(format, sw);
+            if (!format.equals(RDFFormat.JSONLD)) {
+                RecordPrefixManager.STANDARD_PREFIXES.forEach(model::setNamespace);
+                writer.startRDF();
+                model.getNamespaces().forEach(ns -> writer.handleNamespace(ns.getPrefix(), ns.getName()));
+                new SkolemizedStatementIterable(model, service).forEach(writer::handleStatement);
+                writer.endRDF();
+            } else {
+                write(new SkolemizedStatementIterable(model, service), writer);
+            }
             return sw.toString();
         } finally {
             LOG.trace("modelToSkolemizedString took {}ms", System.currentTimeMillis() - start);
         }
     }
-
     /**
      * Converts a {@link Model} into a skolemized string containing RDF in the format specified by the passed string.
      *
@@ -346,10 +361,12 @@ public class RestUtils {
      * @param os     The output stream the model should be written to.
      */
     public static void groupedModelToOutputStream(Model model, RDFFormat format, OutputStream os) {
+        if (!format.equals(RDFFormat.JSONLD)) {
+            RecordPrefixManager.STANDARD_PREFIXES.forEach(model::setNamespace);
+        }
         RDFHandler handler = new BufferedGroupingRDFHandler(Rio.createWriter(format, os));
-        Rio.write(model, handler);
+        write(model, handler);
     }
-
     /**
      * Converts a {@link Model} into a string containing grouped RDF in the specified RDFFormat.
      *
@@ -361,14 +378,16 @@ public class RestUtils {
         long start = System.currentTimeMillis();
         try {
             StringWriter sw = new StringWriter();
+            if (!format.equals(RDFFormat.JSONLD)) {
+                RecordPrefixManager.STANDARD_PREFIXES.forEach(model::setNamespace);
+            }
             RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, sw));
-            Rio.write(model, rdfWriter);
+            write(model, rdfWriter);
             return sw.toString();
         } finally {
             LOG.trace("groupedModelToString took {}ms", System.currentTimeMillis() - start);
         }
     }
-
     /**
      * Converts a {@link Model} into a string containing grouped RDF in the format specified by the passed string.
      *
@@ -392,14 +411,23 @@ public class RestUtils {
         long start = System.currentTimeMillis();
         try {
             StringWriter sw = new StringWriter();
-            RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, sw));
-            Rio.write(new SkolemizedStatementIterable(model, service), rdfWriter);
+            if (!format.equals(RDFFormat.JSONLD)) {
+                RecordPrefixManager.STANDARD_PREFIXES.forEach(model::setNamespace);
+                RDFWriter writer = Rio.createWriter(format, sw);
+                RDFHandler rdfWriter = new BufferedGroupingRDFHandler(writer);
+                rdfWriter.startRDF();
+                model.getNamespaces().forEach(ns -> rdfWriter.handleNamespace(ns.getPrefix(), ns.getName()));
+                new SkolemizedStatementIterable(model, service).forEach(rdfWriter::handleStatement);
+                rdfWriter.endRDF();
+            } else {
+                RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, sw));
+                write(new SkolemizedStatementIterable(model, service), rdfWriter);
+            }
             return sw.toString();
         } finally {
             LOG.trace("groupedModelToSkolemizedString took {}ms", System.currentTimeMillis() - start);
         }
     }
-
     /**
      * Converts a {@link Model} into a skolemized string containing grouped RDF in the format specified by the passed
      * string.
@@ -817,14 +845,14 @@ public class RestUtils {
      * @param type           The type of the {@link Thing} to be returned
      * @param bNodeService   The {@link BNodeService} to use.
      * @return A {@link Response} with a page of {@link Thing}s that has been filtered, sorted, and limited and headers
-     *      for the total size and links to the next and prev pages if present.
+     * for the total size and links to the next and prev pages if present.
      */
     public static <T extends Thing> Response createPaginatedThingResponse(UriInfo uriInfo, Set<T> things,
-                                                                                 IRI sortIRI, int offset, int limit,
-                                                                                 boolean asc,
-                                                                                 Function<T, Boolean> filterFunction,
-                                                                                 String type,
-                                                                                 BNodeService bNodeService) {
+                                                                          IRI sortIRI, int offset, int limit,
+                                                                          boolean asc,
+                                                                          Function<T, Boolean> filterFunction,
+                                                                          String type,
+                                                                          BNodeService bNodeService) {
         long start = System.currentTimeMillis();
         try {
             if (offset > things.size()) {
@@ -870,7 +898,7 @@ public class RestUtils {
      * @param offset    The offset for the current page.
      * @param type      The type of the {@link Thing} to be returned
      * @return A Response with the current page of Things and headers for the total size and links to the next and prev
-     *      pages if present.
+     * pages if present.
      */
     public static <T extends Thing> Response createPaginatedResponse(UriInfo uriInfo, Collection<T> items,
                                                                      int totalSize, int limit, int offset,
@@ -892,12 +920,12 @@ public class RestUtils {
      * @param type         The type of the {@link Thing} to be returned
      * @param bNodeService The {@link BNodeService} to use.
      * @return A Response with the current page of Things and headers for the total size and links to the next and prev
-     *      pages if present.
+     * pages if present.
      */
     public static <T extends Thing> Response createPaginatedResponse(UriInfo uriInfo, Collection<T> items,
-                                                                            int totalSize, int limit,
-                                                                            int offset, String type,
-                                                                            BNodeService bNodeService) {
+                                                                     int totalSize, int limit,
+                                                                     int offset, String type,
+                                                                     BNodeService bNodeService) {
         ArrayNode results;
         long start = System.currentTimeMillis();
 
@@ -928,7 +956,7 @@ public class RestUtils {
      * @param limit     The limit for each page.
      * @param offset    The offset for the current page.
      * @return A Response with the current page of Things and headers for the total size and links to the next and prev
-     *      pages if present.
+     * pages if present.
      */
     public static Response createPaginatedResponse(UriInfo uriInfo, ArrayNode items, int totalSize, int limit,
                                                    int offset) {
@@ -1076,7 +1104,7 @@ public class RestUtils {
      * Creates a {@link MobiWebException} containing a 500 response with the error message provided in the body of the
      * response.
      *
-     * @param throwable The {@link Throwable} to create a JSON error object from.
+     * @param throwable          The {@link Throwable} to create a JSON error object from.
      * @param overrideObjectNode The {@link ObjectNode} entity error object node
      * @return A {@link MobiWebException} of a 500 with error information in the body.
      */
@@ -1119,10 +1147,10 @@ public class RestUtils {
      * one class is present in the list, the first will be used as the Collection and the second as the parameterized
      * type for the Collection.
      *
-     * @param servletRequest The {@link HttpServletRequest} used to retrieve form data from.
-     * @param fields         A {@link Map} of field name to the Class of the field.
+     * @param servletRequest  The {@link HttpServletRequest} used to retrieve form data from.
+     * @param fields          A {@link Map} of field name to the Class of the field.
      * @param writeStreamPath Path to write file streams to.
-     * @param applyExtension Whether to apply the file extension to the written file.
+     * @param applyExtension  Whether to apply the file extension to the written file.
      * @return A map of the field name to the corresponding form data field Object.
      */
     public static Map<String, Object> getFormData(HttpServletRequest servletRequest,
@@ -1240,10 +1268,10 @@ public class RestUtils {
      * provided IRI from the {@link VersionedRDFRecord} with the provided IRI can be modified by the provided
      * {@link User}.
      *
-     * @param user The {@link User} attempting to execute the Modify action
-     * @param branchId The IRI string of the Branch in question
+     * @param user      The {@link User} attempting to execute the Modify action
+     * @param branchId  The IRI string of the Branch in question
      * @param recordIRI The IRI string of the parent VersionedRDFRecord for the Branch
-     * @param pdp The PDP service to use to execute the request
+     * @param pdp       The PDP service to use to execute the request
      * @return The `{@link Decision} from the XACML request
      */
     public static Decision isBranchModifiable(User user, IRI branchId, IRI recordIRI, PDP pdp) {
@@ -1264,7 +1292,7 @@ public class RestUtils {
      * Converts a tuple query ResultSet into List of ObjectNodes which have properties for each specified binding.
      * Converts literal bindings into the appropriate data types and IRIs into strings.
      *
-     * @param result The query results to turn into a list of object nodes
+     * @param result          The query results to turn into a list of object nodes
      * @param displayBindings The specific query bindings that should be included in the generated ObjectNodes
      * @return List of ObjectNodes
      */
@@ -1272,7 +1300,7 @@ public class RestUtils {
         List<ObjectNode> records = new ArrayList<>();
         result.forEach(bindings -> {
             ObjectNode recordObjectNode = mapper.createObjectNode();
-            for (String key: displayBindings) {
+            for (String key : displayBindings) {
                 Value value = bindings.getValue(key);
                 if (value == null) {
                     recordObjectNode.set(key, null);
@@ -1310,8 +1338,8 @@ public class RestUtils {
      * it returns the original exception.
      *
      * @param error The exception whose message is to be checked for HTML content.
-     *          It is expected to possibly contain an HTML response.
-     * @param <T> A {@link Class} that extends {@link Exception}.
+     *              It is expected to possibly contain an HTML response.
+     * @param <T>   A {@link Class} that extends {@link Exception}.
      * @return A re-wrapped {@link Exception} of the original exception unless there's no HTML in the message.
      */
     public static <T extends Exception> T parseExceptionForHTML(T error) {
