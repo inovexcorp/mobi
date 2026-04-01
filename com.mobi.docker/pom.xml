@@ -78,6 +78,20 @@
                             <name>inovexis/mobi:${project.version}</name>
                             <build>
                                 <dockerFile>${project.build.directory}/filtered-resources/docker/Dockerfile</dockerFile>
+                                <!-- Enable buildx for multi-platform support -->
+                                <buildx>
+                                    <platforms>
+                                        <platform>linux/amd64</platform>
+                                        <platform>linux/arm64</platform>
+                                    </platforms>
+                                    <builderName>multiarch</builderName>
+                                    <attestations>
+                                        <provenance>false</provenance>
+                                    </attestations>
+                                </buildx>
+                                <tags>
+                                    <tag>latest</tag>
+                                </tags>
                                 <assembly>
                                     <inline>
                                         <files>
