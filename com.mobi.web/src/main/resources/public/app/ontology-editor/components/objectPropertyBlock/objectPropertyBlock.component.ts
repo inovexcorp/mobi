@@ -69,7 +69,9 @@ export class ObjectPropertyBlockComponent implements OnChanges {
         }
     }
     openAddObjectPropOverlay(): void {
-        this.dialog.open(ObjectPropertyOverlayComponent).afterClosed().subscribe(() => {
+        this.dialog.open(ObjectPropertyOverlayComponent, {
+            minWidth: '400px'
+        }).afterClosed().subscribe(() => {
             this.updatePropertiesFiltered();
         });
     }

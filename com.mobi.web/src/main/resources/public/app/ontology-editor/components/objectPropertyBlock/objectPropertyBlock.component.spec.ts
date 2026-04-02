@@ -152,7 +152,9 @@ describe('Object Property Block component', function() {
         });
         it('should set the correct manager values when opening the Add Object Property Overlay', function() {
             component.openAddObjectPropOverlay();
-            expect(matDialog.open).toHaveBeenCalledWith(ObjectPropertyOverlayComponent);
+            expect(matDialog.open).toHaveBeenCalledWith(ObjectPropertyOverlayComponent, {
+                minWidth: '400px'
+            });
         });
         it('should set the correct manager values when opening the Remove Object Property Overlay', fakeAsync(function() {
             spyOn(component, 'updatePropertiesFiltered');
