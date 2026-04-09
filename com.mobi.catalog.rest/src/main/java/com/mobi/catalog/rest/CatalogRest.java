@@ -12,12 +12,12 @@ package com.mobi.catalog.rest;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -97,14 +97,17 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.rest.util.swagger.CommitData;
+import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import com.mobi.rest.util.swagger.JsonLdObject;
 import com.mobi.rest.util.swagger.SearchEntity;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
@@ -163,17 +166,30 @@ import javax.ws.rs.core.UriInfo;
 @JaxrsResource
 @Path("/catalogs")
 public class CatalogRest {
-
     private static final Logger LOG = LoggerFactory.getLogger(CatalogRest.class);
-    private static final Set<String> SORT_RESOURCES;
     private static final ObjectMapper mapper = new ObjectMapper();
+    private final ValueFactory vf = new ValidatingValueFactory();
+    private final ModelFactory mf = new DynamicModelFactory();
+
+    private static final String TAG_NAME = "Catalog";
+    private static final String TAG_DESC = "Operations for managing catalog records, versions, branches, "
+            + "commits, and distributions";
+    private static final Set<String> SORT_RESOURCES;
     private static final String COULD_NOT_BE_FOUND = " could not be found";
     private static final String COMMIT = "Commit ";
     private static final String DELETIONS = "deletions";
     private static final String ADDITIONS = "additions";
 
-    private final ValueFactory vf = new ValidatingValueFactory();
-    private final ModelFactory mf = new DynamicModelFactory();
+    static {
+        Set<String> sortResources = new HashSet<>();
+        sortResources.add(DCTERMS.MODIFIED.stringValue());
+        sortResources.add(DCTERMS.ISSUED.stringValue());
+        sortResources.add(DCTERMS.TITLE.stringValue());
+        SORT_RESOURCES = Collections.unmodifiableSet(sortResources);
+    }
+
+    @Reference
+    public DatasetManager datasetManager;
 
     @Reference
     protected OrmFactoryRegistry factoryRegistry;
@@ -186,9 +202,6 @@ public class CatalogRest {
 
     @Reference
     protected RecordManager recordManager;
-
-    @Reference
-    public DatasetManager datasetManager;
 
     @Reference
     protected BranchManager branchManager;
@@ -226,14 +239,6 @@ public class CatalogRest {
     @Reference
     protected CommitFactory commitFactory;
 
-    static {
-        Set<String> sortResources = new HashSet<>();
-        sortResources.add(DCTERMS.MODIFIED.stringValue());
-        sortResources.add(DCTERMS.ISSUED.stringValue());
-        sortResources.add(DCTERMS.TITLE.stringValue());
-        SORT_RESOURCES = Collections.unmodifiableSet(sortResources);
-    }
-
     /**
      * Retrieves a list of the Catalogs (two) available in the system. These Catalogs will be the distributed and
      * local Catalog which contain different Records depending on the situation.
@@ -242,21 +247,59 @@ public class CatalogRest {
      * @return The list of Catalogs within the repository.
      */
     @GET
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Retrieves the distributed and local Catalogs",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "List of Catalogs within the repository",
-                            content = @Content(array = @ArraySchema(
-                                    schema = @Schema(implementation = JsonLdObject.class,
-                                    description = "A list of Catalog JSON-LD objects")))),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. Could not retrieve catalogs"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the distributed and local Catalogs")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "List of Catalogs within the repository",
+                    content = @Content(
+                            array = @ArraySchema(
+                                    schema = @Schema(
+                                            implementation = JsonLdObject.class,
+                                            description = "List of Catalog JSON-LD objects")
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid catalog type parameter provided",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to retrieve catalogs",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving catalogs",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response getCatalogs(
             @Parameter(description = "Optional Type of Catalog you want back (local or distributed)")
             @QueryParam("type") String catalogType) {
@@ -291,20 +334,53 @@ public class CatalogRest {
      * @return The specific Catalog from the repository.
      */
     @GET
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Retrieves the Catalog specified by the provided ID",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Specific Catalog from the repository",
-                            content = @Content(schema = @Schema(implementation = JsonLdObject.class))),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "404", description = "Catalog does not exist"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the Catalog specified by the provided ID")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Specific Catalog from the repository",
+                    content = @Content(schema = @Schema(implementation = JsonLdObject.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view this catalog",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Catalog with the provided ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string"))
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the catalog",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response getCatalog(
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId) {
@@ -329,35 +405,70 @@ public class CatalogRest {
      * An optional type parameter filters the returned Entities.  Parameters can be passed to control paging.
      *
      * @param servletRequest The HTTP servlet request context.
-     * @param uriInfo The URI context for the request.
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param offset The offset for the page.
-     * @param limit The number of Records to return in one page.
-     * @param searchText The String used to filter out Records.
+     * @param uriInfo        The URI context for the request.
+     * @param catalogId      String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param offset         The offset for the page.
+     * @param limit          The number of Records to return in one page.
+     * @param searchText     The String used to filter out Records.
      * @return List of Records that match the search criteria.
      */
     @GET
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/entities")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Search for existing definitions of an entity across all records",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "List of Entities that match the search criteria",
-                            content = @Content(array = @ArraySchema(
-                                    schema = @Schema(implementation = SearchEntity.class,
-                                    description = "A list of Entity search result objects")))),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId could not"
-                            + " be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Searches for entity definitions across all records in a Catalog")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "List of Entities that match the search criteria",
+                    content = @Content(
+                            array = @ArraySchema(
+                                    schema = @Schema(
+                                            implementation = SearchEntity.class,
+                                            description = "List of Entity search result objects")
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog could not be found",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to search entities",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while searching for entities",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            )
+    })
     public Response getEntities(
-            @Context HttpServletRequest servletRequest,
-            @Context UriInfo uriInfo,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context UriInfo uriInfo,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "Offset for the page", required = true)
@@ -401,7 +512,7 @@ public class CatalogRest {
                     builder.build(), activeUser, conn);
 
             ArrayNode entities = mapper.createArrayNode();
-            searchResults.page().forEach(entityMetadata->{
+            searchResults.page().forEach(entityMetadata -> {
                 entities.add(entityMetadata.toObjectNode());
             });
             return createPaginatedResponse(uriInfo, entities, searchResults.totalSize(), limit, offset);
@@ -417,40 +528,77 @@ public class CatalogRest {
      * Parameters can be passed to control paging.
      *
      * @param servletRequest The HTTP servlet request context.
-     * @param uriInfo The URI context for the request.
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param sort IRI field with sort order specified.
-     * @param recordTypes A list of IRIs representing the types of Records to return.
-     * @param keywords Optional list of keywords to filter the Records.
-     * @param creators Optional list of creator IRIs to filter the Records.
-     * @param offset The offset for the page.
-     * @param limit The number of Records to return in one page.
-     * @param asc Whether the list should be sorted ascending or descending.
-     * @param searchText The String used to filter out Records.
+     * @param uriInfo        The URI context for the request.
+     * @param catalogId      String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param sort           IRI field with sort order specified.
+     * @param recordTypes    A list of IRIs representing the types of Records to return.
+     * @param keywords       Optional list of keywords to filter the Records.
+     * @param creators       Optional list of creator IRIs to filter the Records.
+     * @param offset         The offset for the page.
+     * @param limit          The number of Records to return in one page.
+     * @param asc            Whether the list should be sorted ascending or descending.
+     * @param searchText     The String used to filter out Records.
      * @return List of Records that match the search criteria.
      */
     @GET
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Retrieves the Records in the Catalog",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "List of Records that match the search criteria",
-                            content = @Content(array = @ArraySchema(
-                                    schema = @Schema(implementation = JsonLdObject.class,
-                                    description = "A list of Record JSON-LD objects")))),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId could not"
-                            + " be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the Records in the Catalog")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "List of Records that match the search criteria",
+                    content = @Content(
+                            array = @ArraySchema(
+                                    schema = @Schema(
+                                            implementation = JsonLdObject.class,
+                                            description = "List of Record JSON-LD objects")
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view catalog records",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving catalog records",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response getRecords(
-            @Context HttpServletRequest servletRequest,
-            @Context UriInfo uriInfo,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context UriInfo uriInfo,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(schema = @Schema(description = "IRI of the field to use for sort order",
@@ -520,27 +668,73 @@ public class CatalogRest {
      *
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                 with "_:".
+     * @param recordId  String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
      * @return An array with the contents of the Record’s named graph, including the Record object
      */
     @GET
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Retrieves the Catalog record by its ID",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Array with the contents of the "
-                            + "Record’s named graph, including the Record object"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId "
-                            + "could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "404", description = "Record could not be found"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the Catalog Record specified by the provided ID")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "JSON-LD array with the contents of the Record’s named graph,"
+                            + "including the Record object",
+                    content = @Content(
+                            array = @ArraySchema(
+                                    schema = @Schema(implementation = JsonLdObject.class)
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog or Record could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view this record",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Record with the provided ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the record",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getRecord(
             @Parameter(description = "String representing the Catalog ID", required = true)
@@ -564,31 +758,62 @@ public class CatalogRest {
      * Deletes a Record from the repository.
      *
      * @param servletRequest The HttpServletRequest.
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                 with "_:".
+     * @param catalogId      The String representing the Catalog ID.
+     *                       NOTE: Assumes ID represents an IRI unless String begins with "_:".
+     * @param recordId       String representing the Record ID.
+     *                       NOTE: Assumes ID represents an IRI unless String begins with "_:".
      * @return A Response indicating whether the Record was deleted.
      */
     @DELETE
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}")
-    @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Deletes the Catalog Record by its ID",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating whether or not the Record was deleted"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId "
-                            + "could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Deletes the Catalog Record specified by the provided ID")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Record successfully deleted",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog or Record could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string"))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to delete this record",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while deleting the record",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteRecord(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the Record ID", required = true)
@@ -609,31 +834,64 @@ public class CatalogRest {
      * Updates a Record based on the ID contained within the provided Catalog using the modifications from the provided
      * JSON-LD.
      *
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                 with "_:".
+     * @param catalogId     String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                      with "_:".
+     * @param recordId      String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                      with "_:".
      * @param newRecordJson The JSON-LD of the new Record which will replace the existing Record.
      * @return A Response indicating whether the Record was updated along with the updated model represented
-     *         as JSON if successful
+     *      as JSON if successful
      */
     @PUT
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Updates the Catalog Record by its ID using the provided Record JSON-LD ",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Returns the updated model represented as Json"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId "
-                            + "could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Updates the Catalog Record specified by the provided ID")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "JSON-LD array with the contents of the updated Record's named graph",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = JsonLdObject.class)))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog or Record could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to update this record",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while updating the record",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateRecord(
             @Parameter(description = "String representing the Catalog ID", required = true)
@@ -642,7 +900,7 @@ public class CatalogRest {
             @PathParam("recordId") String recordId,
             @Parameter(description = "JSON-LD of the new Record which will replace the existing Record",
                     required = true)
-                    String newRecordJson) {
+            String newRecordJson) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Record newRecord = getNewThing(newRecordJson, vf.createIRI(recordId),
                     factoryRegistry.getFactoryOfType(Record.class).get());
@@ -661,27 +919,68 @@ public class CatalogRest {
      *
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                 with "_:".
+     * @param recordId  String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
      * @return Array containing the statistics in JSON format, or a 204 status code if no statistics are found
      */
     @GET
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/statistics")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Retrieves the Catalog record statistics by its ID",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Array with the contents of the "
-                            + "statistics"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId "
-                            + "could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "404", description = "Record could not be found"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the Catalog Record's statistics specified by the provided ID")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "JSON-LD array with the contents of the statistics",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = JsonLdObject.class)))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog or Record could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view record statistics",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Record with the provided ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving record statistics",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getRecordStatistics(
             @Parameter(description = "String representing the Catalog ID", required = true)
@@ -720,30 +1019,64 @@ public class CatalogRest {
      * Retrieves a list of all the Keywords in the Catalog.
      * Parameters can be passed to control paging.
      *
-     * @param uriInfo The URI context for the request.
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
+     * @param uriInfo    The URI context for the request.
+     * @param catalogId  String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                   with "_:".
      * @param searchText The String used to filter out Records.
-     * @param offset The offset for the page.
-     * @param limit The number of Records to return in one page.
+     * @param offset     The offset for the page.
+     * @param limit      The number of Records to return in one page.
      * @return List of Keywords in the catalog.
      */
     @GET
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/keywords")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Retrieves the Keywords in the Catalog",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "List of Keywords in catalog"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the Keywords in the Catalog")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "List of Keywords in catalog"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid pagination parameters or Catalog could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view catalog keywords",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving keywords",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response getKeywords(
-            @Context UriInfo uriInfo,
+            @Parameter(hidden = true) @Context UriInfo uriInfo,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String used to filter out Keywords")
@@ -781,7 +1114,7 @@ public class CatalogRest {
     private ArrayNode serializeKeywordCount(PaginatedSearchResults<KeywordCount> keywordCounts) {
         ArrayNode keywordsArrayNode = mapper.createArrayNode();
 
-        for (KeywordCount keywordCount: keywordCounts.page()) {
+        for (KeywordCount keywordCount : keywordCounts.page()) {
             ObjectNode keywordObject = mapper.createObjectNode();
             keywordObject.put(Record.keyword_IRI, keywordCount.getKeyword().stringValue());
             keywordObject.put("count", keywordCount.getKeywordCount());
@@ -794,37 +1127,68 @@ public class CatalogRest {
      * Retrieves a list of all the Distributions associated with a specific UnversionedRecord. Parameters can be passed
      * to control paging.
      *
-     * @param uriInfo The URI information of the request to be used in creating links to other pages of distributions
+     * @param uriInfo   The URI information of the request to be used in creating links to other pages of distributions
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param sort The field with sort order specified.
-     * @param offset The offset for the page.
-     * @param limit The number of Distributions to return in one page.
-     * @param asc Whether the list should be sorted ascending or descending.
+     * @param recordId  String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                  String begins with "_:".
+     * @param sort      The field with sort order specified.
+     * @param offset    The offset for the page.
+     * @param limit     The number of Distributions to return in one page.
+     * @param asc       Whether the list should be sorted ascending or descending.
      * @return Response with a list of all the Distributions of the requested UnversionedRecord.
      */
     @GET
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/distributions")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Retrieves the list of Distributions associated with an UnversionedRecord",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response with a list of all the Distributions of the"
-                                    + " requested UnversionedRecord"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId "
-                            + "could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the list of Distributions associated with an UnversionedRecord")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "List of all the Distributions of the requested UnversionedRecord"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog or Record could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view distributions",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving unversioned distributions",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getUnversionedDistributions(
-            @Context UriInfo uriInfo,
+            @Parameter(hidden = true) @Context UriInfo uriInfo,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the UnversionedRecord ID", required = true)
@@ -860,37 +1224,69 @@ public class CatalogRest {
      * field to be set. Returns a Response with the IRI of the new Distribution.
      *
      * @param servletRequest The HttpServletRequest
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param title Required title for the new Distribution.
-     * @param description Optional description for the new Distribution.
-     * @param format Optional format string for the new Distribution. Expects a MIME type.
-     * @param accessURL Optional access URL for the new Distribution.
-     * @param downloadURL Optional download URL for the new Distribution.
+     * @param catalogId      String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param recordId       String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @param title          Required title for the new Distribution.
+     * @param description    Optional description for the new Distribution.
+     * @param format         Optional format string for the new Distribution. Expects a MIME type.
+     * @param accessURL      Optional access URL for the new Distribution.
+     * @param downloadURL    Optional download URL for the new Distribution.
      * @return Response with the IRI string of the created Distribution.
      */
     @POST
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/distributions")
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Creates a new Distribution for the provided UnversionedRecord",
-            responses = {
-                    @ApiResponse(responseCode = "201",
-                            description = "Response with the IRI string of the created Distribution"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId "
-                            + "could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Creates a new Distribution for the provided UnversionedRecord")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The IRI string of the created Distribution"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog or Record could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to create a distribution",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while creating the unversioned distribution",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response createUnversionedDistribution(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the UnversionedRecord ID", required = true)
@@ -926,30 +1322,62 @@ public class CatalogRest {
     /**
      * Returns the Distribution of the UnversionedRecord identified using the provided IDs.
      *
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
+     * @param catalogId      String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param recordId       String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
      * @param distributionId String representing the Distribution ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
      * @return The Distribution that was identified by the provided IDs.
      */
     @GET
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/distributions/{distributionId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Gets a specific Distribution of an UnversionedRecord",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Distribution that was identified by the provided IDs"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId, "
-                            + "or distributionId could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
-            }
-    )
+    @Operation(summary = "Retrieves a specific Distribution of an UnversionedRecord")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Distribution that was identified by the provided IDs"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog, Record, or Distribution could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view this distribution",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the unversioned distribution",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getUnversionedDistribution(
             @Parameter(description = "String representing the Catalog ID", required = true)
@@ -973,35 +1401,68 @@ public class CatalogRest {
     /**
      * Deletes a specific Distribution identified by the provided IDs.
      *
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
+     * @param catalogId      String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param recordId       String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
      * @param distributionId String representing the Distribution ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
      * @return A Response indicating if the Distribution was deleted.
      */
     @DELETE
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/distributions/{distributionId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Deletes a specific Distribution of an UnversionedRecord",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating if the Distribution was deleted"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId, "
-                            + "or distributionId could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
-            }
-    )
+    @Operation(summary = "Deletes a specific Distribution of an UnversionedRecord")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Distribution successfully deleted",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog, Record, or Distribution could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to delete this distribution",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while deleting the unversioned distribution",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteUnversionedDistribution(
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the UnversionedRecord", required = true)
+            @Parameter(description = "String representing the UnversionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
             @Parameter(description = "String representing the Distribution ID", required = true)
             @PathParam("distributionId") String distributionId) {
@@ -1020,32 +1481,64 @@ public class CatalogRest {
      * Updates a specific Distribution for an UnversionedRecord identified by the provided IDs using the modifications
      * in the provided JSON-LD.
      *
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param distributionId String representing the Distribution ID. NOTE: Assumes ID represents an IRI unless
-     *                       String begins with "_:".
+     * @param catalogId           String representing the Catalog ID.
+     *                            NOTE: Assumes ID represents an IRI unless String begins with "_:".
+     * @param recordId            String representing the UnversionedRecord ID.
+     *                            NOTE: Assumes ID represents an IRI unless String begins with "_:".
+     * @param distributionId      String representing the Distribution ID.
+     *                            NOTE: Assumes ID represents an IRI unless String begins with "_:".
      * @param newDistributionJson The JSON-LD of the new Distribution which will replace the existing Distribution.
      * @return A Response indicating if the Distribution was updated.
      */
     @PUT
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/distributions/{distributionId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Updates a specific Distribution for an UnversionedRecord identified by the provided IDs "
-                    + "using the modifications in the provided JSON-LD",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating if the Distribution was updated"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId, "
-                            + "or distributionId could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
-            }
-    )
+    @Operation(summary = "Updates a specific Distribution for an UnversionedRecord")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Distribution successfully updated",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog, Record, or Distribution could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to update this distribution",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while updating the unversioned distribution",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateUnversionedDistribution(
             @Parameter(description = "String representing the Catalog ID", required = true)
@@ -1072,36 +1565,68 @@ public class CatalogRest {
     /**
      * Gets a list of all Versions for a VersionedRecord. Parameters can be passed to control paging.
      *
-     * @param uriInfo The URI information of the request to be used in creating links to other pages of versions
+     * @param uriInfo   The URI information of the request to be used in creating links to other pages of versions
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param sort The field with sort order specified.
-     * @param offset The offset for the page.
-     * @param limit The number of Versions to return in one page.
-     * @param asc Whether the list should be sorted ascending or descending.
+     * @param recordId  String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                  String begins with "_:".
+     * @param sort      The field with sort order specified.
+     * @param offset    The offset for the page.
+     * @param limit     The number of Versions to return in one page.
+     * @param asc       Whether the list should be sorted ascending or descending.
      * @return A list of all the Versions associated with a VersionedRecord.
      */
     @GET
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/versions")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Gets a list of Versions for a VersionedRecord",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "List of all the Versions associated with a VersionedRecord"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId "
-                            + "could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the Versions of a VersionedRecord")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "List of all the Versions associated with a VersionedRecord"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog or Record could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view versions",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving versions",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getVersions(
-            @Context UriInfo uriInfo,
+            @Parameter(hidden = true) @Context UriInfo uriInfo,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
@@ -1132,46 +1657,81 @@ public class CatalogRest {
      * This Version will become the latest Version for the identified VersionedRecord.
      *
      * @param servletRequest The HttpServletRequest.
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param typeIRI The required IRI of the type for the new Version. Must be a valid IRI for a Version or one of its
-     *                subclasses.
-     * @param title The required title for the new Version.
-     * @param description The optional description for the new Version.
+     * @param catalogId      String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param recordId       String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @param typeIRI        The required IRI of the type for the new Version. Must be a valid IRI for a Version or
+     *                       one of its subclasses.
+     * @param title          The required title for the new Version.
+     * @param description    The optional description for the new Version.
      * @return Response with the IRI string of the created Version.
      */
     @POST
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/versions")
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
-            tags = "catalogs",
-            summary = "Creates a Version for the identified VersionedRecord using the passed form data and "
-                    + "stores it in the repository. This Version will become the latest Version for the "
-                    + "identified VersionedRecord",
-            responses = {
-                    @ApiResponse(responseCode = "201",
-                            description = "Response with the IRI string of the created Version"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId "
-                            + "could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
+            summary = "Creates a Version for the identified VersionedRecord",
+            description = "Creates a Version using the passed form data and stores it in the repository."
+                    + "This Version will become the latest Version for the identified VersionedRecord."
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The IRI string of the created Version"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog or Record could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to create a version",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while creating the version",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response createVersion(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "Required IRI of the type for the new Version. Must be a valid IRI for a "
-                    + "Version or one of its subclasses", required = true))
+            @Parameter(schema = @Schema(
+                    type = "string",
+                    description = "Required IRI of the type for the new Version. Must be a valid IRI for a Version "
+                            + "or one of its subclasses", required = true))
             @FormParam("type") String typeIRI,
             @Parameter(schema = @Schema(type = "string",
                     description = "Required title for the new Version", required = true))
@@ -1204,40 +1764,68 @@ public class CatalogRest {
      * become the latest Version for the identified VersionedRecord
      *
      * @param servletRequest The HttpServletRequest.
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param title The required title for the new Tag.
-     * @param description The optional description for the new Tag.
-     * @param iri The required IRI for the new Tag. Must be unique in the repository.
-     * @param commitId The required String representing the Commit ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
+     * @param catalogId      String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param recordId       String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @param title          The required title for the new Tag.
+     * @param description    The optional description for the new Tag.
+     * @param iri            The required IRI for the new Tag. Must be unique in the repository.
+     * @param commitId       The required String representing the Commit ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
      * @return Response with the IRI string of the created Tag.
      */
     @POST
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/tags")
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Creates a Tag for the identified VersionedRecord",
-            responses = {
-                    @ApiResponse(responseCode = "201",
-                            description = "Response with the IRI string of the created Tag"),
-                    @ApiResponse(responseCode = "400",
-                            description = "Response indicating BAD_REQUEST, likely to be parameter is not set"),
-                    @ApiResponse(responseCode = "403",
-                            description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500",
-                            description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Creates a Tag for the identified VersionedRecord")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The IRI string of the created Tag"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Required parameter is missing or the commit is not in the record",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to create a tag",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while creating the tag",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            )
+    })
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response createTag(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
@@ -1291,26 +1879,67 @@ public class CatalogRest {
      *
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
+     * @param recordId  String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                  String begins with "_:".
      * @return The latest Version for the identified VersionedRecord.
      */
     @GET
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/versions/latest")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Gets the latest Version of a VersionedRecord identified by the provided IDs",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Latest Version for the identified VersionedRecord"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId "
-                            + "could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the latest Version of a VersionedRecord")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Latest Version for the identified VersionedRecord"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog or Record could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view the latest version",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Latest version for the record does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the latest version",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getLatestVersion(
             @Parameter(description = "String representing the Catalog ID", required = true)
@@ -1335,34 +1964,67 @@ public class CatalogRest {
      *
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
+     * @param recordId  String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                  String begins with "_:".
      * @param versionId String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @return The requested Version.
      */
     @GET
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/versions/{versionId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Gets a specific Version for the identified VersionedRecord",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Requested Version"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId,"
-                            + " or versionId could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
-            }
-    )
+    @Operation(summary = "Retrieves a specific Version of a VersionedRecord")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The Version identified by the provided IDs as JSON-LD"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog, Record, or Version could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view this version",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the version",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getVersion(
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the VersionedRecord ID", required = true)
+            @Parameter(description = "String representing the Version ID", required = true)
             @PathParam("versionId") String versionId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Version version = versionManager.getVersion(vf.createIRI(catalogId), vf.createIRI(recordId),
@@ -1383,29 +2045,65 @@ public class CatalogRest {
      *
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
+     * @param recordId  String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                  String begins with "_:".
      * @param versionId String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @return A Response indicating whether the Version was deleted.
      */
     @DELETE
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/versions/{versionId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-            tags = "catalogs",
-            summary = "Removes a specific Version from a VersionedRecord. If that Version happens to be "
-                    + "the latest Version, the latest Version will be updated to be the previous Version",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating whether the Version was deleted"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId, "
-                            + "or versionId could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
-            }
+            summary = "Removes a specific Version from a VersionedRecord",
+            description = "If that Version happens to be the latest Version, the latest Version "
+                    + "will be updated to be the previous Version."
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Version successfully deleted",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog, Record, or Version could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to delete this version",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while deleting the version",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteVersion(
@@ -1413,7 +2111,7 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the VersionedRecord ID", required = true)
+            @Parameter(description = "String representing the Version ID", required = true)
             @PathParam("versionId") String versionId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             versionManager.removeVersion(vf.createIRI(catalogId), vf.createIRI(recordId), vf.createIRI(versionId),
@@ -1429,33 +2127,64 @@ public class CatalogRest {
     /**
      * Updates the Version identified by the provided IDs using the modifications in the provided JSON-LD.
      *
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param versionId String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
+     * @param catalogId      String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param recordId       String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @param versionId      String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
      * @param newVersionJson The JSON-LD of the new Version which will replace the existing Version.
      * @return A Response indicating whether the Version was updated.
      */
     @PUT
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/versions/{versionId}")
-    @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Updates the Version identified by the provided IDs using the "
-                    + "modifications in the provided JSON-LD",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating whether the Version was updated"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId, "
-                            + "or versionId could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
-            }
-    )
+    @Operation(summary = "Updates a specific Version of a VersionedRecord")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Version successfully updated",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog, Record, or Version could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to update this version",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while updating the version",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateVersion(
@@ -1467,7 +2196,7 @@ public class CatalogRest {
             @PathParam("versionId") String versionId,
             @Parameter(description = "JSON-LD of the new Version which will replace the existing Version",
                     required = true)
-                    String newVersionJson) {
+            String newVersionJson) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Version newVersion = getNewThing(newVersionJson, vf.createIRI(versionId),
                     factoryRegistry.getFactoryOfType(Version.class).get());
@@ -1484,38 +2213,70 @@ public class CatalogRest {
      * Retrieves a list of all the Distributions associated with a specific Version. Parameters can be passed to control
      * paging.
      *
-     * @param uriInfo The URI information of the request to be used in creating links to other pages of distributions
+     * @param uriInfo   The URI information of the request to be used in creating links to other pages of distributions
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
+     * @param recordId  String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                  String begins with "_:".
      * @param versionId String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param sort The field with sort order specified.
-     * @param offset The offset for the page.
-     * @param limit The number of Distributions to return in one page.
-     * @param asc Whether the list should be sorted ascending or descending.
+     * @param sort      The field with sort order specified.
+     * @param offset    The offset for the page.
+     * @param limit     The number of Distributions to return in one page.
+     * @param asc       Whether the list should be sorted ascending or descending.
      * @return Returns a list of Distributions for the identified Version.
      */
     @GET
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/versions/{versionId}/distributions")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Gets the list of all Distributions for the identified Version",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "List of Distributions for the identified Version"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId, "
-                            + "or versionId could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the Distributions of a Version")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "List of Distributions for the identified Version"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog, Record, or Version could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view versioned distributions",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving versioned distributions",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getVersionedDistributions(
-            @Context UriInfo uriInfo,
+            @Parameter(hidden = true) @Context UriInfo uriInfo,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
@@ -1549,39 +2310,71 @@ public class CatalogRest {
      * Creates a new Distribution for the identified Version using the passed form data.
      *
      * @param servletRequest The HttpServletRequest.
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param versionId String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param title The required title for the new Distribution.
-     * @param description The optional description for the new Distribution.
-     * @param format The optional format string for the new Distribution. Expects a MIME type.
-     * @param accessURL The optional access URL for the new Distribution.
-     * @param downloadURL The optional download URL for the new Distribution.
+     * @param catalogId      String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param recordId       String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @param versionId      String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param title          The required title for the new Distribution.
+     * @param description    The optional description for the new Distribution.
+     * @param format         The optional format string for the new Distribution. Expects a MIME type.
+     * @param accessURL      The optional access URL for the new Distribution.
+     * @param downloadURL    The optional download URL for the new Distribution.
      * @return Response with the IRI string of the created Distribution.
      */
     @POST
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/versions/{versionId}/distributions")
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Creates a Distribution for the identified Version",
-            responses = {
-                    @ApiResponse(responseCode = "201",
-                            description = "Response with the IRI string of the created Distribution"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId, "
-                            + "or versionId could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Creates a Distribution for the identified Version")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The IRI string of the created Distribution"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog, Record, or Version could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to create a versioned distribution",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while creating the versioned distribution",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response createVersionedDistribution(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
@@ -1592,8 +2385,8 @@ public class CatalogRest {
                     description = "String representing the Version ID", required = true))
             @FormParam("title") String title,
             @Parameter(schema = @Schema(type = "string",
-                    description = "Required title for the new Distribution. " +
-                            "If the title is null, throws a 400 Response", required = true))
+                    description = "Required title for the new Distribution. If title is null, throws a 400 Response",
+                    required = true))
             @FormParam("description") String description,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional format string for the new Distribution. Expects a MIME type"))
@@ -1620,32 +2413,64 @@ public class CatalogRest {
     /**
      * Gets a specific Distribution for the Version identified by the IDs.
      *
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param versionId String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
+     * @param catalogId      String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param recordId       String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @param versionId      String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
      * @param distributionId String representing the Distribution ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
      * @return The Distribution for the Version identified by the IDs.
      */
     @GET
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Gets a specific Distribution for the Version identified by the IDs",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Distribution for the Version identified by the IDs"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId, "
-                            + "versionId, or distributionId could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
-            }
-    )
+    @Operation(summary = "Retrieves a specific Distribution of a Version")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Distribution for the Version identified by the IDs"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog, Record, Version, or Distribution could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view this versioned distribution",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the versioned distribution",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getVersionedDistribution(
             @Parameter(description = "String representing the Catalog ID", required = true)
@@ -1671,32 +2496,65 @@ public class CatalogRest {
     /**
      * Deletes the Distribution from the Version identified by the IDs.
      *
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param versionId String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
+     * @param catalogId      String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param recordId       String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @param versionId      String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
      * @param distributionId String representing the Distribution ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
      * @return A Response identifying whether the Distribution was deleted.
      */
     @DELETE
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Deletes a specific Distribution of the identified Version",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response identifying whether the Distribution was deleted"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId, "
-                            + "versionId, or distributionId could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
-            }
-    )
+    @Operation(summary = "Deletes a specific Distribution of the identified Version")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Response identifying whether the Distribution was deleted",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog, Record, Version, or Distribution could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to delete this versioned distribution",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while deleting the versioned distribution",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteVersionedDistribution(
             @Parameter(description = "String representing the Catalog ID", required = true)
@@ -1721,35 +2579,66 @@ public class CatalogRest {
     /**
      * Updates the specified Distribution with the modifications in the provided newDistribution.
      *
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param versionId String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param distributionId String representing the Distribution ID. NOTE: Assumes ID represents an IRI unless
-     *                       String begins with "_:".
+     * @param catalogId           String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String
+     *                            begins with "_:".
+     * @param recordId            String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                            String begins with "_:".
+     * @param versionId           String representing the Version ID. NOTE: Assumes ID represents an IRI unless String
+     *                            begins with "_:".
+     * @param distributionId      String representing the Distribution ID. NOTE: Assumes ID represents an IRI unless
+     *                            String begins with "_:".
      * @param newDistributionJson The JSON-LD of the new Distribution which will replace the existing Distribution.
      * @return A Response identifying whether the Distribution was updated.
      */
     @PUT
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}")
-    @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Updates a specific Distribution of the identified Version with the modifications in the "
-                    + "provided newDistribution",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response identifying whether the Distribution was updated"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId, "
-                            + "versionId, or distributionId could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
-            }
-    )
+    @Operation(summary = "Updates a specific Distribution of a Version")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Response identifying whether the Distribution was updated",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog, Record, Version, or Distribution could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to update this versioned distribution",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while updating the versioned distribution",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateVersionedDistribution(
             @Parameter(description = "String representing the Catalog ID", required = true)
@@ -1760,8 +2649,9 @@ public class CatalogRest {
             @PathParam("versionId") String versionId,
             @Parameter(description = "String representing the Distribution ID", required = true)
             @PathParam("distributionId") String distributionId,
-            @Parameter(description = "JSON-LD of the new Distribution which will replace the existing Distribution", required = true)
-                    String newDistributionJson) {
+            @Parameter(description = "JSON-LD of the new Distribution which will replace the existing Distribution",
+                    required = true)
+            String newDistributionJson) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Distribution newDistribution = getNewThing(newDistributionJson, vf.createIRI(distributionId),
                     distributionFactory);
@@ -1780,27 +2670,60 @@ public class CatalogRest {
      *
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
+     * @param recordId  String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                  String begins with "_:".
      * @param versionId String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @return The Commit associated with the identified Version.
      */
     @GET
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/versions/{versionId}/commit")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Gets the Commit associated with the identified Version using the provided IDs",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Commit associated with the identified Version"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId, "
-                            + "or versionId could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the Commit associated with a Version")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Commit associated with the identified Version"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog, Record, or Version could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view the version commit",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the version commit",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getVersionCommit(
             @Parameter(description = "String representing the Catalog ID", required = true)
@@ -1829,42 +2752,79 @@ public class CatalogRest {
     /**
      * Gets a list of Branches associated with a VersionedRDFRecord identified by the provided IDs.
      *
-     * @param servletRequest The HttpServletRequest.
-     * @param uriInfo The URI information of the request to be used in creating links to other pages of branches
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param sort The field with sort order specified.
-     * @param offset The offset for the page.
-     * @param limit The number of Branches to return in one page.
-     * @param asc Whether the list should be sorted ascending or descending.
+     * @param servletRequest  The HttpServletRequest.
+     * @param uriInfo         The URI information of the request to be used in creating links to other pages of branches
+     * @param catalogId       String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String
+     *                        begins with "_:".
+     * @param recordId        String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                        String begins with "_:".
+     * @param sort            The field with sort order specified.
+     * @param offset          The offset for the page.
+     * @param limit           The number of Branches to return in one page.
+     * @param asc             Whether the list should be sorted ascending or descending.
      * @param applyUserFilter Whether the list should be filtered to Branches associated with the user making
      *                        the request.
      * @return A list of Branches for the identified VersionedRDFRecord.
      */
     @GET
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/branches")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Gets a list of Branches associated with a VersionedRDFRecord identified by the provided IDs",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "List of Records that match the search criteria",
-                            content = @Content(array = @ArraySchema(
-                                    schema = @Schema(implementation = JsonLdObject.class,
-                                    description = "A list of Branch JSON-LD objects")))),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId"
-                            + COULD_NOT_BE_FOUND),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the Branches of a VersionedRDFRecord")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "List of Branches that match the search criteria",
+                    content = @Content(
+                            array = @ArraySchema(
+                                    schema = @Schema(
+                                            implementation = JsonLdObject.class,
+                                            description = "A list of Branch JSON-LD objects")
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog or Record could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view branches",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving branches",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getBranches(
-            @Context HttpServletRequest servletRequest,
-            @Context UriInfo uriInfo,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context UriInfo uriInfo,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
@@ -1877,8 +2837,8 @@ public class CatalogRest {
             @DefaultValue("100") @QueryParam("limit") int limit,
             @Parameter(description = "Whether or not the list should be sorted ascending or descending")
             @DefaultValue("true") @QueryParam("ascending") boolean asc,
-            @Parameter(description = "Whether or not the list should be filtered to Branches associated "
-                    + "with the user making the request")
+            @Parameter(description = "Whether or not the list should be filtered to Branches "
+                    + "associated with the user making the request")
             @DefaultValue("false") @QueryParam("applyUserFilter") boolean applyUserFilter) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
@@ -1909,39 +2869,71 @@ public class CatalogRest {
      * Creates a Branch for a VersionedRDFRecord identified by the IDs using the passed form data.
      *
      * @param servletRequest The HttpServletRequest.
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param typeIRI Required IRI of the type for the new Branch. Must be a valid IRI for a Branch or one of its
-     *                subclasses.
-     * @param title Required title for the new Branch.
-     * @param description Optional description for the new Branch.
-     * @param commitId String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                 with "_:".
+     * @param catalogId      String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param recordId       String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @param typeIRI        Required IRI of the type for the new Branch. Must be a valid IRI for a Branch or one of its
+     *                       subclasses.
+     * @param title          Required title for the new Branch.
+     * @param description    Optional description for the new Branch.
+     * @param commitId       String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
      * @return Response with the IRI string of the created Branch.
      */
     @POST
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/branches")
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Creates a Branch for a VersionedRDFRecord identified by the IDs using the passed form data",
-            responses = {
-                    @ApiResponse(responseCode = "201",
-                            description = "Response with the IRI string of the created Branch"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId"
-                            + COULD_NOT_BE_FOUND),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Creates a Branch for a VersionedRDFRecord")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The IRI string of the created Branch"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog or Record could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to create a branch",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while creating the branch",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response createBranch(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
@@ -1992,37 +2984,68 @@ public class CatalogRest {
      *
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param branchId String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                 with "_:".
+     * @param recordId  String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                  String begins with "_:".
+     * @param branchId  String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
      * @return The identified Branch for the specific VersionedRDFRecord.
      */
     @GET
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/branches/{branchId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Get a specific Branch for a specific VersionedRDFRecord",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Identified Branch for the specific VersionedRDFRecord"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId,"
-                            + " or branchId does not exist"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves a specific Branch of a VersionedRDFRecord")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Identified Branch for the specific VersionedRDFRecord"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog, Record, or Branch does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view this branch",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the branch",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getBranch(
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Branch ID. "
-                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
-                    required = true)
+            @Parameter(description = "String representing the Branch ID. Keyword 'master' (case-insensitive) "
+                    + "may be used to resolve to the Master branch IRI.", required = true)
             @PathParam("branchId") String branchId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             OrmFactory<Branch> branchOrmFactory = factoryRegistry.getFactoryOfType(Branch.class)
@@ -2044,28 +3067,61 @@ public class CatalogRest {
      *
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param branchId String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                 with "_:".
+     * @param recordId  String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                  String begins with "_:".
+     * @param branchId  String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
      * @return A Response identifying whether the Branch was deleted.
      */
     @DELETE
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/branches/{branchId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Deletes a specific Branch for a specific VersionedRDFRecord",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response identifying whether the Branch was deleted"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId, "
-                            + "or branchId does not exist"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Deletes a specific Branch for a specific VersionedRDFRecord")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Response identifying whether the Branch was deleted",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog, Record, or Branch does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to delete this branch",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while deleting the branch",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     @ActionAttributes(
@@ -2076,8 +3132,8 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Branch ID. "
-                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
+            @Parameter(description = "String representing the Branch ID. Keyword 'master' "
+                    + "(case-insensitive) may be used to resolve to the Master branch IRI.",
                     required = true)
             @PathParam("branchId") String branchId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
@@ -2094,33 +3150,64 @@ public class CatalogRest {
     /**
      * Updates the specified Branch using the modifications in the provided newBranch for a specific VersionedRDFRecord.
      *
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param branchId String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                 with "_:".
+     * @param catalogId     String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                      with "_:".
+     * @param recordId      String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                      String begins with "_:".
+     * @param branchId      String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                      with "_:".
      * @param newBranchJson The JSON-LD of the new Branch which will replace the existing Branch.
      * @return A Response identifying whether the Branch was successfully updated.
      */
     @PUT
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/branches/{branchId}")
-    @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Updates the specified Branch using the modifications in the provided newBranch for a "
-                    + "specific VersionedRDFRecord",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Response identifying whether the Branch was "
-                            + "successfully updated"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId,"
-                            + " or branchId does not exist"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Updates a specific Branch of a VersionedRDFRecord")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Response identifying whether the Branch was successfully updated",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog, Record, or Branch does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to update this branch",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while updating the branch",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateBranch(
@@ -2128,12 +3215,12 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Branch ID. "
-                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
+            @Parameter(description = "String representing the Branch ID. Keyword 'master' "
+                    + "(case-insensitive) may be used to resolve to the Master branch IRI.",
                     required = true)
             @PathParam("branchId") String branchId,
             @Parameter(description = "String representing the Branch JSON", required = true)
-                String newBranchJson) {
+            String newBranchJson) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Resource branchIRI = vf.createIRI(checkBranchId(catalogId, recordId, branchId, conn));
             Branch newBranch = getNewThing(newBranchJson, branchIRI,
@@ -2152,56 +3239,92 @@ public class CatalogRest {
      * chain for that Branch. If a limit is passed which is greater than zero, will paginate the results. If a
      * targetId is passed, then only commits between the HEAD commits of the branchId and targetId will be returned.
      *
-     * @param uriInfo The URI context for the request.
+     * @param uriInfo   The URI context for the request.
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param branchId String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                 with "_:".
-     * @param targetId String representing the target Branch ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param offset An optional offset for the results.
-     * @param limit An optional limit for the results.
+     * @param recordId  String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                  String begins with "_:".
+     * @param branchId  String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param targetId  String representing the target Branch ID. NOTE: Assumes ID represents an IRI unless
+     *                  String begins with "_:".
+     * @param offset    An optional offset for the results.
+     * @param limit     An optional limit for the results.
      * @return A list of Commits for the identified Branch which represents the Commit chain.
      */
     @GET
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-            tags = "catalogs",
-            summary = "Gets a list of Commits associated with the Branch identified by the provided IDs "
-                    + "which represents the Commit chain for that Branch. If a limit is passed which is "
-                    + "greater than zero, will paginate the results. If a targetId is passed, then only "
-                    + "commits between the HEAD commits of the branchId and "
-                    + "targetId will be returned.",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "List of Commits for the identified Branch which represents"
-                                    + " the Commit chain",
-                            content = @Content(array = @ArraySchema(
-                                    schema = @Schema(implementation = CommitData.class,
-                                    description = "A chain of Commit data objects")))),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId,"
-                            + " or branchId could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
+            summary = "Retrieves the Commit history of a Branch",
+            description = "Returns the Commit chain for the Branch. If a limit greater than zero is passed,"
+                    + "results will be paginated. If a targetId is passed, only commits between the"
+                    + " HEAD commits of the branchId and targetId will be returned."
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "List of Commits for the identified Branch which represents the Commit chain",
+                    content = @Content(
+                            array = @ArraySchema(
+                                    schema = @Schema(
+                                            implementation = CommitData.class,
+                                            description = "A chain of Commit data objects")
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog, Record, or Branch could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view the commit chain",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the commit chain",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getCommitChain(
-            @Context UriInfo uriInfo,
+            @Parameter(hidden = true) @Context UriInfo uriInfo,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Branch ID. "
-                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
+            @Parameter(description = "String representing the Branch ID. Keyword 'master' (case-insensitive) "
+                    + "may be used to resolve to the Master branch IRI.",
                     required = true)
             @PathParam("branchId") String branchId,
-            @Parameter(description = "String representing the target Branch ID. "
-                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
+            @Parameter(description = "String representing the target Branch ID. Keyword 'master' (case-insensitive) "
+                    + "may be used to resolve to the Master branch IRI.",
                     required = true)
             @QueryParam("targetId") String targetId,
             @Parameter(description = "Optional offset for the results")
@@ -2242,45 +3365,78 @@ public class CatalogRest {
      * making this request. The HEAD Commit is updated to be this new Commit.
      *
      * @param servletRequest The HttpServletRequest.
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param branchId String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                 with "_:".
-     * @param message Message for the new Commit.
+     * @param catalogId      String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param recordId       String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @param branchId       String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param message        Message for the new Commit.
      * @return Response with the IRI of the new Commit added to the Branch.
      */
     @POST
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits")
     @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
     @Operation(
-            tags = "catalogs",
-            summary = "Creates a new Commit in the repository for a specific Branch using the InProgressCommit "
-                    + "associated with the user making this request. The HEAD Commit is updated to be this new Commit",
-            responses = {
-                    @ApiResponse(responseCode = "201",
-                            description = "Response with the IRI of the new Commit added to the Branch"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId,"
-                            + " or branchId could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
+            summary = "Creates a new Commit on a Branch from the User's InProgressCommit",
+            description = "Creates a new Commit in the repository for the specific Branch using the InProgressCommit "
+                    + "associated with the user making this request. The HEAD Commit is updated to be this new Commit."
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The IRI of the new Commit added to the Branch"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog, Record, or Branch could not be found",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to create a commit on this branch",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while creating the branch commit",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            )
+    })
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     @ActionAttributes(
             @AttributeValue(type = ValueType.PATH, id = VersionedRDFRecord.branch_IRI, value = "branchId")
     )
     public Response createBranchCommit(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Branch ID. "
-                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
+            @Parameter(description = "String representing the Branch ID. Keyword 'master' (case-insensitive) "
+                    + "may be used to resolve to the Master branch IRI.",
                     required = true)
             @PathParam("branchId") String branchId,
             @Parameter(description = "Message for the new Commit", required = true)
@@ -2306,45 +3462,85 @@ public class CatalogRest {
      *
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param branchId String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                 with "_:".
-     * @param commitId String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                 with "_:".
-     * @param format Desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @param recordId  String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                  String begins with "_:".
+     * @param branchId  String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param commitId  String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param format    Desired RDF return format. NOTE: Optional param - defaults to "jsonld".
      * @return Response with the Commit identified by the provided IDs.
      */
     @GET
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Gets the Commit identified by the provided IDs",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response with the Commit identified by the provided IDs",
-                            content = @Content(schema = @Schema(implementation = CommitData.class))),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId,"
-                            + " branchId, or commitId could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "404", description = "Commit could not be found"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves a specific Commit on a Branch")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The Commit identified by the provided IDs",
+                    content = @Content(schema = @Schema(implementation = CommitData.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog, Record, Branch, or Commit could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view this commit",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Commit with the provided ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the branch commit",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getBranchCommit(
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Branch ID. "
-                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
+            @Parameter(description = "String representing the Branch ID. Keyword 'master' (case-insensitive) "
+                    + "may be used to resolve to the Master branch IRI.",
                     required = true)
             @PathParam("branchId") String branchId,
-            @Parameter(description = "String representing the Commit ID. "
-                    + "Keyword 'head' (case-insensitive) may be used to resolve to the HEAD Commit IRI for the branch.",
+            @Parameter(description = "String representing the Commit ID. Keyword 'head' (case-insensitive) "
+                    + "may be used to resolve to the HEAD Commit IRI for the branch.",
                     required = true)
             @PathParam("commitId") String commitId,
             @Parameter(description = "Optional RDF return format")
@@ -2354,9 +3550,11 @@ public class CatalogRest {
             Resource catalogIRI = vf.createIRI(catalogId);
             Resource recordIRI = vf.createIRI(recordId);
             Resource branchIRI = vf.createIRI(checkBranchId(catalogId, recordId, branchId, conn));
-            Resource commitIRI = vf.createIRI(checkCommitId(catalogId, recordId, branchIRI.stringValue(), commitId, conn));
+            Resource commitIRI = vf.createIRI(checkCommitId(catalogId, recordId, branchIRI.stringValue(), commitId,
+                    conn));
             Commit commit = commitManager.getCommit(catalogIRI, recordIRI, branchIRI, commitIRI, conn).orElseThrow(() ->
-                    ErrorUtils.sendError(COMMIT + commitIRI.stringValue() + COULD_NOT_BE_FOUND, Response.Status.NOT_FOUND));
+                    ErrorUtils.sendError(COMMIT + commitIRI.stringValue() + COULD_NOT_BE_FOUND,
+                            Response.Status.NOT_FOUND));
             return createCommitResponse(commit, differenceManager.getCommitDifference(commit.getResource(), conn),
                     format, bNodeService);
         } catch (IllegalArgumentException ex) {
@@ -2373,48 +3571,82 @@ public class CatalogRest {
      * HEAD Commit of the Branch identified by the query parameter. For this comparison to be done, the Commits must
      * have an ancestor Commit in common.
      *
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
+     * @param catalogId      String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param recordId       String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
      * @param sourceBranchId String representing the source Branch ID. NOTE: Assumes ID represents an IRI unless String
-     *                 begins with "_:".
+     *                       begins with "_:".
      * @param targetBranchId String representing the target Branch ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
-     * @param rdfFormat Desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @param rdfFormat      Desired RDF return format. NOTE: Optional param - defaults to "jsonld".
      * @return Response with the Difference between the identified Branches' HEAD Commits as a JSON object.
      */
     @GET
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/difference")
+    @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-            tags = "catalogs",
-            summary = "Gets the Difference between the HEAD Commit of the Branch identified by the "
-                    + "provided IDs in the path and the HEAD Commit of the Branch identified by the "
-                    + "query parameter. For this comparison to be done, the Commits must have an ancestor "
-                    + "Commit in common.",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response with the Difference between the identified"
-                                    + " Branches' HEAD Commits as a JSON object"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId,"
-                            + " or branchId could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
+            summary = "Retrieves the Difference between two Branch HEAD Commits",
+            description = "Compares the HEAD Commits of the Branches identified by the path and query parameters."
+                    + "The Commits must have an ancestor Commit in common."
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The Difference between the identified Branches' "
+                            + "HEAD Commits as a JSON object"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog, Record, or Branch could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view branch differences",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while computing the branch difference",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getDifference(
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the source Branch ID. "
-                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
+            @Parameter(description = "String representing the source Branch ID. Keyword 'master' (case-insensitive) "
+                    + "may be used to resolve to the Master branch IRI.",
                     required = true)
             @PathParam("branchId") String sourceBranchId,
-            @Parameter(description = "String representing the target Branch ID. "
-                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
+            @Parameter(description = "String representing the target Branch ID. Keyword 'master' (case-insensitive) "
+                    + "may be used to resolve to the Master branch IRI.",
                     required = true)
             @QueryParam("targetId") String targetBranchId,
             @Parameter(description = "Optional RDF return format")
@@ -2442,49 +3674,81 @@ public class CatalogRest {
      * HEAD Commit of the Branch identified by the query parameter. For this comparison to be done, the Commits must
      * have an ancestor Commit in common.
      *
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param branchId String representing the source Branch ID. NOTE: Assumes ID represents an IRI unless String
-     *                 begins with "_:".
+     * @param catalogId      String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param recordId       String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @param branchId       String representing the source Branch ID. NOTE: Assumes ID represents an IRI unless String
+     *                       begins with "_:".
      * @param targetBranchId String representing the target Branch ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
-     * @param rdfFormat Desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @param rdfFormat      Desired RDF return format. NOTE: Optional param - defaults to "jsonld".
      * @return Response with the list of Conflicts between the identified Branches' HEAD Commits.
      */
     @GET
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/conflicts")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-            tags = "catalogs",
-            summary = "Gets the Conflicts between the HEAD Commit of the Branch identified by the "
-                    + "provided IDs in the path and the HEAD Commit of the Branch identified by the "
-                    + "query parameter. For this comparison to be done, the Commits must have an "
-                    + "ancestor Commit in common",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response with the list of Conflicts between the "
-                                    + "identified Branches' HEAD Commits"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId,"
-                            + " or branchId could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
+            summary = "Retrieves the Conflicts between two Branch HEAD Commits",
+            description = "Compares the HEAD Commits of the Branches identified by the path and query parameters."
+                    + "The Commits must have an ancestor Commit in common."
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The list of Conflicts between the identified Branches' HEAD Commits"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog, Record, or Branch could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view branch conflicts",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving branch conflicts",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getConflicts(
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the source Branch ID. "
-                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
+            @Parameter(description = "String representing the source Branch ID. Keyword 'master' (case-insensitive) "
+                    + "may be used to resolve to the Master branch IRI.",
                     required = true)
             @PathParam("branchId") String branchId,
-            @Parameter(description = "String representing the target Branch ID. "
-                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
+            @Parameter(description = "String representing the target Branch ID. Keyword 'master' (case-insensitive) "
+                    + "may be used to resolve to the Master branch IRI.",
                     required = true)
             @QueryParam("targetId") String targetBranchId,
             @Parameter(description = "Optional RDF return format")
@@ -2498,7 +3762,8 @@ public class CatalogRest {
             Resource targetBranchIRI = vf.createIRI(checkBranchId(catalogId, recordId, targetBranchId, conn));
             Commit sourceHead = commitManager.getHeadCommit(catalogIRI, recordIRI, sourceBranchIRI, conn);
             Commit targetHead = commitManager.getHeadCommit(catalogIRI, recordIRI, targetBranchIRI, conn);
-            Set<Conflict> conflicts = differenceManager.getConflicts(sourceHead.getResource(), targetHead.getResource(), conn);
+            Set<Conflict> conflicts = differenceManager.getConflicts(sourceHead.getResource(),
+                    targetHead.getResource(), conn);
             ArrayNode array = mapper.createArrayNode();
             conflicts.stream()
                     .map(conflict -> conflictToJson(conflict, rdfFormat))
@@ -2519,64 +3784,95 @@ public class CatalogRest {
      * point to the new merge commit, but the source Branch will still point to the original head commit.
      *
      * @param servletRequest The HttpServletRequest.
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
+     * @param catalogId      String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param recordId       String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
      * @param sourceBranchId String representing the source Branch ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
      * @param targetBranchId String representing the target Branch ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
-     * @param additionsJson String of JSON-LD that corresponds to the statements that were added to the entity.
-     * @param deletionsJson String of JSON-LD that corresponds to the statements that were deleted in the entity.
+     * @param additionsJson  String of JSON-LD that corresponds to the statements that were added to the entity.
+     * @param deletionsJson  String of JSON-LD that corresponds to the statements that were deleted in the entity.
      * @return A Response indicating whether the Commits were successfully merged.
      */
     @POST
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/conflicts/resolution")
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
-            tags = "catalogs",
-            summary = "Performs a merge between the two Branches identified by the provided IDs. The addition and "
-                    + "deletion statements that are required to resolve any conflicts will be used to create the "
-                    + "merged Commit. The target Branch will point to the new merge commit, but the source Branch  "
-                    + "will still point to the original head commit.",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Commits were successfully merged"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId,"
-                            + " or branchId could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
+            summary = "Merges two Branches and resolves conflicts",
+            description = "The addition and deletion statements that are required to resolve any conflicts "
+                    + "will be used to create the merged Commit. The target Branch will point to the new merge "
+                    + "commit, but the source Branch will still point to the original head commit."
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Commits were successfully merged"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog, Record, or Branch could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to merge branches",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while merging the branches",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionId(value = Modify.TYPE)
     @ActionAttributes(
             @AttributeValue(type = ValueType.QUERY, id = VersionedRDFRecord.branch_IRI, value = "targetId")
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response merge(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "Catalog IRI", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "VersionedRecord IRI", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "Source Branch IRI. "
-                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
-                    required = true)
+            @Parameter(description = "Source Branch IRI. Keyword 'master' (case-insensitive) "
+                    + "may be used to resolve to the Master branch IRI.", required = true)
             @PathParam("branchId") String sourceBranchId,
-            @Parameter(description = "Target Branch IRI. "
-                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
-                    required = true)
+            @Parameter(description = "Target Branch IRI. Keyword 'master' (case-insensitive)"
+                    + " may be used to resolve to the Master branch IRI.", required = true)
             @QueryParam("targetId") String targetBranchId,
             @Parameter(schema = @Schema(type = "string",
-                    description = "String of JSON-LD that corresponds to the statements that"
-                    + "were added to the entity"))
+                    description = "String of JSON-LD that corresponds to the statements that were added to the entity"))
             @Encoded @FormParam(ADDITIONS) String additionsJson,
             @Parameter(schema = @Schema(type = "string",
-                    description = "String of JSON-LD that corresponds to the statements that "
-                    + "were deleted in the entity"))
+                    description = "String of JSON-LD that corresponds to the statements that were deleted in the"
+                            + " entity"))
             @Encoded @FormParam(DELETIONS) String deletionsJson,
             @Parameter(schema = @Schema(type = "string",
                     description = "String of JSON-LD array that corresponds to conflicts associated with the merge"))
@@ -2604,54 +3900,99 @@ public class CatalogRest {
      * which terminates at the identified Commit.
      *
      * @param servletRequest The HttpServletRequest.
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param branchId String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                 with "_:".
-     * @param commitId String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                 with "_:".
-     * @param rdfFormat Desired RDF return format. NOTE: Optional param - defaults to "jsonld".
-     * @param apply Boolean value identifying whether the InProgressCommit associated with identified Record should be
-     *              applied to the result.
-     * @return A Response the compiled Resource for the entity at the specific Commit.
+     * @param catalogId      String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param recordId       String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @param branchId       String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param commitId       String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param rdfFormat      Desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @param apply          Boolean value identifying whether the InProgressCommit associated with identified Record
+     *                       should be applied to the result.
+     * @return A Response with the compiled Resource for the identified Commit.
      */
     @GET
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/resource")
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @RolesAllowed("user")
     @Operation(
-            tags = "catalogs",
-            summary = "Gets the Commit identified by the provided IDs and returns the compiled Resource "
-                    + "following the Commit chain which terminates at the identified Commit",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response the compiled Resource for the entity at the specific Commit"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId,"
-                            + " branchId, or commitId could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
+            summary = "Retrieves the compiled Resource for a Commit on a Branch",
+            description = "Returns the compiled Resource following the Commit chain which terminates at the "
+                    + "identified Commit."
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The compiled Resource for the identified Commit"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog, Record, Branch, or Commit could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view the compiled resource",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Commit with the provided ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the compiled resource",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getCompiledResource(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Branch ID. "
-                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.")
+            @Parameter(description = "String representing the Branch ID. Keyword 'master' "
+                    + "(case-insensitive) may be used to resolve to the Master branch IRI.")
             @PathParam("branchId") String branchId,
-            @Parameter(description = "String representing the Commit ID. "
-                    + "Keyword 'head' (case-insensitive) may be used to resolve to the HEAD Commit IRI for the branch.",
+            @Parameter(description = "String representing the Commit ID. Keyword 'head' "
+                    + "(case-insensitive) may be used to resolve to the "
+                    + "HEAD Commit IRI for the branch.",
                     required = true)
             @PathParam("commitId") String commitId,
             @Parameter(description = "Optional RDF return format")
             @DefaultValue("jsonld") @QueryParam("format") String rdfFormat,
             @Parameter(description = "Boolean value identifying whether the InProgressCommit associated with "
-                    + "identified Record should be  applied to the result")
+                    + "identified Record should be applied to the result")
             @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean apply,
             @Parameter(description = "Boolean value identifying whether to skolemize blank nodes")
             @DefaultValue("true") @QueryParam("skolemize") boolean skolemize) {
@@ -2663,17 +4004,19 @@ public class CatalogRest {
                 Resource branchIRI = vf.createIRI(checkBranchId(catalogId, recordId, branchId, conn));
                 commitIRI = vf.createIRI(checkCommitId(catalogId, recordId, branchIRI.stringValue(), commitId, conn));
                 commitManager.getCommit(catalogIRI, recordIRI, branchIRI, commitIRI, conn).orElseThrow(() ->
-                        ErrorUtils.sendError(COMMIT + commitIRI.stringValue() + COULD_NOT_BE_FOUND, Response.Status.NOT_FOUND));
+                        ErrorUtils.sendError(COMMIT + commitIRI.stringValue() + COULD_NOT_BE_FOUND,
+                                Response.Status.NOT_FOUND));
             } else {
                 commitIRI = vf.createIRI(commitId);
                 commitManager.getCommit(commitIRI, conn).orElseThrow(() ->
-                        ErrorUtils.sendError(COMMIT + commitIRI.stringValue() + COULD_NOT_BE_FOUND, Response.Status.NOT_FOUND));
+                        ErrorUtils.sendError(COMMIT + commitIRI.stringValue() + COULD_NOT_BE_FOUND,
+                                Response.Status.NOT_FOUND));
             }
             Model resource = compiledResourceManager.getCompiledResource(commitIRI, conn);
             if (apply) {
                 User activeUser = getActiveUser(servletRequest, engineManager);
-                Optional<InProgressCommit> inProgressCommit = commitManager.getInProgressCommitOpt(catalogIRI, recordIRI,
-                        activeUser, conn);
+                Optional<InProgressCommit> inProgressCommit = commitManager.getInProgressCommitOpt(catalogIRI,
+                        recordIRI, activeUser, conn);
                 if (inProgressCommit.isPresent()) {
                     resource = differenceManager.applyInProgressCommit(inProgressCommit.get().getResource(), resource,
                             conn);
@@ -2698,75 +4041,117 @@ public class CatalogRest {
      * Commit chain which terminates at the identified Commit.
      *
      * @param servletRequest The HttpServletRequest.
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param branchId String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                 with "_:".
-     * @param commitId String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                 with "_:".
-     * @param rdfFormat Desired RDF return format. NOTE: Optional param - defaults to "jsonld".
-     * @param apply Boolean value identifying whether the InProgressCommit associated with the identified Record and
-     *              User making the request should be applied to the result.
-     * @param fileName The Desired name of the generated file. NOTE: Optional param - defaults to "resource".
-     * @return Response with the compiled Resource for the entity at the specific Commit to download.
+     * @param catalogId      String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param recordId       String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @param branchId       String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param commitId       String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param rdfFormat      Desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @param apply          Boolean value identifying whether the InProgressCommit associated with the identified
+     *                       Record and User making the request should be applied to the result.
+     * @param fileName       The Desired name of the generated file. NOTE: Optional param - defaults to "resource".
+     * @return Response with the compiled Resource for the identified Commit to download.
      */
     @GET
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/resource")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Gets the compiled resource for a the entity identified by a specific Commit",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response with the compiled Resource for the entity"
-                                    + " at the specific Commit to download"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId,"
-                            + " branchId, or commitId could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Downloads the compiled Resource for a Commit on a Branch")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The compiled Resource for the identified Commit to download"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog, Record, Branch, or Commit could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to download the compiled resource",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Commit with the provided ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while downloading the compiled resource",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response downloadCompiledResource(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Branch ID. "
-                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
+            @Parameter(description = "String representing the Branch ID. Keyword 'master' "
+                    + "(case-insensitive) may be used to resolve to the Master branch IRI.",
                     required = true)
             @PathParam("branchId") String branchId,
-            @Parameter(description = "String representing the Commit ID. "
-                    + "Keyword 'head' (case-insensitive) may be used to resolve to the HEAD Commit IRI for the branch.",
+            @Parameter(description = "String representing the Commit ID. Keyword 'head' (case-insensitive) may be "
+                    + "used to resolve to the HEAD Commit IRI for the branch.",
                     required = true)
             @PathParam("commitId") String commitId,
             @Parameter(description = "Optional RDF return format")
             @DefaultValue("jsonld") @QueryParam("format") String rdfFormat,
-            @Parameter(description = "Boolean value identifying whether the InProgressCommit associated with "
-                    + "the identified Record and User making the request should be applied to the result")
+            @Parameter(description = "Boolean value identifying whether the InProgressCommit associated with the "
+                    + "identified Record and User making the request should be applied to the result")
             @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean apply,
-            @Parameter(description = "Desired name of the generated file. "
+            @Parameter(description = "Desired name of the generated file."
                     + "NOTE: Optional param - defaults to \"resource\"")
             @DefaultValue("resource") @QueryParam("fileName") String fileName) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Resource catalogIRI = vf.createIRI(catalogId);
             Resource recordIRI = vf.createIRI(recordId);
             Resource branchIRI = vf.createIRI(checkBranchId(catalogId, recordId, branchId, conn));
-            Resource commitIRI = vf.createIRI(checkCommitId(catalogId, recordId, branchIRI.stringValue(), commitId, conn));
+            Resource commitIRI = vf.createIRI(checkCommitId(catalogId, recordId, branchIRI.stringValue(), commitId,
+                    conn));
             commitManager.getCommit(catalogIRI, recordIRI, branchIRI, commitIRI, conn).orElseThrow(() ->
-                    ErrorUtils.sendError(COMMIT + commitIRI.stringValue() + COULD_NOT_BE_FOUND, Response.Status.NOT_FOUND));
+                    ErrorUtils.sendError(COMMIT + commitIRI.stringValue() + COULD_NOT_BE_FOUND,
+                            Response.Status.NOT_FOUND));
             Model resource;
             Model temp = compiledResourceManager.getCompiledResource(commitIRI, conn);
             if (apply) {
                 User activeUser = getActiveUser(servletRequest, engineManager);
-                Optional<InProgressCommit> inProgressCommit = commitManager.getInProgressCommitOpt(catalogIRI, recordIRI,
-                        activeUser, conn);
+                Optional<InProgressCommit> inProgressCommit = commitManager.getInProgressCommitOpt(catalogIRI,
+                        recordIRI, activeUser, conn);
                 resource = inProgressCommit.map(inProgressCommit1 ->
-                        differenceManager.applyInProgressCommit(inProgressCommit1.getResource(), temp, conn))
+                                differenceManager.applyInProgressCommit(inProgressCommit1.getResource(), temp, conn))
                         .orElse(temp);
             } else {
                 resource = temp;
@@ -2778,7 +4163,7 @@ public class CatalogRest {
                 }
             };
             return Response.ok(stream).header("Content-Disposition", "attachment;filename=" + fileName
-                    + "." + getRDFFormatFileExtension(rdfFormat))
+                            + "." + getRDFFormatFileExtension(rdfFormat))
                     .header("Content-Type", getRDFFormatMimeType(rdfFormat)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -2791,31 +4176,63 @@ public class CatalogRest {
      * Creates a new InProgressCommit in the repository for the User making this request.
      *
      * @param servletRequest The HttpServletRequest.
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
+     * @param catalogId      String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param recordId       String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
      * @return Response indicating whether the InProgressCommit was created successfully.
      */
     @POST
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/in-progress-commit")
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Creates a InProgressCommit linked to a specific VersionedRDFRecord",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating whether the InProgressCommit"
-                                   +  " was created successfully"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId"
-                            + COULD_NOT_BE_FOUND),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Creates a InProgressCommit linked to a specific VersionedRDFRecord")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "InProgressCommit successfully created",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog or Record could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to create an InProgressCommit",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while creating the InProgressCommit",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response createInProgressCommit(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRDFRecord ID", required = true)
@@ -2824,6 +4241,7 @@ public class CatalogRest {
             User activeUser = getActiveUser(servletRequest, engineManager);
             InProgressCommit inProgressCommit = commitManager.createInProgressCommit(activeUser);
             commitManager.addInProgressCommit(vf.createIRI(catalogId), vf.createIRI(recordId), inProgressCommit, conn);
+            // TODO: POST that creates a resource should return Response.status(201) not Response.ok() (200)
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -2837,33 +4255,74 @@ public class CatalogRest {
      * provided IDs.
      *
      * @param servletRequest The HttpServletRequest.
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param format Desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @param catalogId      String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param recordId       String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @param format         Desired RDF return format. NOTE: Optional param - defaults to "jsonld".
      * @return Response with the changes from the specific InProgressCommit.
      */
     @GET
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/in-progress-commit")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Gets the changes made in the User's current InProgressCommit for a specific VersionedRDFRecord",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response with the changes from the specific InProgressCommit"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId"
-                            + COULD_NOT_BE_FOUND),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the User's InProgressCommit changes for a VersionedRDFRecord")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The changes from the specific InProgressCommit"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog or Record could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view the InProgressCommit",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "In-progress commit for this user and record does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the InProgressCommit",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getInProgressCommit(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
@@ -2889,33 +4348,63 @@ public class CatalogRest {
      * the repository.
      *
      * @param servletRequest The HttpServletRequest.
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
+     * @param catalogId      String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param recordId       String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
      * @return A Response indicating whether the InProgressCommit was deleted successfully.
      */
     @DELETE
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/in-progress-commit")
-    @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Deletes the changes made in the User's current InProgressCommit for a "
-                    + "specific VersionedRDFRecord",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating whether the InProgressCommit "
-                                    + "was deleted successfully"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId"
-                            + COULD_NOT_BE_FOUND),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Deletes the User's InProgressCommit for a VersionedRDFRecord")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "InProgressCommit successfully deleted",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog or Record could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to delete the InProgressCommit",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while deleting the InProgressCommit",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteInProgressCommit(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRDFRecord ID", required = true)
@@ -2936,47 +4425,84 @@ public class CatalogRest {
      * form data. If the user does not have an InProgressCommit, one will be created with the provided data.
      *
      * @param servletRequest The HttpServletRequest.
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param additionsJson String of JSON-LD that corresponds to the statements that were added to the entity.
-     * @param deletionsJson String of JSON-LD that corresponds to the statements that were deleted in the entity.
+     * @param catalogId      String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                       with "_:".
+     * @param recordId       String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @param additionsJson  String of JSON-LD that corresponds to the statements that were added to the entity.
+     * @param deletionsJson  String of JSON-LD that corresponds to the statements that were deleted in the entity.
      * @return A Response indicating whether the InProgressCommit was updated.
      */
     @PUT
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{catalogId}/records/{recordId}/in-progress-commit")
-    @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
-            tags = "catalogs",
-            summary = "Updates the InProgressCommit for a user identified by the provided IDs using the statements "
-                    + "found in the provided form data. If the user does not have an InProgressCommit, one will be"
-                    + " created with the provided data.",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "InProgressCommit was updated"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId"
-                            + COULD_NOT_BE_FOUND),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
+            summary = "Updates or creates the User's InProgressCommit for a VersionedRDFRecord",
+            description = "Updates the InProgressCommit for the user using the statements found in the provided"
+                    + " form data. If the user does not have an InProgressCommit, "
+                    + "one will be created with the provided data."
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "InProgressCommit was updated",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The requested Catalog or Record could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to update the InProgressCommit",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while updating the InProgressCommit",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateInProgressCommit(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
             @Parameter(schema = @Schema(type = "string",
-                    description = "String of JSON-LD that corresponds to the statements that"
-                    + " were added to the entity", required = true))
+                    description = "String of JSON-LD that corresponds to the statements that were added to the entity",
+                    required = true))
             @Encoded @FormParam(ADDITIONS) String additionsJson,
             @Parameter(schema = @Schema(type = "string",
-                    description = "String of JSON-LD that corresponds to the statements that"
-                    + " were deleted in the entity", required = true))
+                    description = "String of JSON-LD that corresponds to the statements that were deleted in the "
+                            + "entity",
+                    required = true))
             @Encoded @FormParam(DELETIONS) String deletionsJson) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             User activeUser = getActiveUser(servletRequest, engineManager);
@@ -2998,22 +4524,59 @@ public class CatalogRest {
      * @return All the available record types
      */
     @GET
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("record-types")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Retrieves all the available record types",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "All the available record types",
-                            content = @Content(schema = @Schema(type = "object",
+    @Operation(summary = "Retrieves all the available record types")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "All the available record types",
+                    content = @Content(
+                            schema = @Schema(
+                                    type = "object",
                                     description = "Map of Record IRIs to a list of their parent type IRIs"
-                                    ))),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request for record types",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view record types",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving record types",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response getRecordTypes() {
         try {
             ObjectNode returnObject = mapper.createObjectNode();
@@ -3037,23 +4600,52 @@ public class CatalogRest {
      * @return All the available sorting options.
      */
     @GET
+    @io.swagger.v3.oas.annotations.tags.Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("sort-options")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Retrieves all the available sorting options",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "All the available sorting options",
-                        content = @Content(array = @ArraySchema(schema = @Schema(
-                                type = "string",
-                                format = "uri",
-                                description = "The IRI of a sorting property")))),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves all the available sorting options")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "All the available sorting options",
+                    content = @Content(
+                            array = @ArraySchema(
+                                    schema = @Schema(
+                                            type = "string",
+                                            format = "uri",
+                                            description = "The IRI of a sorting property")
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request for sort options",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view sort options",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+    })
     public Response getSortOptions() {
         try {
             return Response.ok(SORT_RESOURCES).build();
@@ -3071,7 +4663,7 @@ public class CatalogRest {
      * @param format   String representing the RDF format to return the statements in.
      * @param conn     A RepositoryConnection to use for lookup.
      * @return A JSONObject with a key for the Commit's addition statements and a key for the Commit's deletion
-     * statements.
+     *      statements.
      */
     private ObjectNode getCommitDifferenceObject(Resource commitId, String format, RepositoryConnection conn) {
         long start = System.currentTimeMillis();
@@ -3088,9 +4680,8 @@ public class CatalogRest {
      *
      * @param difference The Difference to convert into a JSONObject.
      * @param format     String representing the RDF format to return the statements in.
-     *
      * @return A JSONObject with a key for the Difference's addition statements and a key for the Difference's deletion
-     *         statements.
+     *      statements.
      */
     private ObjectNode getDifferenceJson(Difference difference, String format) {
         long start = System.currentTimeMillis();
@@ -3118,13 +4709,12 @@ public class CatalogRest {
     /**
      * Creates a Distribution object using the provided metadata strings. If the title is null, throws a 400 Response.
      *
-     * @param title       Required title for the new Distribution.
-     * @param description Optional description for the new Distribution.
-     * @param format      Optional format string for the new Distribution.
-     * @param accessURL   Optional access URL for the new Distribution.
-     * @param downloadURL Optional download URL for the Distribution.
+     * @param title          Required title for the new Distribution.
+     * @param description    Optional description for the new Distribution.
+     * @param format         Optional format string for the new Distribution.
+     * @param accessURL      Optional access URL for the new Distribution.
+     * @param downloadURL    Optional download URL for the Distribution.
      * @param servletRequest The HttpServletRequest.
-     *
      * @return The new Distribution if passed a title.
      */
     private Distribution createDistribution(String title, String description, String format, String accessURL,
@@ -3157,7 +4747,6 @@ public class CatalogRest {
      * @param thingId      The ID Resource to confirm.
      * @param factory      The OrmFactory to use when creating the new Thing.
      * @param <T>          A class that extends Thing.
-     *
      * @return The new Thing if the JSON-LD contains the correct ID Resource; throws a 400 otherwise.
      */
     private <T extends Thing> T getNewThing(String newThingJson, Resource thingId, OrmFactory<T> factory) {
@@ -3173,9 +4762,8 @@ public class CatalogRest {
      *
      * @param conflict  The Conflict to turn into a JSONObject
      * @param rdfFormat String representing the RDF format to return the statements in.
-     *
      * @return A JSONObject with a key for the Conflict's original Model, a key for the Conflict's left Difference, and
-     *         a key for the Conflict's right Difference.
+     *      a key for the Conflict's right Difference.
      */
     private ObjectNode conflictToJson(Conflict conflict, String rdfFormat) {
         ObjectNode object = mapper.createObjectNode();
@@ -3195,8 +4783,8 @@ public class CatalogRest {
             if (arrNode != null && arrNode.isArray()) {
                 for (final JsonNode objNode : arrNode) {
                     IRI iri = vf.createIRI(objNode.get("iri").asText());
-                    Difference left = getDifference(objNode.get("left"));
-                    Difference right = getDifference(objNode.get("right"));
+                    Difference left = getDifferenceFromJson(objNode.get("left"));
+                    Difference right = getDifferenceFromJson(objNode.get("right"));
                     Conflict conflict = new Conflict.Builder(iri)
                             .leftDifference(left)
                             .rightDifference(right)
@@ -3210,7 +4798,7 @@ public class CatalogRest {
         }
     }
 
-    private Difference getDifference(JsonNode differenceNode) {
+    private Difference getDifferenceFromJson(JsonNode differenceNode) {
         JsonNode additions = differenceNode.get(ADDITIONS);
         JsonNode deletions = differenceNode.get(DELETIONS);
         return new Difference.Builder()
@@ -3223,7 +4811,6 @@ public class CatalogRest {
      * Converts a JSON-LD string into a Model.
      *
      * @param jsonld String of JSON-LD to convert.
-     *
      * @return A Model containing the statements from the JSON-LD string.
      */
     private Model convertJsonld(String jsonld) {
@@ -3269,15 +4856,15 @@ public class CatalogRest {
 
     /**
      * Checks for keyword MASTER in the provided branchId (case-insensitive) if present returns IRI to MASTER branch,
-     * otherwise, returns branchId string
+     * otherwise, returns branchId string.
      *
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param branchId String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                 with "_:".
-     * @param conn A repository connection
+     * @param recordId  String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                  String begins with "_:".
+     * @param branchId  String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param conn      A repository connection
      * @return A string of the appropriate branchId
      */
     private String checkBranchId(String catalogId, String recordId, String branchId, RepositoryConnection conn) {
@@ -3291,15 +4878,15 @@ public class CatalogRest {
 
     /**
      * Checks for keyword HEAD in the provided commitID (case-insensitive) if present returns IRI to HEAD Commit for
-     * branch, otherwise, returns commitId string
+     * branch, otherwise, returns commitId string.
      *
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param branchId String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                 with "_:".
-     * @param conn A repository connection
+     * @param recordId  String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                  String begins with "_:".
+     * @param branchId  String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param conn      A repository connection
      * @return A string of the appropriate commit
      */
     private String checkCommitId(String catalogId, String recordId, String branchId, String commitId,

@@ -27,6 +27,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.exception.MobiException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.event.Event;
@@ -58,6 +66,8 @@ public class SSERest implements EventHandler {
     /**
      * The singleton instance of ObjectMapper for JSON serialization/deserialization.
      */
+    private static final String TAG_NAME = "SSE";
+    private static final String TAG_DESC = "Operations for subscribing to server-sent event streams";
     private static final ObjectMapper mapper = new ObjectMapper();
 
     /**
@@ -87,9 +97,26 @@ public class SSERest implements EventHandler {
      * @param eventSink Instance of SseEventSink for sending Server-Sent Events.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Produces("text/event-stream")
     @RolesAllowed("user")
-    public void getEventStream(@Context SseEventSink eventSink) {
+    @Operation(summary = "Opens a Server-Sent Event stream for real-time notifications")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "JSON event data for the Server-Sent Event stream"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
+    public void getEventStream(@Parameter(hidden = true) @Context SseEventSink eventSink) {
         if (this.broadcaster == null) {
             this.broadcaster = this.sse.newBroadcaster();
         }

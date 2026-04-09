@@ -55,8 +55,11 @@ import com.mobi.security.policy.api.ontologies.policy.Read;
 import com.mobi.security.policy.api.xacml.XACML;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
@@ -109,7 +112,8 @@ import javax.ws.rs.core.UriInfo;
 @JaxrsResource
 @Path("/provenance-data")
 public class ProvRest {
-
+    private static final String TAG_NAME = "Provenance";
+    private static final String TAG_DESC = "Operations for retrieving provenance activity history";
     private static final Logger LOG = LoggerFactory.getLogger(ProvRest.class);
     private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -164,26 +168,52 @@ public class ProvRest {
      * @return A JSON object with a key for activities and a key for entities
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "provenance-data",
-            summary = "Retrieves a JSON object with a paginated list of provenance Activities and referenced Entities",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "A JSON object with a key for activities and a key for entities"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
-    public Response getActivities(@Context HttpServletRequest servletRequest,
-            @Context UriInfo uriInfo,
+    @Operation(summary = "Retrieves a JSON object with a paginated list of provenance Activities and referenced "
+            + "Entities")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A JSON object with a key for activities and a key for entities"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view provenance activities",
+                        headers = @Header(
+                                name = "HTTP Status",
+                                description = "Reason Phrase contains error message",
+                                schema = @Schema(type = "string")
+                        )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving provenance activities",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
+    public Response getActivities(@Parameter(hidden = true) @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context UriInfo uriInfo,
             @Parameter(description = "An entity IRI to filter the results by", required = false)
             @QueryParam("entity") String entityIri,
             @Parameter(description = "An entity IRI to filter the results by", required = false)
             @QueryParam("agent") String agentIri,
-            @Parameter(schema = @Schema(type = "integer", description = "The URI information of the request "
-                    + "to be used in creating links to other pages of Activities", required = false))
+            @Parameter(schema = @Schema(type = "integer", description = "The URI information of the request to be used "
+                    + "in creating links to other pages of Activities", required = false))
             @DefaultValue("0") @QueryParam("offset") int offset,
             @Parameter(schema = @Schema(type = "integer", description = "The offset for the page", required = false))
             @DefaultValue("50") @QueryParam("limit") int limit) {
@@ -333,20 +363,61 @@ public class ProvRest {
      * @return A JSON object that is the complete representation of the provenance Activity
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{activityId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "provenance-data",
-            summary = "Retrieves a JSON object representing the passed in provenance Activity",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "A JSON object representing the passed in activity"),
-                    @ApiResponse(responseCode = "404", description = "Activity Not Found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves a JSON-LD object representing the provenance Activity specified by the provided ID")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A JSON-LD object representing the identified Activity"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The provided activity ID is not a valid IRI",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string"))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view this activity",
+                        headers = @Header(
+                                name = "HTTP Status",
+                                description = "Reason Phrase contains error message",
+                                schema = @Schema(type = "string")
+                        )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Provenance Activity with the provided ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the provenance activity",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response getActivity(
             @Parameter(description = "String representing the identifier of the activity", required = true)
             @PathParam("activityId") String provenanceId) {
@@ -369,20 +440,62 @@ public class ProvRest {
      * @return Returns a JSON object of the action words, predicate, and types.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("/actions")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "provenance-data",
-            summary = "Retrieves a JSON object of the action words for activities",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "A JSON object containing the action words, predicate, and types."),
-                    @ApiResponse(responseCode = "404", description = "Activity actions not found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves a JSON object of the action words for activities")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A JSON object containing the action words, predicate, and types."
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request for activity action words",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view activity actions",
+                        headers = @Header(
+                                name = "HTTP Status",
+                                description = "Reason Phrase contains error message",
+                                schema = @Schema(type = "string")
+                        )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "No activity action words found",
+                        headers = @Header(
+                                name = "HTTP Status",
+                                description = "Reason Phrase contains error message",
+                                schema = @Schema(type = "string")
+                        )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving activity action words",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response getActionWords() {
         try {
             List<ProvActivityAction> activityToAction = provService.getActionWords();

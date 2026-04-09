@@ -46,7 +46,11 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
@@ -80,9 +84,10 @@ import javax.ws.rs.core.UriInfo;
 @JaxrsResource
 @Path("/commits")
 public class CommitRest {
-
     private static final Logger logger = LoggerFactory.getLogger(CommitRest.class);
     private static final ObjectMapper mapper = new ObjectMapper();
+    private static final String TAG_NAME = "Commit";
+    private static final String TAG_DESC = "Operations for retrieving commit details, history, and differences";
 
     @Reference
     protected CatalogConfigProvider configProvider;
@@ -114,24 +119,47 @@ public class CommitRest {
      * @return A {@link Response} with the {@link Commit} identified by the provided ID.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{commitId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "commits",
-            summary = "Retrieves the Commit specified by the provided ID",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response with the Commit identified by the provided ID"),
-                    @ApiResponse(responseCode = "403",
-                            description = "Permission Denied"),
-                    @ApiResponse(responseCode = "404",
-                            description = "Response indicating NOT_FOUND"),
-            }
-    )
+    @Operation(summary = "Retrieves the Commit specified by the provided ID")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The Commit identified by the provided ID"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to retrieve the Commit",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Commit with the provided ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response getCommit(
-            @Parameter(description = "String value of the Commit ID. "
-                    + "NOTE: Assumes an IRI unless String starts with \"_:\"", required = true)
+            @Parameter(description = "String value of the Commit ID. NOTE: Assumes an IRI unless "
+                    + "String starts with \"_:\"", required = true)
             @PathParam("commitId") String commitId,
             @Parameter(description = "String representation of the desired RDFFormat", required = false)
             @DefaultValue("jsonld") @QueryParam("format") String format) {
@@ -166,34 +194,67 @@ public class CommitRest {
      * @param offset   An optional offset for the results.
      * @param limit    An optional limit for the results.
      * @return A {@link Response} containing a {@link List} of {@link Commit}s starting with the provided
-     * {@code commitId} which represents the {@link Commit} history.
+     *      {@code commitId} which represents the {@link Commit} history.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{commitId}/history")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "commits",
-            summary = "Retrieves the Commit history specified by the provided ID",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Response containing a List of "
-                            + "Commits starting with the provided commitId which represents "
-                            + "the Commit history."),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the Commit's history specified by the provided ID")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A List of Commits starting with the provided Commit ID which "
+                            + "represents the Commit history."
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided parameters are invalid for retrieving Commit history",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to retrieve Commit history",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the Commit history",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response getCommitHistory(
-            @Context UriInfo uriInfo,
-            @Parameter(description = "String value of the Commit ID"
-                    + "NOTE: Assumes an IRI unless String starts with \"_:\"", required = true)
+            @Parameter(hidden = true) @Context UriInfo uriInfo,
+            @Parameter(description = "String value of the Commit ID. NOTE: Assumes an IRI unless "
+                    + "String starts with \"_:\"", required = true)
             @PathParam("commitId") String commitId,
-            @Parameter(description = "String value of the target Commit ID"
-                    + "NOTE: Assumes an IRI unless String starts with \"_:\"", required = true)
+            @Parameter(description = "String value of the target Commit ID. NOTE: Assumes an IRI "
+                    + "unless String starts with \"_:\"", required = true)
             @QueryParam("targetId") String targetId,
-            @Parameter(description = "Optional String value of the Entity ID"
-                    + "NOTE: Assumes an IRI unless String starts with \"_:\"", required = false)
+            @Parameter(description = "Optional String value of the Entity ID. NOTE: Assumes an IRI "
+                    + "unless String starts with \"_:\"", required = false)
             @QueryParam("entityId") String entityId,
             @Parameter(description = "Optional offset for the results", required = false)
             @QueryParam("offset") int offset,
@@ -248,23 +309,53 @@ public class CommitRest {
      * @throws IllegalArgumentException Thrown if a CommitId could not be found.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{commitId}/resource")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "commits",
-            summary = "Retrieves the Commit specified by the provided ID",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-                    @ApiResponse(responseCode = "400",
-                            description = "Response indicating BAD_REQUEST, Thrown if a CommitId could not be found"),
-                    @ApiResponse(responseCode = "403",
-                            description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500",
-                            description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the compiled resource of the Commit specified by the provided ID")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The compiled resource of the Commit"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Commit with the provided ID could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to retrieve the compiled resource",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the compiled resource",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response getCompiledResource(
             @Parameter(description = "String value of the Commit ID", required = true)
             @PathParam("commitId") String commitId,
@@ -276,7 +367,8 @@ public class CommitRest {
             checkStringParam(commitId, "Commit ID is required");
             Model model;
             if (StringUtils.isNotBlank(entityId)) {
-                model = compiledResourceManager.getCompiledResource(vf.createIRI(commitId), conn, vf.createIRI(entityId));
+                model = compiledResourceManager.getCompiledResource(vf.createIRI(commitId), conn,
+                        vf.createIRI(entityId));
             } else {
                 model = compiledResourceManager.getCompiledResource(vf.createIRI(commitId), conn);
             }
@@ -310,39 +402,72 @@ public class CommitRest {
      * @param rdfFormat {@link String} representation of the desired {@link RDFFormat}. Default value is
      *                  {@code "jsonld"}.
      * @return A {@link Response} containing the {@link Difference} for the specified commit or between the
-     * {@code sourceId} and {@code targetId}
-     * {@link Commit}s.
+     *         {@code sourceId} and {@code targetId} {@link Commit}s.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{sourceId}/difference")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-            tags = "commits",
-            summary = "Gets the Difference for the specified commit or between the two "
-                    + "specified Commits. If a limit and offset are passed in, retrieve the "
-                    + "differences for the paged subjects using the limit and offset. If the offset is "
-                    + "greater than the number of subjects, the additions and deletions arrays of the "
-                    + "response object will be empty arrays. If limit and offset are provided, a header "
-                    + "called has-more-results will be added to the response object that indicates whether more "
-                    + "pages of results exist.",
-            responses = {
-                    @ApiResponse(responseCode = "201",
-                            description = "Response containing the Difference for the specified commit or "
-                                    + "between the sourceId and targetId"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
+            summary = "Retrieves the Difference for a Commit or between two Commits with optional paging",
+            description = "If a limit and offset are passed, the differences are paged by subject."
+                    + "If the offset exceeds the number of subjects, additions and deletions arrays will be "
+                    + "empty. When limit and offset are provided, a 'has-more-results' header indicates "
+                    + "whether more pages exist."
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Response containing the Difference for the specified commit or "
+                            + "between the sourceId and targetId"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided parameters are invalid for retrieving the difference",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to retrieve the difference",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the difference",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response getDifference(
             @Parameter(description = "String value of the source Commit", required = true)
             @PathParam("sourceId") String sourceId,
             @Parameter(description = "Optional String value of the target Commit ID", required = false)
             @QueryParam("targetId") String targetId,
-            @Parameter(description = "Optional limit of the number of subjects to retrieve the differences for. "
-                    + "The number of subjects in the response object may be less than the limit "
-                    + "due to the way some blank nodes are skolemized", required = false)
+            @Parameter(description = "Optional limit of the number of subjects to retrieve "
+                    + "the differences for. The number of subjects in the response "
+                    + "object may be less than the limit due to the way some blank "
+                    + "nodes are skolemized", required = false)
             @DefaultValue("-1") @QueryParam("limit") int limit,
             @Parameter(description = "Optional integer offset of the subject to start collecting differences from",
                     required = false)
@@ -397,29 +522,73 @@ public class CommitRest {
 
     /**
      * Get Difference For Subject.
+     *
      * @param sourceId {@link String} value of the source {@link Commit} ID
-     * @param subjectId String value of the subjectId
+     * @param subjectId String value of the subject ID
      * @param rdfFormat String representation of the desired RDFFormat
      * @return Results
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{sourceId}/difference/{subjectId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "commits",
-            summary = "Retrieves the Difference in the specified commit for the specified subject",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Success"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the Difference in the specified commit for the specified subject")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Subject differences successfully retrieved"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided parameters are invalid for retrieving the subject difference",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to retrieve the subject difference",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Commit with the provided ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the subject difference",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response getDifferenceForSubject(
             @Parameter(description = "String value of the source Commit", required = true)
             @PathParam("sourceId") String sourceId,
-            @Parameter(description = "String value of the subjectId", required = true)
+            @Parameter(description = "String value of the subject ID", required = true)
             @PathParam("subjectId") String subjectId,
             @Parameter(description = "String representation of the desired RDFFormat", required = true)
             @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {

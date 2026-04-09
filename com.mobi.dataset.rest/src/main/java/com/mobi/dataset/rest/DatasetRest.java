@@ -49,7 +49,6 @@ import com.mobi.dataset.pagination.DatasetPaginatedSearchParams;
 import com.mobi.etl.api.config.rdf.ImportServiceConfig;
 import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.exception.MobiException;
-import com.mobi.rest.util.MobiWebException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.api.BNodeService;
@@ -59,7 +58,6 @@ import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
-import com.mobi.rest.util.FileUpload;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.rest.util.jaxb.Links;
@@ -75,6 +73,8 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
@@ -92,7 +92,6 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -121,9 +120,13 @@ import javax.ws.rs.core.UriInfo;
 @JaxrsResource
 @Path("/datasets")
 public class DatasetRest {
+
     private final ValueFactory vf = new ValidatingValueFactory();
     private final ModelFactory mf = new DynamicModelFactory();
+
     private static final ObjectMapper mapper = new ObjectMapper();
+    private static final String TAG_NAME = "Dataset";
+    private static final String TAG_DESC = "Operations for managing DatasetRecords and their associated RDF data";
 
     @Reference
     protected DatasetManager manager;
@@ -162,36 +165,62 @@ public class DatasetRest {
      * @return Response with a JSON array of DatasetRecords
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "datasets",
-            summary = "Retrieves all DatasetRecords in the local Catalog",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Response with a JSON array of DatasetRecords",
-                    content = @Content(array = @ArraySchema(
-                            schema = @Schema(implementation = JsonLdObject.class,
-                            description = "A list of DatasetRecord JSON-LD objects")))),
-                    @ApiResponse(responseCode = "400", description = "Bad Request",
-                            headers = @Header(name = "HTTP Status",
-                                    description = "Reason Phrase contains error message",
-                                    schema = @Schema(type = "string"))
-                    ),
-                    @ApiResponse(responseCode = "403", description = "Forbidden",
-                            headers = @Header(name = "HTTP Status",
-                                    description = "Reason Phrase contains error message",
-                                    schema = @Schema(type = "string"))
-                    ),
-                    @ApiResponse(responseCode = "500", description = "Internal Server Error",
-                            headers = @Header(name = "HTTP Status",
-                                    description = "Reason Phrase contains error message",
-                                    schema = @Schema(type = "string"))
-                    ),
-            }
-    )
+    @Operation(summary = "Retrieves all DatasetRecords")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A JSON-LD array of DatasetRecords",
+                    content = @Content(
+                            array = @ArraySchema(
+                                    schema = @Schema(
+                                            implementation = JsonLdObject.class,
+                                            description = "A list of DatasetRecord JSON-LD objects")
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid pagination parameters or sort IRI",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view DatasetRecords",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving DatasetRecords",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response getDatasetRecords(
-            @Context HttpServletRequest servletRequest,
-            @Context UriInfo uriInfo,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context UriInfo uriInfo,
             @Parameter(description = "Offset for a page of DatasetRecords", required = true)
             @QueryParam("offset") int offset,
             @Parameter(description = "Number of DatasetRecords to return in one page", required = true)
@@ -257,37 +286,58 @@ public class DatasetRest {
      * @return A Response with the IRI string of the created DatasetRecord
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
-    @Operation(
-            tags = "datasets",
-            summary = "Creates a new DatasetRecord in the local Catalog and Dataset in the specified repository",
-            responses = {
-                    @ApiResponse(responseCode = "201",
-                            description = "Response with the IRI string of the created DatasetRecord",
-                            content = @Content(schema = @Schema(type = "string"))),
-                    @ApiResponse(responseCode = "400", description = "Bad Request",
-                            headers = @Header(name = "HTTP Status",
-                                    description = "Reason Phrase contains error message",
-                                    schema = @Schema(type = "string"))
-                    ),
-                    @ApiResponse(responseCode = "403", description = "Forbidden",
-                            headers = @Header(name = "HTTP Status",
-                                    description = "Reason Phrase contains error message",
-                                    schema = @Schema(type = "string"))
-                    ),
-                    @ApiResponse(responseCode = "500", description = "Internal Server Error",
-                            headers = @Header(name = "HTTP Status",
-                                    description = "Reason Phrase contains error message",
-                                    schema = @Schema(type = "string"))
-                    ),
-            }
-    )
+    @Operation(summary = "Creates a new DatasetRecord with a Dataset in the specified repository")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The IRI string of the created DatasetRecord",
+                    content = @Content(schema = @Schema(type = "string"))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Missing or invalid title, repository ID, or ontology IRI",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to create DatasetRecord",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while creating the DatasetRecord",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionAttributes(@AttributeValue(id = RDF.NAMESPACE + "type", value = DatasetRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
     public Response createDatasetRecord(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(schema = @Schema(type = "string",
                     description = "Required title for the new DatasetRecord", required = true))
             @FormParam("title") String title,
@@ -349,46 +399,63 @@ public class DatasetRest {
      * @return A Response indicating the success of the request
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("{datasetRecordId}")
     @RolesAllowed("user")
-    @Operation(
-            tags = "datasets",
-            summary = "Gets a specific DatasetRecord from the local Catalog",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Success",
-                            content = @Content(schema = @Schema(implementation = JsonLdObject.class))),
-                    @ApiResponse(responseCode = "400", description = "Bad Request",
-                            headers = @Header(
-                                name = "HTTP Status",
-                                description = "Reason Phrase contains error message",
-                                schema = @Schema(type = "string")
-                            )
-                    ),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied",
-                            headers = @Header(
-                                name = "HTTP Status",
-                                description = "Reason Phrase contains error message",
-                                schema = @Schema(type = "string")
-                            )
-                    ),
-                    @ApiResponse(responseCode = "404", description = "Not Found",
-                            headers = @Header(
-                                name = "HTTP Status",
-                                description = "Reason Phrase contains error message",
-                                schema = @Schema(type = "string")
-                            )
-                    ),
-                    @ApiResponse(responseCode = "500", description = "Internal Server Error",
-                            headers = @Header(
-                                name = "HTTP Status",
-                                description = "Reason Phrase contains error message",
-                                schema = @Schema(type = "string")
-                            )
+    @Operation(summary = "Retrieves the DatasetRecord specified by the provided ID")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "JSON-LD array with the contents of the DatasetRecord's named graph",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = JsonLdObject.class)))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The provided DatasetRecord's ID is not a valid IRI",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
                     )
-            }
-    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view this DatasetRecord",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "DatasetRecord with the provided ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the DatasetRecord",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "datasetRecordId")
     public Response getDatasetRecord(
             @Parameter(description = "IRI of a DatasetRecord", required = true,
@@ -420,25 +487,57 @@ public class DatasetRest {
      * @return A Response indicating the success of the request
      */
     @DELETE
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{datasetRecordId}")
     @RolesAllowed("user")
-    @Operation(
-            tags = "datasets",
-            summary = "Deletes a specific DatasetRecord in the local Catalog",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Success"),
-                    @ApiResponse(responseCode = "400", description = "Bad Request",
-                            headers = @Header(name = "HTTP Status", description = "Reason Phrase contains error message", schema = @Schema(type = "string"))),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied",
-                            headers = @Header(name = "HTTP Status", description = "Reason Phrase contains error message", schema = @Schema(type = "string"))),
-                    @ApiResponse(responseCode = "500", description = "Internal Server Error",
-                            headers = @Header(name = "HTTP Status", description = "Reason Phrase contains error message", schema = @Schema(type = "string"))),
-            }
-    )
+    @Operation(summary = "Deletes a specific DatasetRecord and its associated data")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "DatasetRecord successfully deleted",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The provided DatasetRecord's ID is not a valid IRI",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to delete this DatasetRecord",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while deleting the DatasetRecord",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionId(value = Delete.TYPE)
     @ResourceId(type = ValueType.PATH, value = "datasetRecordId")
     public Response deleteDatasetRecord(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "DatasetRecord IRI",
                     schema = @Schema(type = "string", format = "uri",
                             example = "http://mobi.com/dataset/2d4a4592-0b54-4057-a65f-f649261cd302"))
@@ -470,21 +569,53 @@ public class DatasetRest {
      * @return Response indicating the success of the request
      */
     @DELETE
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{datasetRecordId}/data")
     @RolesAllowed("user")
-    @Operation(
-            tags = "datasets",
-            summary = "Clears the data within a specific DatasetRecord in the local Catalog",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Success"),
-                    @ApiResponse(responseCode = "400", description = "Bad Request",
-                            headers = @Header(name = "HTTP Status", description = "Reason Phrase contains error message", schema = @Schema(type = "string"))),
-                    @ApiResponse(responseCode = "403", description = "Forbidden",
-                            headers = @Header(name = "HTTP Status", description = "Reason Phrase contains error message", schema = @Schema(type = "string"))),
-                    @ApiResponse(responseCode = "500", description = "Internal Server Error",
-                            headers = @Header(name = "HTTP Status", description = "Reason Phrase contains error message", schema = @Schema(type = "string"))),
-            }
-    )
+    @Operation(summary = "Clears the data within a specific DatasetRecord")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "DatasetRecord data successfully cleared",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The provided DatasetRecord's ID is not a valid IRI",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to clear data from this DatasetRecord",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while clearing the DatasetRecord data",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "datasetRecordId")
     public Response clearDatasetRecord(
@@ -517,40 +648,63 @@ public class DatasetRest {
      * @return A Response indicating the success of the request
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{datasetRecordId}/data")
     @RolesAllowed("user")
     @Operation(
-            tags = "datasets",
-            summary = "Uploads the data within an RDF file to a specific DatasetRecord in the local Catalog",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Success"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST", content = {
-                            @Content(mediaType = MediaType.APPLICATION_JSON,
-                                    schema = @Schema(implementation = ErrorObjectSchema.class)
-                            )
-                    }),
-                     @ApiResponse(responseCode = "403", description = "Permission Denied",
-                            headers = @Header(
-                                    name = "HTTP Status",
-                                    description = "Reason Phrase contains error message",
-                                    schema = @Schema(type = "string"))),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR", content = {
-                            @Content(mediaType = MediaType.APPLICATION_JSON,
-                                    schema = @Schema(implementation = ErrorObjectSchema.class)
-                            )
-                    })
-            },
+            summary = "Uploads RDF data to a specific DatasetRecord",
             requestBody = @RequestBody(
-                    content = {
-                            @Content(mediaType = MediaType.MULTIPART_FORM_DATA,
-                                    schema = @Schema(implementation = DatasetFileUpload.class)
-                            )
-                    }
+                    content = @Content(
+                            mediaType = MediaType.MULTIPART_FORM_DATA,
+                            schema = @Schema(implementation = DatasetFileUpload.class)
+                    )
             )
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "RDF data successfully uploaded to DatasetRecord",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid RDF file format, missing file, or RDF parse error",
+                    content = @Content(
+                        mediaType = MediaType.APPLICATION_JSON,
+                        schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to upload data to this DatasetRecord",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while importing RDF data into the DatasetRecord",
+                    content = @Content(
+                        mediaType = MediaType.APPLICATION_JSON,
+                        schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            )
+    })
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "datasetRecordId")
-    public Response uploadData(@Context HttpServletRequest servletRequest,
+    public Response uploadData(
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
                                @Parameter(description = "IRI of a DatasetRecord", required = true,
                                        schema = @Schema(type = "string", format = "uri",
                                                example = "http://mobi.com/dataset/2d4a4592-0b54-4057-a65f-f649261cd302"))

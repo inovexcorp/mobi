@@ -41,12 +41,17 @@ import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
+import com.mobi.rest.util.swagger.JsonLdObject;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.Explode;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
@@ -84,16 +89,19 @@ import javax.ws.rs.core.Response;
 @JaxrsResource
 @Path("/groups")
 public class GroupRest {
-    private EngineManager engineManager;
-    private final ValueFactory vf = new ValidatingValueFactory();
-    private GroupFactory groupFactory;
-    private Engine rdfEngine;
     private final Logger logger = LoggerFactory.getLogger(GroupRest.class);
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private final ValueFactory vf = new ValidatingValueFactory();
 
+    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final String TAG_NAME = "Group";
+    private static final String TAG_DESC = "Operations for managing groups, their roles, and members";
     private static final String GROUP = "Group ";
     private static final String TITLE_PROVIDED = "Group title must be provided";
     private static final String NOT_FOUND = " not found";
+
+    private EngineManager engineManager;
+    private GroupFactory groupFactory;
+    private Engine rdfEngine;
 
     @Reference
     void setEngineManager(EngineManager engineManager) {
@@ -116,16 +124,44 @@ public class GroupRest {
      * @return Response with a JSON-LD list of the {@link Group}s in Mobi
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-            tags = "groups",
-            summary = "Get all Mobi Groups",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response with a JSON-LD list of the Groups in Mobi"),
-            }
-    )
+    @Operation(summary = "Retrieves all Groups")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A JSON-LD list of the Groups",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = JsonLdObject.class)))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided Group data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving Groups",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response getGroups() {
         try {
             ArrayNode result = engineManager.getGroups().stream()
@@ -151,17 +187,39 @@ public class GroupRest {
      * @return Response indicating the success or failure of the request
      */
     @POST
-    @RolesAllowed("admin")
-    @Operation(
-            tags = "groups",
-            summary = "Create a new Mobi Group",
-            responses = {
-                    @ApiResponse(responseCode = "201",
-                            description = "Response indicating the success or failure of the request"),
-            }
-    )
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @RolesAllowed("admin")
+    @Operation(
+            summary = "Creates a new Group",
+            description = "Requires the 'admin' role."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The title of the created Group"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided Group data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
+
     public Response createGroup(
             @Parameter(schema = @Schema(type = "string",
                     description = "Title of the Group", required = true))
@@ -180,7 +238,7 @@ public class GroupRest {
         checkStringParam(title, "Group title is required");
         try {
             if (engineManager.groupExists(title)) {
-                throw ErrorUtils.sendError(GROUP+ title + " already exists", Response.Status.BAD_REQUEST);
+                throw ErrorUtils.sendError(GROUP + title + " already exists", Response.Status.BAD_REQUEST);
             }
 
             GroupConfig.Builder builder = new GroupConfig.Builder(title);
@@ -218,17 +276,44 @@ public class GroupRest {
      * @return Response with a JSON representation of the Group in Mobi
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{groupTitle}")
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-            tags = "groups",
-            summary = "Get a single Mobi Group",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response with a JSON representation of the Group in Mobi"),
-            }
-    )
+    @Operation(summary = "Retrieves a specific Group by title")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A JSON-LD representation of the Group"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided Group data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Group with the provided title does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response getGroup(
             @Parameter(description = "Title of the Group to retrieve", required = true)
             @PathParam("groupTitle") String groupTitle) {
@@ -256,18 +341,48 @@ public class GroupRest {
      * @return Response indicating the success or failure of the request
      */
     @PUT
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{groupTitle}")
+    @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("admin")
     @Operation(
-            tags = "groups",
-            summary = "Update a Mobi Group's information",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-            }
+            summary = "Updates a Group's information",
+            description = "Requires the 'admin' role."
     )
-    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Group successfully updated",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided Group data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while updating the Group",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response updateGroup(
             @Parameter(description = "Title of the Group to update", required = true)
             @PathParam("groupTitle") String groupTitle,
@@ -323,17 +438,38 @@ public class GroupRest {
      * @return Response indicating the success or failure of the request
      */
     @DELETE
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{groupTitle}")
     @RolesAllowed("admin")
     @Operation(
-            tags = "groups",
-            summary = "Remove a Mobi Group",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-            }
+            summary = "Deletes a Group",
+            description = "Requires the 'admin' role."
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Group successfully deleted",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided Group data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response deleteGroup(
             @Parameter(description = "Title of the Group to remove", required = true)
             @PathParam("groupTitle") String groupTitle) {
@@ -360,18 +496,36 @@ public class GroupRest {
      * @return Response with a JSON array of the roles of the Group in Mobi
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{groupTitle}/roles")
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-            tags = "groups",
-            summary = "List roles of a Mobi Group",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response with a JSON array of the roles of the Group in Mobi"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-            }
-    )
+    @Operation(summary = "Retrieves the Roles of a Group")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A JSON-LD array of the roles of the Group",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = JsonLdObject.class)))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided Group data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response getGroupRoles(
             @Parameter(description = "Title of the Group to retrieve roles from", required = true)
             @PathParam("groupTitle") String groupTitle) {
@@ -402,17 +556,38 @@ public class GroupRest {
      * @return Response indicating the success or failure of the request
      */
     @PUT
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{groupTitle}/roles")
     @RolesAllowed("admin")
     @Operation(
-            tags = "groups",
-            summary = "Add roles to a Mobi Group",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-            }
+            summary = "Adds Roles to a Group",
+            description = "Requires the 'admin' role."
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Roles successfully added to the Group",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided Group data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response addGroupRoles(
             @Parameter(description = "Title of the Group to add a role to", required = true)
             @PathParam("groupTitle") String groupTitle,
@@ -447,17 +622,38 @@ public class GroupRest {
      * @return Response indicating the success or failure of the request
      */
     @DELETE
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{groupTitle}/roles")
     @RolesAllowed("admin")
     @Operation(
-            tags = "groups",
-            summary = "Remove role from a Mobi Group",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-            }
+            summary = "Removes a Role from a Group",
+            description = "Requires the 'admin' role."
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Role successfully removed from the Group",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided Group data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response removeGroupRole(
             @Parameter(description = "Title of the Group to remove a role from", required = true)
             @PathParam("groupTitle") String groupTitle,
@@ -488,19 +684,45 @@ public class GroupRest {
      * @return Response with a JSON array of the users of the Group in Mobi
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{groupTitle}/users")
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-            tags = "groups",
-            summary = "List users of a Mobi Group",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response with a JSON array of the users for the specified Group in Mobi"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the Users in a Group")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A JSON-LD array of the users for the specified Group",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = JsonLdObject.class)))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided Group data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving Group Users",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response getGroupUsers(
             @Parameter(description = "Title of the Group to retrieve users from", required = true)
             @PathParam("groupTitle") String groupTitle) {
@@ -541,17 +763,38 @@ public class GroupRest {
      * @return Response indicating the success or failure of the request
      */
     @PUT
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{groupTitle}/users")
     @RolesAllowed("admin")
     @Operation(
-            tags = "groups",
-            summary = "Add a Mobi User to a Group",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-            }
+            summary = "Adds a User to a Group",
+            description = "Requires the 'admin' role."
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "User successfully added to the Group",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided Group data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response addGroupUser(
             @Parameter(description = "Title of the Group to add users to", required = true)
             @PathParam("groupTitle") String groupTitle,
@@ -586,17 +829,38 @@ public class GroupRest {
      * @return Response indicating the success or failure of the request
      */
     @DELETE
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{groupTitle}/users")
     @RolesAllowed("admin")
     @Operation(
-            tags = "groups",
-            summary = "Remove a Mobi User from a Group",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-            }
+            summary = "Removes a User from a Group",
+            description = "Requires the 'admin' role."
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "User successfully removed from the Group",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided Group data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response removeGroupUser(
             @Parameter(description = "Title of the Group to remove a user from", required = true)
             @PathParam("groupTitle") String groupTitle,

@@ -12,12 +12,12 @@ package com.mobi.sparql.rest;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -25,9 +25,9 @@ package com.mobi.sparql.rest;
 
 import static com.mobi.rest.util.RestUtils.CSV_MIME_TYPE;
 import static com.mobi.rest.util.RestUtils.JSON_MIME_TYPE;
-import static com.mobi.rest.util.RestUtils.SPARQL_JSON_MIME_TYPE;
 import static com.mobi.rest.util.RestUtils.LDJSON_MIME_TYPE;
 import static com.mobi.rest.util.RestUtils.RDFXML_MIME_TYPE;
+import static com.mobi.rest.util.RestUtils.SPARQL_JSON_MIME_TYPE;
 import static com.mobi.rest.util.RestUtils.TSV_MIME_TYPE;
 import static com.mobi.rest.util.RestUtils.TURTLE_MIME_TYPE;
 import static com.mobi.rest.util.RestUtils.XLSX_MIME_TYPE;
@@ -66,10 +66,13 @@ import com.mobi.versionedrdf.api.QueryableVersionedRDF;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.dhatim.fastexcel.Workbook;
 import org.dhatim.fastexcel.Worksheet;
@@ -129,12 +132,20 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
-@Component(service = SparqlRest.class, immediate = true, configurationPolicy = ConfigurationPolicy.OPTIONAL)
+@Component(
+        service = SparqlRest.class,
+        immediate = true,
+        configurationPolicy = ConfigurationPolicy.OPTIONAL
+)
 @JaxrsResource
 @Designate(ocd = SparqlRestConfig.class)
 @Path("/sparql")
 public class SparqlRest {
     private static final Logger logger = LoggerFactory.getLogger(SparqlRest.class);
+    private final ValueFactory vf = new ValidatingValueFactory();
+
+    private static final String TAG_NAME = "Sparql";
+    private static final String TAG_DESC = "Operations for executing SPARQL queries and downloads";
     private static final String X_LIMIT_EXCEEDED = "X-LIMIT-EXCEEDED";
     private static final String QUERY_INVALID_MESSAGE = "Query is invalid. Please change the query and re-execute.";
     private static final String REPO_NOT_AVAILABLE_MESSAGE = "Repository is not available";
@@ -146,16 +157,16 @@ public class SparqlRest {
     private static final String DATASET_STORE_TYPE = "dataset-record";
     private static final String ONTOLOGY_STORE_TYPE = "ontology-record";
     private static final String SHAPES_GRAPH_STORE_TYPE = "shapes-graph-record";
-    
-    private final ValueFactory vf = new ValidatingValueFactory();
+
+
     private int limitResults;
 
     @Reference
     public RepositoryManager repositoryManager;
-    
+
     @Reference
     public DatasetManager datasetManager;
-    
+
     @Reference
     public OntologyManager ontologyManager;
 
@@ -192,62 +203,81 @@ public class SparqlRest {
      * For select queries the default type is JSON and for construct queries default type is Turtle.
      * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
      *
-     * @param queryString String representing a SPARQL query
-     * @param storeType the type of store to query
-     * @param resourceId the IRI of the resource to query
+     * @param queryString  String representing a SPARQL query
+     * @param storeType    the type of store to query
+     * @param resourceId   the IRI of the resource to query
      * @param acceptString used to specify certain media types which are acceptable for the response
      * @return The SPARQL 1.1 results in mime type specified by accept header
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("/{storeType}/{id}")
-    @Produces({XLSX_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE, JSON_MIME_TYPE, SPARQL_JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE,
-            RDFXML_MIME_TYPE})
+    @Produces({XLSX_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE, JSON_MIME_TYPE, SPARQL_JSON_MIME_TYPE, TURTLE_MIME_TYPE,
+            LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
     @Operation(
-            tags = "sparql",
             operationId = "rdfQuery",
-            summary = "Retrieves the results of the provided SPARQL query",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "The SPARQL 1.1 results in mime type specified by accept header",
-                            content = {
-                                    @Content(mediaType = "*/*"),
-                                    @Content(mediaType = TURTLE_MIME_TYPE),
-                                    @Content(mediaType = LDJSON_MIME_TYPE),
-                                    @Content(mediaType = RDFXML_MIME_TYPE),
-                                    @Content(mediaType = JSON_MIME_TYPE),
-                                    @Content(mediaType = SPARQL_JSON_MIME_TYPE),
-                                    @Content(mediaType = XLSX_MIME_TYPE),
-                                    @Content(mediaType = CSV_MIME_TYPE),
-                                    @Content(mediaType = TSV_MIME_TYPE),
-                                    @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM)
-                            }
-                    ),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST", content = {
-                            @Content(mediaType = MediaType.APPLICATION_JSON,
-                                    schema = @Schema(implementation = ErrorObjectSchema.class)
-                            )
-                    }),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR", content = {
-                            @Content(mediaType = MediaType.APPLICATION_JSON,
-                                    schema = @Schema(implementation = ErrorObjectSchema.class)
-                            )
-                    })
-            }
+            summary = "Retrieves the results of the provided SPARQL query"
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The SPARQL 1.1 results in mime type specified by accept header",
+                    content = {
+                            @Content(mediaType = MediaType.WILDCARD),
+                            @Content(mediaType = TURTLE_MIME_TYPE),
+                            @Content(mediaType = LDJSON_MIME_TYPE),
+                            @Content(mediaType = RDFXML_MIME_TYPE),
+                            @Content(mediaType = JSON_MIME_TYPE),
+                            @Content(mediaType = SPARQL_JSON_MIME_TYPE),
+                            @Content(mediaType = XLSX_MIME_TYPE),
+                            @Content(mediaType = CSV_MIME_TYPE),
+                            @Content(mediaType = TSV_MIME_TYPE),
+                            @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM)
+                    }
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided SPARQL query or parameters are invalid",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to execute this query"
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while executing the SPARQL query",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            )
+    })
     @ResourceAttributes(@AttributeValue(type = ValueType.PATH, id = "https://mobi.solutions/store-type",
             value = "storeType"))
     @ResourceId(type = ValueType.PATH, value = "id")
     public Response queryRdf(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing a SPARQL query", required = true)
             @QueryParam("query") String queryString,
-            @Parameter(description = "The string value representing what type of store is being queried (dataset, "
-                    + "repository, etc.)", required = true)
+            @Parameter(description = "The string value representing what type of store is being queried "
+                    + "(dataset, repository, etc.)", required = true)
             @PathParam("storeType") String storeType,
-            @Parameter(description = "The IRI representing what resource to query (Repository IRI, DatasetRecord IRI, "
-                    + "etc.", required = true)
+            @Parameter(description = "The IRI representing what resource to query "
+                    + "(Repository IRI, DatasetRecord IRI, etc.)", required = true)
             @PathParam("id") String resourceId,
             @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
@@ -255,14 +285,13 @@ public class SparqlRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Boolean indicating whether imports should be included in the query")
             @DefaultValue("false") @QueryParam("includeImports") boolean includeImports,
-            @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
+            @Parameter(description = "Whether or not to apply the InProgressCommit for the user making the request")
             @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit,
             @Parameter(hidden = true)
             @HeaderParam("accept") String acceptString) {
         if (queryString == null) {
             throw getErrorObjBadRequest(new IllegalArgumentException("Parameter 'query' must be set."));
         }
-        
         VersionedRDFRecordParams rdfRecordParams = new VersionedRDFRecordParams(branchIdStr, commitIdStr,
                 includeImports, applyInProgressCommit, getActiveUser(servletRequest, engineManager));
         return handleQuery(queryString, vf.createIRI(resourceId), storeType, acceptString, null,
@@ -277,23 +306,40 @@ public class SparqlRest {
      * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
      * https://github.com/eclipse/rdf4j/blob/master/core/rio/api/src/main/java/org/eclipse/rdf4j/rio/RDFFormat.java
      *
-     * @param queryString The SPARQL query to execute.
-     * @param storeType the type of store to query
-     * @param resourceId the IRI of the resource to query
-     * @param fileType used to specify certain media types which are acceptable for the response
+     * @param queryString  The SPARQL query to execute.
+     * @param storeType    the type of store to query
+     * @param resourceId   the IRI of the resource to query
+     * @param fileType     used to specify certain media types which are acceptable for the response
      * @param acceptString used to specify certain media types which are acceptable for the response
-     * @param fileName The optional file name for the download file
-     * @return The SPARQL 1.1 Response in the format of fileType query parameter
+     * @param fileName     The optional file name for the download file
+     * @return The SPARQL 1.1 Response in the format of the file type query parameter
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("/{storeType}/{id}")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
     @ResourceAttributes(@AttributeValue(type = ValueType.PATH, id = "https://mobi.solutions/store-type",
             value = "storeType"))
     @ResourceId(type = ValueType.PATH, value = "id")
+    @Operation(summary = "Downloads the results of the provided SPARQL query in RDF format")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The SPARQL results to download"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response downloadRdfQuery(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @QueryParam("query") String queryString,
             @PathParam("storeType") String storeType,
             @PathParam("id") String resourceId,
@@ -307,7 +353,6 @@ public class SparqlRest {
         if (queryString == null) {
             throw getErrorObjBadRequest(new IllegalArgumentException("Parameter 'query' must be set."));
         }
-        
         VersionedRDFRecordParams rdfRecordParams = new VersionedRDFRecordParams(branchIdStr, commitIdStr,
                 includeImports, applyInProgressCommit, getActiveUser(servletRequest, engineManager));
         return handleQuery(queryString, vf.createIRI(resourceId), storeType,
@@ -320,24 +365,41 @@ public class SparqlRest {
      * For select queries the default type is JSON and for construct queries default type is Turtle.
      * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
      *
-     * @param queryString String representing a SPARQL query
-     * @param storeType the type of store to query
-     * @param resourceId the IRI of the resource to query
+     * @param queryString  String representing a SPARQL query
+     * @param storeType    the type of store to query
+     * @param resourceId   the IRI of the resource to query
      * @param acceptString used to specify certain media types which are acceptable for the response
      * @return The SPARQL 1.1 results in mime type specified by accept header
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("/{storeType}/{id}")
     @Consumes("application/sparql-query")
-    @Produces({XLSX_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE, JSON_MIME_TYPE, SPARQL_JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE,
-            RDFXML_MIME_TYPE})
+    @Produces({XLSX_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE, JSON_MIME_TYPE, SPARQL_JSON_MIME_TYPE, TURTLE_MIME_TYPE,
+            LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
     @ActionId(value = Read.TYPE)
     @ResourceAttributes(@AttributeValue(type = ValueType.PATH, id = "https://mobi.solutions/store-type",
             value = "storeType"))
     @ResourceId(type = ValueType.PATH, value = "id")
+    @Operation(summary = "Retrieves the results of a SPARQL query submitted via POST in RDF format")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The results of the provided SPARQL query"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response postQueryRdf(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @PathParam("storeType") String storeType,
             @PathParam("id") String resourceId,
             @QueryParam("branchId") String branchIdStr,
@@ -349,7 +411,7 @@ public class SparqlRest {
         if (queryString == null) {
             throw getErrorObjBadRequest(new IllegalArgumentException("SPARQL query must be provided in request body."));
         }
-        
+
         VersionedRDFRecordParams rdfRecordParams = new VersionedRDFRecordParams(branchIdStr, commitIdStr,
                 includeImports, applyInProgressCommit, getActiveUser(servletRequest, engineManager));
         return handleQuery(queryString, vf.createIRI(resourceId), storeType, acceptString, null,
@@ -364,15 +426,16 @@ public class SparqlRest {
      * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
      * https://github.com/eclipse/rdf4j/blob/master/core/rio/api/src/main/java/org/eclipse/rdf4j/rio/RDFFormat.java
      *
-     * @param queryString The SPARQL query to execute
-     * @param storeType the type of store to query
-     * @param resourceId the IRI of the resource to query
-     * @param fileType used to specify certain media types which are acceptable for the response
+     * @param queryString  The SPARQL query to execute
+     * @param storeType    the type of store to query
+     * @param resourceId   the IRI of the resource to query
+     * @param fileType     used to specify certain media types which are acceptable for the response
      * @param acceptString used to specify certain media types which are acceptable for the response
-     * @param fileName The optional file name for the download file
-     * @return The SPARQL 1.1 Response in the format of fileType query parameter
+     * @param fileName     The optional file name for the download file
+     * @return The SPARQL 1.1 Response in the format of the file type query parameter
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("/{storeType}/{id}")
     @Consumes("application/sparql-query")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
@@ -381,8 +444,24 @@ public class SparqlRest {
     @ResourceAttributes(@AttributeValue(type = ValueType.PATH, id = "https://mobi.solutions/store-type",
             value = "storeType"))
     @ResourceId(type = ValueType.PATH, value = "id")
+    @Operation(summary = "Downloads the results of a SPARQL query submitted via POST in RDF format")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The SPARQL results to download"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response postDownloadRdfQuery(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @PathParam("storeType") String storeType,
             @PathParam("id") String resourceId,
             @QueryParam("branchId") String branchIdStr,
@@ -396,7 +475,6 @@ public class SparqlRest {
         if (queryString == null) {
             throw getErrorObjBadRequest(new IllegalArgumentException("Body must contain a query."));
         }
-        
         VersionedRDFRecordParams rdfRecordParams = new VersionedRDFRecordParams(branchIdStr, commitIdStr,
                 includeImports, applyInProgressCommit, getActiveUser(servletRequest, engineManager));
         return handleQuery(queryString, vf.createIRI(resourceId), storeType,
@@ -409,52 +487,22 @@ public class SparqlRest {
      * For select queries the default type is JSON and for construct queries default type is Turtle.
      * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
      *
-     * @param queryString String representing a SPARQL query
-     * @param storeType the type of store to query
-     * @param resourceId the IRI of the resource to query
+     * @param queryString  String representing a SPARQL query
+     * @param storeType    the type of store to query
+     * @param resourceId   the IRI of the resource to query
      * @param acceptString used to specify certain media types which are acceptable for the response
      * @return The SPARQL 1.1 results in mime type specified by accept header
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("/{storeType}/{id}")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Produces({XLSX_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE, JSON_MIME_TYPE, SPARQL_JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE,
-            RDFXML_MIME_TYPE})
+    @Produces({XLSX_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE, JSON_MIME_TYPE, SPARQL_JSON_MIME_TYPE,
+            TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
     @Operation(
-            tags = "sparql",
             operationId = "postRdfQuery",
             summary = "Retrieves the results of the provided SPARQL query",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "The SPARQL 1.1 Response in the format of fileType query parameter",
-                            content = {
-                                    @Content(mediaType = "*/*"),
-                                    @Content(mediaType = TURTLE_MIME_TYPE),
-                                    @Content(mediaType = LDJSON_MIME_TYPE),
-                                    @Content(mediaType = RDFXML_MIME_TYPE),
-                                    @Content(mediaType = JSON_MIME_TYPE),
-                                    @Content(mediaType = SPARQL_JSON_MIME_TYPE),
-                                    @Content(mediaType = XLSX_MIME_TYPE),
-                                    @Content(mediaType = CSV_MIME_TYPE),
-                                    @Content(mediaType = TSV_MIME_TYPE),
-                                    @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM),
-                                    @Content(mediaType = "text/*"),
-                                    @Content(mediaType = "application/*")
-                            }
-                    ),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST", content = {
-                            @Content(mediaType = MediaType.APPLICATION_JSON,
-                                    schema = @Schema(implementation = ErrorObjectSchema.class)
-                            )
-                    }),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR", content = {
-                            @Content(mediaType = MediaType.APPLICATION_JSON,
-                                    schema = @Schema(implementation = ErrorObjectSchema.class)
-                            )
-                    })
-            },
             requestBody = @RequestBody(
                     content = {
                             @Content(
@@ -472,24 +520,83 @@ public class SparqlRest {
                     }
             ),
             parameters = {
-                    @Parameter(name = "storeType", description = "The string value representing what type of store is "
-                            + "being queried (dataset, repository, etc.)", required = true, in = ParameterIn.PATH),
-                    @Parameter(name = "id", description = "The IRI representing what resource to query (Repository IRI,"
-                            + " DatasetRecord IRI, etc.", required = true, in = ParameterIn.PATH)
+                    @Parameter(
+                            name = "storeType",
+                            description = "The string value representing what type of store is being queried "
+                                    + "(dataset, repository, etc.)",
+                            required = true,
+                            in = ParameterIn.PATH
+                    ),
+                    @Parameter(
+                            name = "id",
+                            description = "The IRI representing what resource to query (Repository IRI,"
+                                    + "DatasetRecord IRI, etc.)",
+                            required = true,
+                            in = ParameterIn.PATH
+                    )
             }
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The SPARQL 1.1 Response in the format of the file type query parameter",
+                    content = {
+                            @Content(mediaType = MediaType.WILDCARD),
+                            @Content(mediaType = TURTLE_MIME_TYPE),
+                            @Content(mediaType = LDJSON_MIME_TYPE),
+                            @Content(mediaType = RDFXML_MIME_TYPE),
+                            @Content(mediaType = JSON_MIME_TYPE),
+                            @Content(mediaType = SPARQL_JSON_MIME_TYPE),
+                            @Content(mediaType = XLSX_MIME_TYPE),
+                            @Content(mediaType = CSV_MIME_TYPE),
+                            @Content(mediaType = TSV_MIME_TYPE),
+                            @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM),
+                            @Content(mediaType = "text/*"),
+                            @Content(mediaType = "application/*")
+                    }
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided SPARQL query or parameters are invalid",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to execute this query"
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while executing the SPARQL query",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            )
+    })
     @ActionId(value = Read.TYPE)
     @ResourceAttributes(@AttributeValue(type = ValueType.PATH, id = "https://mobi.solutions/store-type",
             value = "storeType"))
     @ResourceId(type = ValueType.PATH, value = "id")
     public Response postUrlEncodedQueryRdf(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @FormParam("query") String queryString,
-            @Parameter(description = "The string value representing what type of store is being queried (dataset, "
-                    + "repository, etc.)", required = true)
+            @Parameter(description = "The string value representing what type of store is being queried "
+                    + "(dataset, repository, etc.)", required = true)
             @PathParam("storeType") String storeType,
-            @Parameter(description = "The IRI representing what resource to query (Repository IRI, DatasetRecord IRI, "
-                    + "etc.", required = true)
+            @Parameter(description = "The IRI representing what resource to query "
+                    + "(Repository IRI, DatasetRecord IRI, etc.)", required = true)
             @PathParam("id") String resourceId,
             @Parameter(description = "String representing the Branch Resource ID")
             @FormParam("branchId") String branchIdStr,
@@ -497,14 +604,13 @@ public class SparqlRest {
             @FormParam("commitId") String commitIdStr,
             @Parameter(description = "Boolean indicating whether imports should be included in the query")
             @DefaultValue("false") @FormParam("includeImports") boolean includeImports,
-            @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
+            @Parameter(description = "Whether or not to apply the InProgressCommit for the user making the request")
             @DefaultValue("false") @FormParam("applyInProgressCommit") boolean applyInProgressCommit,
             @Parameter(hidden = true)
             @HeaderParam("accept") String acceptString) {
         if (queryString == null) {
             throw getErrorObjBadRequest(new IllegalArgumentException("Form parameter 'query' must be set."));
         }
-        
         VersionedRDFRecordParams rdfRecordParams = new VersionedRDFRecordParams(branchIdStr, commitIdStr,
                 includeImports, applyInProgressCommit, getActiveUser(servletRequest, engineManager));
         return handleQuery(queryString, vf.createIRI(resourceId), storeType, acceptString, null,
@@ -519,15 +625,16 @@ public class SparqlRest {
      * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
      * https://github.com/eclipse/rdf4j/blob/master/core/rio/api/src/main/java/org/eclipse/rdf4j/rio/RDFFormat.java
      *
-     * @param queryString The SPARQL query to execute
-     * @param storeType the type of store to query
-     * @param resourceId the IRI of the resource to query
-     * @param fileType used to specify certain media types which are acceptable for the response
+     * @param queryString  The SPARQL query to execute
+     * @param storeType    the type of store to query
+     * @param resourceId   the IRI of the resource to query
+     * @param fileType     used to specify certain media types which are acceptable for the response
      * @param acceptString used to specify certain media types which are acceptable for the response
-     * @param fileName The optional file name for the download file
-     * @return The SPARQL 1.1 Response in the format of fileType query parameter
+     * @param fileName     The optional file name for the download file
+     * @return The SPARQL 1.1 Response in the format of the file type query parameter
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("/{storeType}/{id}")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
@@ -536,8 +643,24 @@ public class SparqlRest {
     @ResourceAttributes(@AttributeValue(type = ValueType.PATH, id = "https://mobi.solutions/store-type",
             value = "storeType"))
     @ResourceId(type = ValueType.PATH, value = "id")
+    @Operation(summary = "Downloads the results of a URL-encoded SPARQL query submitted via POST")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The SPARQL results to download"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response postUrlEncodedDownloadRdfQuery(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @FormParam("query") String queryString,
             @PathParam("storeType") String storeType,
             @PathParam("id") String resourceId,
@@ -551,7 +674,6 @@ public class SparqlRest {
         if (queryString == null) {
             throw getErrorObjBadRequest(new IllegalArgumentException("Form parameter 'query' must be set."));
         }
-        
         VersionedRDFRecordParams rdfRecordParams = new VersionedRDFRecordParams(branchIdStr, commitIdStr,
                 includeImports, applyInProgressCommit, getActiveUser(servletRequest, engineManager));
         return handleQuery(queryString, vf.createIRI(resourceId), storeType,
@@ -565,55 +687,73 @@ public class SparqlRest {
      * For select queries the default type is JSON and for construct queries default type is Turtle.
      * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
      *
-     * @param queryString The SPARQL query to execute
-     * @param storeType the type of store to query
-     * @param resourceId the IRI of the resource to query
+     * @param queryString  The SPARQL query to execute
+     * @param storeType    the type of store to query
+     * @param resourceId   the IRI of the resource to query
      * @param acceptString used to specify certain media types which are acceptable for the response
      * @return The SPARQL 1.1 results in mime type specified by accept header
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("/{storeType}/{id}/limited-results")
-    @Produces({JSON_MIME_TYPE, SPARQL_JSON_MIME_TYPE,TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
+    @Produces({JSON_MIME_TYPE, SPARQL_JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
-    @Operation(
-            tags = "sparql",
-            summary = "Retrieves the limited results of the provided SPARQL query",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "The SPARQL 1.1 results in mime type specified by accept header",
-                            content = {
-                                    @Content(mediaType = "*/*"),
-                                    @Content(mediaType = TURTLE_MIME_TYPE),
-                                    @Content(mediaType = LDJSON_MIME_TYPE),
-                                    @Content(mediaType = RDFXML_MIME_TYPE),
-                                    @Content(mediaType = JSON_MIME_TYPE),
-                                    @Content(mediaType = SPARQL_JSON_MIME_TYPE)
-                            }),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST", content = {
-                            @Content(mediaType = MediaType.APPLICATION_JSON,
-                                    schema = @Schema(implementation = ErrorObjectSchema.class)
-                            )
-                    }),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR", content = {
-                            @Content(mediaType = MediaType.APPLICATION_JSON,
-                                    schema = @Schema(implementation = ErrorObjectSchema.class)
-                            )
-                    })
-            }
-    )
+    @Operation(summary = "Retrieves the limited results of the provided SPARQL query")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The SPARQL 1.1 results in mime type specified by accept header",
+                    content = {
+                            @Content(mediaType = MediaType.WILDCARD),
+                            @Content(mediaType = TURTLE_MIME_TYPE),
+                            @Content(mediaType = LDJSON_MIME_TYPE),
+                            @Content(mediaType = RDFXML_MIME_TYPE),
+                            @Content(mediaType = JSON_MIME_TYPE),
+                            @Content(mediaType = SPARQL_JSON_MIME_TYPE)
+                    }
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided SPARQL query or parameters are invalid",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to execute this query"
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while executing the SPARQL query",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            )
+    })
     @ResourceAttributes(@AttributeValue(type = ValueType.PATH, id = "https://mobi.solutions/store-type",
             value = "storeType"))
     @ResourceId(type = ValueType.PATH, value = "id")
     public Response getLimitedResults(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "The SPARQL query to execute", required = true)
             @QueryParam("query") String queryString,
-            @Parameter(description = "The string value representing what type of store is being queried (dataset, "
-                    + "repository, etc.)", required = true)
+            @Parameter(description = "The string value representing what type of store is being queried "
+                    + "(dataset, repository, etc.)", required = true)
             @PathParam("storeType") String storeType,
-            @Parameter(description = "The IRI representing what resource to query (Repository IRI, DatasetRecord IRI, "
-                    + "etc.", required = true)
+            @Parameter(description = "The IRI representing what resource to query "
+                    + "(Repository IRI, DatasetRecord IRI, etc.)", required = true)
             @PathParam("id") String resourceId,
             @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
@@ -621,14 +761,13 @@ public class SparqlRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Boolean indicating whether imports should be included in the query")
             @DefaultValue("false") @QueryParam("includeImports") boolean includeImports,
-            @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
+            @Parameter(description = "Whether or not to apply the InProgressCommit for the user making the request")
             @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit,
             @Parameter(hidden = true)
             @HeaderParam("accept") String acceptString) {
         if (queryString == null) {
             throw getErrorObjBadRequest(new IllegalArgumentException("Parameter 'query' must be set."));
         }
-        
         VersionedRDFRecordParams rdfRecordParams = new VersionedRDFRecordParams(branchIdStr, commitIdStr,
                 includeImports, applyInProgressCommit, getActiveUser(servletRequest, engineManager));
         return handleQueryEagerly(queryString, vf.createIRI(resourceId), storeType,
@@ -642,23 +781,40 @@ public class SparqlRest {
      * For select queries the default type is JSON and for construct queries default type is Turtle.
      * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
      *
-     * @param queryString The SPARQL query to execute
-     * @param storeType the type of store to query
-     * @param resourceId the IRI of the resource to query
+     * @param queryString  The SPARQL query to execute
+     * @param storeType    the type of store to query
+     * @param resourceId   the IRI of the resource to query
      * @param acceptString used to specify certain media types which are acceptable for the response
      * @return The SPARQL 1.1 results in mime type specified by accept header
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Consumes("application/sparql-query")
     @Path("/{storeType}/{id}/limited-results")
-    @Produces({JSON_MIME_TYPE, SPARQL_JSON_MIME_TYPE,TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
+    @Produces({JSON_MIME_TYPE, SPARQL_JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
     @ActionId(value = Read.TYPE)
     @ResourceAttributes(@AttributeValue(type = ValueType.PATH, id = "https://mobi.solutions/store-type",
             value = "storeType"))
     @ResourceId(type = ValueType.PATH, value = "id")
+    @Operation(summary = "Retrieves the limited results of a SPARQL query submitted via POST")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The SPARQL 1.1 results in mime type specified by accept header"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response postLimitedResults(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @PathParam("storeType") String storeType,
             @PathParam("id") String resourceId,
             @QueryParam("branchId") String branchIdStr,
@@ -670,7 +826,6 @@ public class SparqlRest {
         if (queryString == null) {
             throw getErrorObjBadRequest(new IllegalArgumentException("Body must contain a query."));
         }
-        
         VersionedRDFRecordParams rdfRecordParams = new VersionedRDFRecordParams(branchIdStr, commitIdStr,
                 includeImports, applyInProgressCommit, getActiveUser(servletRequest, engineManager));
         return handleQueryEagerly(queryString, vf.createIRI(resourceId), storeType,
@@ -684,51 +839,21 @@ public class SparqlRest {
      * For select queries the default type is JSON and for construct queries default type is Turtle.
      * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
      *
-     * @param queryString The SPARQL query to execute
-     * @param storeType the type of store to query
-     * @param resourceId the IRI of the resource to query
+     * @param queryString  The SPARQL query to execute
+     * @param storeType    the type of store to query
+     * @param resourceId   the IRI of the resource to query
      * @param acceptString used to specify certain media types which are acceptable for the response
      * @return The SPARQL 1.1 results in mime type specified by accept header
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Path("/{storeType}/{id}/limited-results")
-    @Produces({JSON_MIME_TYPE, SPARQL_JSON_MIME_TYPE,TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
+    @Produces({JSON_MIME_TYPE, SPARQL_JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
     @Operation(
-            tags = "sparql",
             operationId = "postRdfQueryLimited",
             summary = "Retrieves the results of the provided SPARQL query",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "The SPARQL 1.1 Response in the format of fileType query parameter",
-                            content = {
-                                    @Content(mediaType = "*/*"),
-                                    @Content(mediaType = TURTLE_MIME_TYPE),
-                                    @Content(mediaType = LDJSON_MIME_TYPE),
-                                    @Content(mediaType = RDFXML_MIME_TYPE),
-                                    @Content(mediaType = JSON_MIME_TYPE),
-                                    @Content(mediaType = SPARQL_JSON_MIME_TYPE),
-                                    @Content(mediaType = XLSX_MIME_TYPE),
-                                    @Content(mediaType = CSV_MIME_TYPE),
-                                    @Content(mediaType = TSV_MIME_TYPE),
-                                    @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM),
-                                    @Content(mediaType = "text/*"),
-                                    @Content(mediaType = "application/*")
-                            }
-                    ),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST", content = {
-                            @Content(mediaType = MediaType.APPLICATION_JSON,
-                                    schema = @Schema(implementation = ErrorObjectSchema.class)
-                            )
-                    }),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR", content = {
-                            @Content(mediaType = MediaType.APPLICATION_JSON,
-                                    schema = @Schema(implementation = ErrorObjectSchema.class)
-                            )
-                    }),
-            },
             requestBody = @RequestBody(
                     content = {
                             @Content(
@@ -746,18 +871,77 @@ public class SparqlRest {
                     }
             ),
             parameters = {
-                    @Parameter(name = "storeType", description = "The string value representing what type of store is "
-                            + "being queried (dataset, repository, etc.)", required = true, in = ParameterIn.PATH),
-                    @Parameter(name = "id", description = "The IRI representing what resource to query (Repository IRI,"
-                            + " DatasetRecord IRI, etc.", required = true, in = ParameterIn.PATH)
+                    @Parameter(
+                            name = "storeType",
+                            description = "The string value representing what type of store is being queried "
+                                    + "(dataset, repository, etc.)",
+                            required = true,
+                            in = ParameterIn.PATH
+                    ),
+                    @Parameter(
+                            name = "id",
+                            description = "The IRI representing what resource to query (Repository IRI,"
+                                    + "DatasetRecord IRI, etc.)",
+                            required = true,
+                            in = ParameterIn.PATH
+                    )
             }
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The SPARQL 1.1 Response in the format of the file type query parameter",
+                    content = {
+                            @Content(mediaType = MediaType.WILDCARD),
+                            @Content(mediaType = TURTLE_MIME_TYPE),
+                            @Content(mediaType = LDJSON_MIME_TYPE),
+                            @Content(mediaType = RDFXML_MIME_TYPE),
+                            @Content(mediaType = JSON_MIME_TYPE),
+                            @Content(mediaType = SPARQL_JSON_MIME_TYPE),
+                            @Content(mediaType = XLSX_MIME_TYPE),
+                            @Content(mediaType = CSV_MIME_TYPE),
+                            @Content(mediaType = TSV_MIME_TYPE),
+                            @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM),
+                            @Content(mediaType = "text/*"),
+                            @Content(mediaType = "application/*")
+                    }
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided SPARQL query or parameters are invalid",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to execute this query"
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while executing the SPARQL query",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            )
+    })
     @ActionId(value = Read.TYPE)
     @ResourceAttributes(@AttributeValue(type = ValueType.PATH, id = "https://mobi.solutions/store-type",
             value = "storeType"))
     @ResourceId(type = ValueType.PATH, value = "id")
     public Response postUrlEncodedLimitedResults(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @FormParam("query") String queryString,
             @PathParam("storeType") String storeType,
             @PathParam("id") String resourceId,
@@ -769,7 +953,6 @@ public class SparqlRest {
         if (queryString == null) {
             throw getErrorObjBadRequest(new IllegalArgumentException("Form parameter 'query' must be set."));
         }
-        
         VersionedRDFRecordParams rdfRecordParams = new VersionedRDFRecordParams(branchIdStr, commitIdStr,
                 includeImports, applyInProgressCommit, getActiveUser(servletRequest, engineManager));
         return handleQueryEagerly(queryString, vf.createIRI(resourceId), storeType, acceptString,
@@ -789,12 +972,12 @@ public class SparqlRest {
         @Schema(type = "string", description = "String representing the Commit Resource ID")
         public String commitId;
 
-        @Schema(type = "boolean", description = "Boolean indicating whether ontology imports should be included in "
-                + "the query")
+        @Schema(type = "boolean", description = "Boolean indicating whether ontology imports "
+                + "should be included in the query")
         public boolean includeImports;
 
-        @Schema(type = "boolean", description = "Whether or not to apply the in progress commit for the user making"
-                + " the request")
+        @Schema(type = "boolean", description = "Whether or not to apply the InProgressCommit "
+                + "for the user making the request")
         public boolean applyInProgressCommit;
     }
 
@@ -930,7 +1113,6 @@ public class SparqlRest {
                         TupleQueryResultFormat.JSON);
             }
         }
-
         Response.ResponseBuilder builder = Response.ok(stream)
                 .type(mimeType);
 
@@ -965,10 +1147,10 @@ public class SparqlRest {
      * @return The SPARQL 1.1 Response in the format of ACCEPT Header mime type
      */
     private Response handleSelectQueryEagerly(String queryString, Resource resourceId, String storeType,
-                                              String mimeType, int limit,VersionedRDFRecordParams rdfRecordParams)
+                                              String mimeType, int limit, VersionedRDFRecordParams rdfRecordParams)
             throws IOException {
         //Null Case
-        if(mimeType == null){
+        if (mimeType == null) {
             mimeType = SPARQL_JSON_MIME_TYPE;
         }
 
@@ -1395,12 +1577,12 @@ public class SparqlRest {
                 Optional<InProgressCommit> inProgressCommitOpt;
                 try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
                     inProgressCommitOpt = commitManager.getInProgressCommitOpt(configProvider.getLocalCatalogIRI(),
-                                    recordId, user, conn);
+                            recordId, user, conn);
                 }
 
                 if (inProgressCommitOpt.isPresent()) {
                     queryableRDFOpt = isOnt ? Optional.of(ontologyManager.applyChanges((Ontology) queryableRDFOpt.get(),
-                                    inProgressCommitOpt.get())) :
+                            inProgressCommitOpt.get())) :
                             Optional.of(shapesGraphManager.applyChanges((ShapesGraph) queryableRDFOpt.get(),
                                     inProgressCommitOpt.get()));
                 }
@@ -1410,7 +1592,6 @@ public class SparqlRest {
         } catch (IllegalStateException | MobiException ex) {
             throw RestUtils.getErrorObjInternalServerError(ex);
         }
-
         return queryableRDFOpt.orElseThrow(() -> RestUtils.getErrorObjBadRequest(
                 new IllegalArgumentException("The ontology could not be found.")));
     }
