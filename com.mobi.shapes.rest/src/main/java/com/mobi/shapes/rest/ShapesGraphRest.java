@@ -72,10 +72,10 @@ import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
-import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.FileUpload;
 import com.mobi.rest.util.MobiNotFoundException;
 import com.mobi.rest.util.RestUtils;
+import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import com.mobi.rest.util.swagger.JsonLdObject;
 import com.mobi.security.policy.api.Decision;
 import com.mobi.security.policy.api.PDP;
@@ -85,12 +85,15 @@ import com.mobi.shapes.api.ShapesGraphManager;
 import com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecord;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Encoding;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.BNode;
@@ -147,6 +150,8 @@ import javax.ws.rs.core.UriInfo;
 @Component(service = ShapesGraphRest.class, immediate = true)
 @JaxrsResource
 public class ShapesGraphRest {
+    private static final String TAG_NAME = "ShapesGraph";
+    private static final String TAG_DESC = "Operations for managing SHACL shapes graph records";
     private static final ObjectMapper mapper = new ObjectMapper();
     final ValueFactory vf = new ValidatingValueFactory();
     final ModelFactory mf = new DynamicModelFactory();
@@ -195,33 +200,66 @@ public class ShapesGraphRest {
      *      SERVER ERROR if there is a problem creating the ShapesGraphRecord.
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-            tags = "shapes-graphs",
             summary = "Uploads a shapes-graph file to the data store",
             description = "Uploads and imports a shapes-graph file to a data store and creates an associated "
                     + "ShapesGraphRecord using the form data. A master Branch is created and stored with an initial "
                     + "Commit containing the data provided in the SHACL Shapes Graph file.",
-            responses = {
-                    @ApiResponse(responseCode = "201", description = "ShapesGraphRecord created"),
-                    @ApiResponse(responseCode = "400", description = "Resource can't be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "Problem creating ShapesGraphRecord")
-            },
             requestBody = @RequestBody(
-                    content = {
-                            @Content(mediaType = MediaType.MULTIPART_FORM_DATA, encoding = {
-                                    @Encoding(name = "keywords", explode = true)
-                                }, schema = @Schema(implementation = ShapesGraphFileUpload.class)
-                            )
-                    }
+                    content = @Content(
+                            mediaType = MediaType.MULTIPART_FORM_DATA,
+                            encoding = {@Encoding(name = "keywords", explode = true)},
+                            schema = @Schema(implementation = ShapesGraphFileUpload.class)
+                    )
             )
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The IRI string of the created ShapesGraphRecord"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided Shapes Graph data or parameters are invalid",
+                    content = @Content(
+                        mediaType = MediaType.APPLICATION_JSON,
+                        schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to perform this action",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while creating the ShapesGraphRecord",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            )
+    })
     @RolesAllowed("user")
     @ActionAttributes(@AttributeValue(id = RDF.NAMESPACE + "type", value = ShapesGraphRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
-    public Response uploadFile(@Context HttpServletRequest servletRequest) {
+    public Response uploadFile(@Parameter(hidden = true) @Context HttpServletRequest servletRequest) {
         Map<String, List<Class<?>>> fields = new HashMap<>();
         fields.put("title", List.of(String.class));
         fields.put("description", List.of(String.class));
@@ -244,8 +282,8 @@ public class ShapesGraphRest {
                     new IllegalArgumentException("The SHACL Shapes Graph data is missing."));
         } else if (inputStream != null && json != null) {
             throw RestUtils.getErrorObjBadRequest(
-                    new IllegalArgumentException("Only provide either a SHACL Shapes Graph file or "
-                            + "SHACL Shapes Graph json data"));
+                    new IllegalArgumentException("Only provide either a SHACL Shapes Graph file or SHACL Shapes Graph "
+                            + "json data"));
         }
         if (inputStream != null) {
             RecordOperationConfig config = new OperationConfig();
@@ -358,41 +396,68 @@ public class ShapesGraphRest {
      * @return the SHACL Shapes Graph associated with requested record ID to download.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
-    @Operation(
-            tags = "shapes-graphs",
-            summary = "Streams the SHACL Shapes Graph associated with the requested record ID to an OutputStream",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "The SHACL Shapes Graph associated with requested record ID to download"),
-                    @ApiResponse(responseCode = "400", description = "Resource can't be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "Problem downloading ShapesGraphRecord")
-            }
-    )
+    @Operation(summary = "Downloads the SHACL Shapes Graph associated with the requested record ID")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The SHACL Shapes Graph associated with requested record ID to download"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided Shapes Graph data or parameters are invalid",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to perform this action"
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while downloading the ShapesGraphRecord",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            )
+    })
     @RolesAllowed("user")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response downloadShapesGraph(
-            @Context HttpServletRequest servletRequest,
-            @Parameter(description = "String representing the Record Resource ID. "
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
+            @Parameter(description = "String representing the Record Resource ID."
                     + "NOTE: Assumes id represents an IRI unless String begins with \"_:\"", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "Optional String representing the Branch Resource id. NOTE: Assumes id "
-                    + "represents an IRI unless String begins with \"_:\". Defaults to Master branch if missing")
+            @Parameter(description = "Optional String representing the Branch Resource id."
+                    + "NOTE: Assumes id represents an IRI unless String begins with \"_:\"."
+                    + " Defaults to Master branch if missing")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "Optional String representing the Commit Resource id. NOTE: Assumes id "
-                    + "represents an IRI unless String begins with \"_:\". Defaults to head commit if missing. The "
-                    + "provided commitId must be on the Branch identified by the provided branchId; otherwise, nothing "
-                    + "will be returned")
+            @Parameter(description = "Optional String representing the Commit Resource id."
+                    + "NOTE: Assumes id represents an IRI unless String begins with \"_:\". Defaults to head commit "
+                    + " if missing. The provided commitId must be on the Branch identified by the provided branchId; "
+                    + "otherwise, nothing will be returned")
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Desired RDF return format",
                     schema = @Schema(allowableValues = {"jsonld", "rdf/xml", "turtle"}))
             @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
             @Parameter(description = "File name for the SHACL Shapes Graph file")
             @DefaultValue("shapesGraph") @QueryParam("fileName") String fileName,
-            @Parameter(description = "Whether or not any in progress commits by user should be applied "
-                    + "to the return value")
+            @Parameter(description = "Whether or not any InProgressCommits by user should be applied to the "
+                    + "return value")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         checkStringParam(recordIdStr, "The recordIdStr is missing.");
@@ -424,29 +489,61 @@ public class ShapesGraphRest {
      * @return A Response indicating whether the InProgress update/create was successful.
      */
     @PUT
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-            tags = "shapes-graphs",
             summary = "Updates the specified shapes graph branch and commit with the data provided",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "OK if successful or METHOD_NOT_ALLOWED if the changes "
-                                    + "can not be applied to the commit specified"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            },
             requestBody = @RequestBody(
-                    content = {
-                            @Content(mediaType = MediaType.MULTIPART_FORM_DATA,
-                                    schema = @Schema(implementation = ShapesGraphFileUploadChanges.class)
-                            )
-                    }
+                    content = @Content(
+                            mediaType = MediaType.MULTIPART_FORM_DATA,
+                            schema = @Schema(implementation = ShapesGraphFileUploadChanges.class)
+                    )
             )
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Shapes Graph changes successfully applied, or METHOD_NOT_ALLOWED "
+                            + "if changes conflict with the specified Commit",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided Shapes Graph data or parameters are invalid",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to perform this action",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while updating the ShapesGraphRecord",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            )
+    })
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     @ActionAttributes(
@@ -454,21 +551,20 @@ public class ShapesGraphRest {
                     ValueType.QUERY, required = false)
     )
     public Response updateShapesGraph(
-            @Context HttpServletRequest servletRequest,
-            @Parameter(description = "String representing the Record Resource ID. NOTE: Assumes id represents an IRI "
-                    + "unless String begins with \"_:\"", required = true)
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
+            @Parameter(description = "String representing the Record Resource ID."
+                    + "NOTE: Assumes id represents an IRI unless String begins with \"_:\"", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "Optional String representing the Branch Resource id. "
+            @Parameter(description = "Optional String representing the Branch Resource id."
                     + "NOTE: Assumes id represents an IRI unless String begins with \"_:\". "
                     + "Defaults to Master branch if missing")
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "Optional String representing the Commit Resource id."
-                    + " NOTE: Assumes id represents an IRI unless String begins with \"_:\". "
-                    + "Defaults to head commit if missing. The provided commitId must be on "
-                    + "the Branch identified by the provided branchId; otherwise, nothing "
-                    + "will be returned")
+                    + "NOTE: Assumes id represents an IRI unless String begins with \"_:\". "
+                    + "Defaults to head commit if missing. The provided commitId must be on the Branch "
+                    + "identified by the provided branchId; otherwise, nothing will be returned")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Boolean representing whether the in progress commit should be overwritten")
+            @Parameter(description = "Boolean representing whether the InProgressCommit should be overwritten")
             @DefaultValue("false") @QueryParam("replaceInProgressCommit") boolean replaceInProgressCommit) {
         Map<String, List<Class<?>>> fields = new HashMap<>();
         fields.put("json", List.of(String.class));
@@ -479,11 +575,12 @@ public class ShapesGraphRest {
         String filename = file.getFilename();
         String jsonld = (String) formData.get("json");
         if (replaceInProgressCommit) {
-            throw ErrorUtils.sendError("This functionality has not yet been implemented.",
-                    Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(
+                    new UnsupportedOperationException("This functionality has not yet been implemented."));
         }
         if ((fileInputStream == null && jsonld == null) || (fileInputStream != null && jsonld != null)) {
-            throw ErrorUtils.sendError("Either a File or JSON-LD must be provided", Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(
+                    new IllegalArgumentException("Either a File or JSON-LD must be provided"));
         }
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Resource catalogIRI = configProvider.getLocalCatalogIRI();
@@ -493,7 +590,8 @@ public class ShapesGraphRest {
             Optional<InProgressCommit> commit = commitManager.getInProgressCommitOpt(catalogIRI, recordId, user, conn);
 
             if (commit.isPresent()) {
-                throw ErrorUtils.sendError("User has an in progress commit already.", Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjBadRequest(
+                        new IllegalArgumentException("User has an in progress commit already."));
             }
 
             Resource branchId;
@@ -510,8 +608,8 @@ public class ShapesGraphRest {
                 branchId = branch.getResource();
                 Decision canModify = RestUtils.isBranchModifiable(user, (IRI) branchId, recordId, pdp);
                 if (canModify == Decision.DENY) {
-                    throw ErrorUtils.sendError("User does not have permission to modify the master branch.",
-                            Response.Status.UNAUTHORIZED);
+                    throw RestUtils.getErrorObjUnauthorized(
+                            new IllegalAccessException("User does not have permission to modify the master branch."));
                 }
                 commitId = commitManager.getHeadCommitIRI(branch);
             }
@@ -576,8 +674,8 @@ public class ShapesGraphRest {
      * Class used for OpenAPI documentation for upload changes endpoint.
      */
     private static class ShapesGraphFileUploadChanges {
-        @Schema(type = "string", format = "binary", description = "ShapesGraph file to upload. Must be provided if "
-                + "JSON-lD is not")
+        @Schema(type = "string", format = "binary", description = "ShapesGraph file to upload."
+                + "Must be provided if JSON-lD is not")
         public String file;
 
         @Schema(description = "JSON-LD containing the ShapesGraph definition. Must be provided if a file is not")
@@ -606,23 +704,54 @@ public class ShapesGraphRest {
      * @return The RDF triples for a specified entity, including all of its transitively attached Blank Nodes.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/entities/{entityId}")
     @Produces({LDJSON_MIME_TYPE, TURTLE_MIME_TYPE, RDFXML_MIME_TYPE, TRIG_MIME_TYPE})
     @RolesAllowed("user")
-    @Operation(
-            tags = "shapes-graphs",
-            summary = "Retrieves the triples for a specified entity",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "RDF triples for a specified entity"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the triples for a specified entity")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "RDF triples for a specified entity"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided Shapes Graph data or parameters are invalid",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to perform this action",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the entity triples",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getEntity(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the entity Resource ID", required = true)
@@ -631,14 +760,12 @@ public class ShapesGraphRest {
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Specified format for the return data. Valid values include 'jsonld', "
-                    + "'turtle', 'rdf/xml', and 'trig'")
+            @Parameter(description = "Specified format for the return data. Valid values include 'jsonld', 'turtle', "
+                    + "'rdf/xml', and 'trig'")
             @DefaultValue("jsonld") @QueryParam("format") String format,
-            @Parameter(description = "Whether or not to apply the in progress commit "
-                    + "for the user making the request")
+            @Parameter(description = "Whether or not to apply the InProgressCommit for the user making the request")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit,
-            @Parameter(description = "Boolean indicating whether ontology imports "
-                    + "should be included in the query")
+            @Parameter(description = "Boolean indicating whether ontology imports should be included in the query")
             @DefaultValue("true") @QueryParam("includeImports") boolean includeImports
     ) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
@@ -677,46 +804,90 @@ public class ShapesGraphRest {
      *         subjectId.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/content")
     @Produces({LDJSON_MIME_TYPE, TURTLE_MIME_TYPE, RDFXML_MIME_TYPE, TRIG_MIME_TYPE})
     @RolesAllowed("user")
-    @Operation(
-            tags = "shapes-graphs",
-            summary = "Retrieves all triples in a Shapes Graph not directly attached to the Shapes Graph IRI subjectId",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "RDF triples for the Shapes Graph serialized in the format determined by"
-                                    + " the 'format' query parameter (jsonld, turtle, rdf/xml, or trig)",
-                            content = {
-                                    @Content(mediaType = LDJSON_MIME_TYPE,
-                                            array = @ArraySchema(schema = @Schema(implementation = JsonLdObject.class,
-                                                    description = "A list of JSON-LD objects representing the graph content"))),
-                                    @Content(mediaType = TURTLE_MIME_TYPE,
-                                            schema = @Schema(type = "string", example = "<http://example.org/s> <http://example.org/p> <http://example.org/o> .")),
-                                    @Content(mediaType = RDFXML_MIME_TYPE,
-                                            schema = @Schema(type = "string")),
-                                    @Content(mediaType = TRIG_MIME_TYPE,
-                                            schema = @Schema(type = "string"))
-                            }),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves all triples in a Shapes Graph not directly attached to the "
+            + "Shapes Graph's IRI subjectId")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "RDF triples for the Shapes Graph serialized in the format determined by "
+                            + "the 'format' query parameter (jsonld, turtle, rdf/xml, or trig)",
+                    content = {
+                            @Content(
+                                    mediaType = LDJSON_MIME_TYPE,
+                                    array = @ArraySchema(
+                                            schema = @Schema(
+                                                    implementation = JsonLdObject.class,
+                                                    description = "A list of JSON-LD objects representing the "
+                                                            + "graph content")
+                                    )
+                            ),
+                            @Content(
+                                    mediaType = TURTLE_MIME_TYPE,
+                                    schema = @Schema(
+                                            type = "string",
+                                            example = "<http://example.org/s> <http://example.org/p> <http://example.org/o> .")
+                            ),
+                            @Content(
+                                    mediaType = RDFXML_MIME_TYPE,
+                                    schema = @Schema(type = "string")
+                            ),
+                            @Content(
+                                    mediaType = TRIG_MIME_TYPE, schema = @Schema(type = "string")
+                            )
+                    }
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided Shapes Graph data or parameters are invalid",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to perform this action",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the Shapes Graph content",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getShapesGraphContent(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Specified format for the return data. Valid values include 'jsonld', "
-                    + "'turtle', 'rdf/xml', and 'trig'")
+            @Parameter(description = "Specified format for the return data."
+                    + "Valid values include 'jsonld', 'turtle', 'rdf/xml', and 'trig'")
             @DefaultValue("turtle") @QueryParam("format") String format,
-            @Parameter(description = "Whether or not to apply the in progress commit "
-                    + "for the user making the request")
+            @Parameter(description = "Whether or not to apply the InProgressCommit for the user making the request")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
@@ -750,27 +921,59 @@ public class ShapesGraphRest {
      *                    retrieval
      * @param applyInProgressCommit Boolean indicating whether any in progress commits by user should be
      *                              applied to the return value
-     * @return Returns a JSON object containing failed import IRIs and successfully imported ontologies for a ShapeGraph.
+     * @return Returns a JSON object containing failed import IRIs and successfully imported ontologies for a
+     *      ShapeGraph.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/imports")
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @RolesAllowed("user")
-    @Operation(
-            tags = "shapes-graphs",
-            summary = "Retrieve information about imports for the given ShapeGraph",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Returns a JSON object containing failed import IRIs and "
-                            + "successfully imported ontologies for a ShapeGraph."),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieve information about imports for the given ShapeGraph")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Returns a JSON object containing failed import IRIs and successfully "
+                            + "imported ontologies for a ShapeGraph."
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided Shapes Graph data or parameters are invalid",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to perform this action",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving import information",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getShapesGraphImports(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
@@ -779,8 +982,7 @@ public class ShapesGraphRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Boolean to decide to clear cache")
             @DefaultValue("false") @QueryParam("clearCache") boolean clearCache,
-            @Parameter(description = "Whether or not to apply the in progress commit "
-                    + "for the user making the request")
+            @Parameter(description = "Whether or not to apply the InProgressCommit for the user making the request")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
@@ -836,7 +1038,6 @@ public class ShapesGraphRest {
      * @param ontology the {@link Ontology} from which to extract identifier information
      * @return a {@link ObjectNode} representing the ontology metadata
      */
-
     private ObjectNode getOntologyIdentifiersAsJsonObject(Ontology ontology) {
         OntologyId ontologyId = ontology.getOntologyId();
         Optional<IRI> optIri = ontologyId.getOntologyIRI();
@@ -871,36 +1072,70 @@ public class ShapesGraphRest {
      * @return The String representation of the IRI representing the Shapes Graph
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/id")
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @RolesAllowed("user")
-    @Operation(
-            tags = "shapes-graphs",
-            summary = "Retrieves the Shapes Graph ID for the specified record, branch, and commit",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Shapes Graph ID for the specified record, branch, and commit",
-                            content = @Content(mediaType = MediaType.TEXT_PLAIN)),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST",
-                            content = @Content(mediaType = MediaType.APPLICATION_JSON)),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied for recordId"),
-                    @ApiResponse(responseCode = "404", description = "Shapes Graph ID could not be found.",
-                            content = @Content(mediaType = MediaType.APPLICATION_JSON)),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR",
-                            content = @Content(mediaType = MediaType.APPLICATION_JSON)),
-            }
-    )
+    @Operation(summary = "Retrieves the Shapes Graph's ID for the specified record, branch, and commit")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Shapes Graph ID for the specified record, branch, and commit",
+                    content = @Content(mediaType = MediaType.TEXT_PLAIN)
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided Shapes Graph data or parameters are invalid",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to access this record",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Shapes Graph ID could not be found.",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the Shapes Graph ID",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getShapesGraphId(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Whether or not to apply the in progress commit "
-                    + "for the user making the request")
+            @Parameter(description = "Whether or not to apply the InProgressCommit for the user making the request")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
@@ -949,48 +1184,81 @@ public class ShapesGraphRest {
      * @param uriInfo                   URI information for request construction and metadata.
      * @param recordIdStr               String representing the Record Resource ID.
      *                                  NOTE: Assumes ID represents an IRI unless the string begins with "_:".
-     * @param branchIdStr               String representing the Branch Resource ID. Optional. If not specified, the master
-     *                                  branch will be used. NOTE: Assumes ID represents an IRI unless the string begins with "_:".
-     * @param commitIdStr               String representing the Commit Resource ID. Optional. If not specified, the head commit
-     *                                  will be used. The provided commitId must belong to the branch identified by branchId;
-     *                                  otherwise, no results will be returned.
+     * @param branchIdStr               String representing the Branch Resource ID. Optional. If not specified, the
+     *                                  master branch will be used. NOTE: Assumes ID represents an IRI unless the
+     *                                  string begins with "_:".
+     * @param commitIdStr               String representing the Commit Resource ID. Optional. If not specified, the
+     *                                  head commit will be used. The provided commitId must belong to the branch
+     *                                  identified by branchId; otherwise, no results will be returned.
      * @param applyInProgressCommit     Whether to apply the in-progress commit for the current user. Defaults to true.
      * @param offset                    Offset index for paging the results. Defaults to 0.
      * @param limit                     Maximum number of node shapes to return. Defaults to 500.
-     * @param searchText                Optional text filter applied when searching node shapes by name or other attributes.
+     * @param searchText                Optional text filter applied when searching node shapes by name or other
+     *                                  attributes.
      *
      * @return A {@link Response} containing a paginated list of {@code NodeShapeSummary} objects in JSON format.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/node-shapes")
     @Produces({MediaType.APPLICATION_JSON})
     @RolesAllowed("user")
-    @Operation(
-            tags = "shapes-graphs",
-            summary = "Retrieves the list of associated NodeShapeSummary for the specified record, branch, and commit",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "A list of Node Shapes with associated metadata",
-                            content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                                    schema = @Schema(implementation = NodeShapeSummaryDoc.class))),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST",
-                            content = @Content(mediaType = MediaType.APPLICATION_JSON)),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied",
-                            content = @Content(mediaType = MediaType.APPLICATION_JSON)),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR",
-                            content = @Content(mediaType = MediaType.APPLICATION_JSON)),
-            }
-    )
+    @Operation(summary = "Retrieves the list of associated NodeShapeSummary for the specified record, branch, and "
+            + "commit")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of Node Shapes with associated metadata",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = NodeShapeSummaryDoc.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided Shapes Graph data or parameters are invalid",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to perform this action",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving NodeShapeSummaries",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getShapesGraphNodeShapes(
-            @Context HttpServletRequest servletRequest,
-            @Context UriInfo uriInfo,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context UriInfo uriInfo,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
+            @Parameter(description = "Whether or not to apply the InProgressCommit for the user making the request")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit,
             @Parameter(description = "Offset for the page")
             @DefaultValue("0") @QueryParam("offset") int offset,

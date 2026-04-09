@@ -12,12 +12,12 @@ package com.mobi.security.policy.rest;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -40,8 +40,11 @@ import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.Request;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import org.apache.commons.lang3.StringUtils;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -72,9 +75,11 @@ import javax.ws.rs.core.Response;
 @JaxrsResource
 @Path("/pep")
 public class PolicyEnforcementRest {
-
     private final Logger log = LoggerFactory.getLogger(PolicyEnforcementRest.class);
+
     private static final ObjectMapper mapper = new ObjectMapper();
+    private static final String TAG_NAME = "PolicyEnforcement";
+    private static final String TAG_DESC = "Operations for evaluating XACML authorization decisions";
 
     private PDP pdp;
     private final ValueFactory vf = new ValidatingValueFactory();
@@ -102,26 +107,55 @@ public class PolicyEnforcementRest {
      * }
      *
      * @param servletRequest the HttpServletRequest
-     * @param jsonRequest a JSON object containing XACML required fields
+     * @param jsonRequest    a JSON object containing XACML required fields
      * @return the decision of the XACML request evaluation
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
     @Operation(
-            tags = "pep",
-            summary = "Converts user provided request into XACML and evaluates",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "the decision of the XACML request evaluation"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
+            summary = "Evaluates a XACML authorization request",
+            description = "Converts the user-provided request into XACML and evaluates it."
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The decision of the XACML request evaluation"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Missing required action ID or resource ID in the request",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while evaluating the XACML policy request",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response evaluateRequest(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "A JSON object containing XACML required fields", required = true)
-                    String jsonRequest) {
+            String jsonRequest) {
         log.debug("Authorizing...");
         long start = System.currentTimeMillis();
         try {
@@ -168,28 +202,53 @@ public class PolicyEnforcementRest {
      * }
      *
      * @param servletRequest the request supplied by the underlying JAX-RS implementation
-     * @param jsonRequest a JSON object containing XACML required fields
+     * @param jsonRequest    a JSON object containing XACML required fields
      * @return an array of xacml responses to the jsonRequest
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("/multiDecisionRequest")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
-    @Operation(
-            tags = "pep",
-            summary = "Converts user provided requests into XACML and evaluates",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "the XACML Responses for the corresponding XACML"
-                            + " requests"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Evaluates a multi-decision XACML authorization request")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The XACML Responses for the corresponding XACML requests"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request JSON or both resource ID and action ID have multiple values",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while evaluating the multi-decision XACML request",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response evaluateMultiDecisionRequest(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "A JSON object with XACML required fields", required = true)
-                    String jsonRequest) {
+            String jsonRequest) {
         log.debug("Authorizing...");
         long start = System.currentTimeMillis();
         try {
@@ -199,15 +258,15 @@ public class PolicyEnforcementRest {
 
             List<IRI> actionIds = json.hasNonNull("actionId") && json.get("actionId").isArray()
                     ? StreamSupport.stream(json.get("actionId").spliterator(), false)
-                            .map(JsonNode::asText)
-                            .map(vf::createIRI)
-                            .collect(Collectors.toList())
+                    .map(JsonNode::asText)
+                    .map(vf::createIRI)
+                    .collect(Collectors.toList())
                     : Collections.emptyList();
             List<IRI> resourceIds = json.hasNonNull("resourceId") && json.get("resourceId").isArray()
                     ? StreamSupport.stream(json.get("resourceId").spliterator(), false)
-                            .map(JsonNode::asText)
-                            .map(vf::createIRI)
-                            .collect(Collectors.toList())
+                    .map(JsonNode::asText)
+                    .map(vf::createIRI)
+                    .collect(Collectors.toList())
                     : Collections.emptyList();
 
             if (resourceIds.size() > 1 && actionIds.size() > 1) {
@@ -239,9 +298,5 @@ public class PolicyEnforcementRest {
                 .stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> vf.createLiteral(entry.getValue().asText())))
                 : Collections.emptyMap();
-    }
-
-    private String getMessageOrDefault(com.mobi.security.policy.api.Response response, String defaultMessage) {
-        return StringUtils.isEmpty(response.getStatusMessage()) ? defaultMessage : response.getStatusMessage();
     }
 }

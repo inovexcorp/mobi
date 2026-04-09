@@ -31,11 +31,16 @@ import com.mobi.exception.MobiException;
 import com.mobi.platform.config.api.state.StateManager;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
+import com.mobi.rest.util.swagger.JsonLdObject;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
@@ -74,6 +79,9 @@ import javax.ws.rs.core.Response;
 @JaxrsResource
 @Path("/states")
 public class StateRest {
+    private static final String TAG_NAME = "State";
+    private static final String TAG_DESC = "Operations for managing user application state";
+    
     protected StateManager stateManager;
     protected final ValueFactory factory = new ValidatingValueFactory();
     protected final ModelFactory modelFactory = new DynamicModelFactory();
@@ -96,25 +104,50 @@ public class StateRest {
      *      that match the passed criteria
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "states",
-            summary = "Retrieves State for the User making the request based on filter criteria",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves State for the User making the request based on filter criteria")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "User States matching the filter criteria"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                        )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view states",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving user states",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                        )
+            )
+    })
     public Response getStates(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "ID of the Application to filter State by", required = true)
             @QueryParam("application") String applicationId,
             @Parameter(array = @ArraySchema(
-                    arraySchema = @Schema(description = "List of all the IDs of resources that should be "
-                            + "associated with the States"),
+                    arraySchema = @Schema(description = "List of all the IDs of resources that should be associated "
+                            + "with the States"),
                     schema = @Schema(implementation = String.class, description = "ID")))
             @QueryParam("subjects") List<String> subjectIds) {
         String username = RestUtils.getActiveUsername(servletRequest);
@@ -150,22 +183,64 @@ public class StateRest {
      * @return a Response with the ID of the new State
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
-    @Operation(
-            tags = "states",
-            summary = "Creates a new State for the User making the request",
-            responses = {
-                    @ApiResponse(responseCode = "201",
-                            description = "Response indicating the success or failure of the request"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Creates a new State for the User making the request")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The IRI of the newly created State"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid JSON-LD or empty state model",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                        )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                        )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to create states",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Application with the provided ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                        )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while creating the state",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                        )
+            )
+    })
     public Response createState(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "ID of the Application to associate the new State with", required = true)
             @QueryParam("application") String applicationId,
             @Parameter(description = "JSON-LD of all resources to be linked to the new State", required = true)
@@ -198,23 +273,56 @@ public class StateRest {
      * @return a Response with the JSON-LD serialization of all resources associated with the specified State
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{stateId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "states",
-            summary = "Retrieves State by ID as long it belongs to the User making the request",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-                    @ApiResponse(responseCode = "401", description = "Response indicating UNAUTHORIZED"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the State specified by the provided ID for the requesting User")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "JSON-LD representation of the State",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = JsonLdObject.class)))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "State does not belong to the requesting user",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                        )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view states",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "State with the provided ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                        )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the state",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                        )
+            )
+    })
     public Response getState(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "ID of the State to retrieve", required = true)
             @PathParam("stateId") String stateId) {
         String username = RestUtils.getActiveUsername(servletRequest);
@@ -242,23 +350,64 @@ public class StateRest {
      * @return a Response indicating the success of the request
      */
     @PUT
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{stateId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "states",
-            summary = "Updates State as long as it belongs to the User making the request",
-            responses = {
-                    @ApiResponse(responseCode = "201",
-                            description = "Response indicating the success or failure of the request"),
-                    @ApiResponse(responseCode = "401", description = "Response indicating UNAUTHORIZED"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Updates State as long as it belongs to the User making the request")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "State successfully updated"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid JSON-LD or empty state model",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                        )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "State does not belong to the requesting user",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                        )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to update states",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "State with the provided ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                        )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while updating the state",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                        )
+            )
+    })
     public Response updateState(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "ID of the State to update", required = true)
             @PathParam("stateId") String stateId,
             @Parameter(description = "JSON-LD serialization of the new resources to associate with the State",
@@ -295,22 +444,54 @@ public class StateRest {
      * @return a Response indicating the success of the request
      */
     @DELETE
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{stateId}")
     @RolesAllowed("user")
-    @Operation(
-            tags = "states",
-            summary = "Deletes State as long as it belongs to the User making the request",
-            responses = {
-                    @ApiResponse(responseCode = "201",
-                            description = "Success"),
-                    @ApiResponse(responseCode = "401", description = "Response indicating UNAUTHORIZED"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Deletes State as long as it belongs to the User making the request")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "State successfully deleted"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "State does not belong to the requesting user",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                        )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to delete states",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "State with the provided ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                        )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while deleting the state",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                        )
+            )
+    })
     public Response deleteState(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "ID of the State to remove", required = true)
             @PathParam("stateId") String stateId) {
         String username = RestUtils.getActiveUsername(servletRequest);

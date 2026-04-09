@@ -1,4 +1,5 @@
 package com.mobi.document.translator.rest;
+
 /*-
  * #%L
  * com.mobi.document.translator.rest
@@ -32,10 +33,14 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.FileUpload;
 import com.mobi.rest.util.RestUtils;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.io.FilenameUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
@@ -85,6 +90,9 @@ import javax.ws.rs.core.StreamingOutput;
 @JaxrsResource
 public class DocumentTranslatorRest {
 
+    private static final String TAG_NAME = "DocumentTranslator";
+    private static final String TAG_DESC = "Operations for translating CSV, JSON, and XML documents to RDF";
+
     /**
      * Logging utility.
      */
@@ -105,28 +113,57 @@ public class DocumentTranslatorRest {
      * the user's system for exporting/importing.
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @RolesAllowed("user")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @Operation(
-            tags = "translate",
-            summary = "Accepts an input File of either csv, json, or xml and transforms it to an ontology and data "
-                    + "file",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Successful Translation of Document"),
-                    @ApiResponse(responseCode = "400", description = "Invalid File or BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            },
+            summary = "Translates a CSV, JSON, or XML file into an ontology and data file",
             requestBody = @RequestBody(
-                    content = {
-                            @Content(mediaType = MediaType.MULTIPART_FORM_DATA,
-                                    schema = @Schema(implementation = TranslateUpload.class)
-                            )
-                    }
+                    content = @Content(
+                            mediaType = MediaType.MULTIPART_FORM_DATA,
+                            schema = @Schema(implementation = TranslateUpload.class)
+                    )
             )
     )
-    public Response translateDocument(@Context HttpServletRequest servletRequest) {
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A zip file containing ontology.ttl and data.ttl from the translation"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid or unsupported file type, or missing required file",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to translate documents"
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while translating the document to RDF",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
+    public Response translateDocument(@Parameter(hidden = true) @Context HttpServletRequest servletRequest) {
         java.nio.file.Path tempFolder = null;
         try {
             Map<String, List<Class<?>>> fields = new HashMap<>();
@@ -231,7 +268,7 @@ public class DocumentTranslatorRest {
                         new UnsupportedOperationException("No translator was found in the system for that file type"));
 
         if (derivedTranslator instanceof CsvSemanticTranslator) {
-                ((CsvSemanticTranslator) derivedTranslator).setDesiredRows(rowCount);
+            ((CsvSemanticTranslator) derivedTranslator).setDesiredRows(rowCount);
         }
 
         return derivedTranslator;
@@ -239,7 +276,7 @@ public class DocumentTranslatorRest {
 
     private void cleanupFiles(java.nio.file.Path tempDirectory) {
         if (tempDirectory != null) {
-            try (Stream<java.nio.file.Path> paths = Files.walk(tempDirectory)){
+            try (Stream<java.nio.file.Path> paths = Files.walk(tempDirectory)) {
                 paths.sorted(Comparator.reverseOrder())
                         .map(java.nio.file.Path::toFile)
                         .forEach(File::delete);

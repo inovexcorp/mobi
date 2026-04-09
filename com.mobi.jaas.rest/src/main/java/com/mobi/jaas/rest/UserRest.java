@@ -45,12 +45,18 @@ import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.platform.config.api.state.StateManager;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
+import com.mobi.rest.util.swagger.ErrorObjectSchema;
+import com.mobi.rest.util.swagger.JsonLdObject;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.Explode;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
@@ -92,9 +98,11 @@ import javax.ws.rs.core.Response;
 @Path("/users")
 public class UserRest {
     private final Logger logger = LoggerFactory.getLogger(UserRest.class);
-    private static final ObjectMapper mapper = new ObjectMapper();
-    static final String ADMIN_USER_IRI = "http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997";
 
+    private static final ObjectMapper mapper = new ObjectMapper();
+    protected static final String ADMIN_USER_IRI = "http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997";
+    private static final String TAG_NAME = "User";
+    private static final String TAG_DESC = "Operations for managing user accounts, roles, and group memberships";
     private static final String USERNAME_PROVIDED = "Username must be provided";
     private static final String NOT_FOUND = " not found";
     private static final String CURRENT_USERNAME_PROVIDED = "Current username must be provided";
@@ -126,16 +134,44 @@ public class UserRest {
      * @return a Response with a JSON-LD list of the {@link User}s in Mobi
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-            tags = "users",
-            summary = "Get all Mobi Users",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-            }
-    )
+    @Operation(summary = "Retrieves the list of all Users")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "JSON-LD array with the list of Users",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = JsonLdObject.class)))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided User data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving Users",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response getUsers() {
         try {
             Set<User> users = engineManager.getUsers();
@@ -168,15 +204,42 @@ public class UserRest {
      * @return Response indicating the success or failure of the request
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @RolesAllowed("admin")
-    @Operation(
-            tags = "users",
-            summary = "Create a Mobi User account",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-            }
-    )
+    @Operation(summary = "Creates a new User account", description = "Requires the 'admin' role.")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The username of the created User"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided User data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while creating the User",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response createUser(
@@ -245,17 +308,44 @@ public class UserRest {
      * @return a Response with a JSON representation of the specified User in Mobi
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{username}")
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-            tags = "users",
-            summary = "Get a single Mobi User",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-            }
-    )
+    @Operation(summary = "Retrieves a specific User")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "JSON-LD of the User with the provided username"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided User data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "User with the provided username does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response getUser(
             @Parameter(description = "Username of the User to retrieve", required = true)
             @PathParam("username") String username) {
@@ -284,19 +374,47 @@ public class UserRest {
      * @return a Response indicating the success or failure of the request
      */
     @PUT
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{username}")
-    @RolesAllowed("user")
-    @Operation(
-            tags = "users",
-            summary = "Update a Mobi user's information",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-            }
-    )
     @Consumes(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @Operation(summary = "Updates a User's information")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "User successfully updated",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided User data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while updating the User",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response updateUser(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "Current username of the user to update", required = true)
             @PathParam("username") String username,
             @Parameter(description = "JSON-LD string representation of a User with the new information to update",
@@ -357,18 +475,39 @@ public class UserRest {
      * @return a Response indicating the success or failure of the request
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{username}/password")
     @RolesAllowed("user")
     @Operation(
-            tags = "users",
-            summary = "Changes a Mobi User's password if it is the User making the request",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-            }
+            summary = "Changes the current User's password",
+            description = "Only the User making the request can change their own password."
+                    + "The current password must be provided."
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "User password successfully changed"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided User data or parameters are invalid",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response changePassword(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "Current username of the user to update", required = true)
             @PathParam("username") String username,
             @Parameter(description = "Current password of the user to update", required = true)
@@ -391,7 +530,7 @@ public class UserRest {
             }
             return updatePassword(username, newPassword);
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         }
     }
 
@@ -404,18 +543,39 @@ public class UserRest {
      * @return a Response indicating the success or failure of the request
      */
     @PUT
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{username}/password")
     @RolesAllowed("admin")
     @Operation(
-            tags = "users",
-            summary = "Resets a Mobi User's password if User making request is the admin",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-            }
+            summary = "Resets a User's password as an admin",
+            description = "Requires the 'admin' role."
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "User's password successfully reset"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided User data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response resetPassword(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "Current username of the User to update", required = true)
             @PathParam("username") String username,
             @Parameter(description = "New password for the User", required = true)
@@ -442,18 +602,46 @@ public class UserRest {
      * @return a Response indicating the success or failure of the request
      */
     @DELETE
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{username}")
     @RolesAllowed("user")
-    @Operation(
-            tags = "users",
-            summary = "Remove a Mobi user's account",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-            }
-    )
+    @Operation(summary = "Removes a User account")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "User account successfully deleted",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided User data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "405",
+                    description = "The admin user cannot be deleted",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response deleteUser(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "Username of the User to remove", required = true)
             @PathParam("username") String username) {
         if (StringUtils.isEmpty(username)) {
@@ -493,17 +681,36 @@ public class UserRest {
      * @return a Response with a JSON array of the roles of the User in Mobi
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{username}/roles")
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-            tags = "users",
-            summary = "List roles of a Mobi User",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-            }
-    )
+    @Operation(summary = "Retrieves the roles of a User")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "JSON-LD array with the roles of the User",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = JsonLdObject.class)))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided User data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response getUserRoles(
             @Parameter(description = "Username of the User to retrieve roles from", required = true)
             @PathParam("username") String username,
@@ -536,16 +743,38 @@ public class UserRest {
      * @return a Response indicating the success or failure of the request
      */
     @PUT
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{username}/roles")
     @RolesAllowed("admin")
     @Operation(
-            tags = "users",
-            summary = "Add roles to a Mobi User",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-            }
+            summary = "Adds roles to a User",
+            description = "Requires the 'admin' role."
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Role successfully added to the User",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided User data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response addUserRoles(
             @Parameter(description = "Username of the User to add a role to", required = true)
             @PathParam("username") String username,
@@ -580,16 +809,38 @@ public class UserRest {
      * @return a Response indicating the success or failure of the request
      */
     @DELETE
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{username}/roles")
     @RolesAllowed("admin")
     @Operation(
-            tags = "users",
-            summary = "Remove role from a Mobi User",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-            }
+            summary = "Removes a role from a User",
+            description = "Requires the 'admin' role."
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Role successfully removed from the User",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided User data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response removeUserRole(
             @Parameter(description = "Username of the User to remove a role from", required = true)
             @PathParam("username") String username,
@@ -624,17 +875,36 @@ public class UserRest {
      * @return a Response with a JSON array of the groups the User is a part of in Mobi
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{username}/groups")
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-            tags = "users",
-            summary = "List groups of a Mobi User",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-            }
-    )
+    @Operation(summary = "Retrieves the groups of a User")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "JSON-LD array with the groups of the User",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = JsonLdObject.class)))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided User data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response listUserGroups(
             @Parameter(description = "Username to retrieve groups from", required = true)
             @PathParam("username") String username) {
@@ -670,16 +940,38 @@ public class UserRest {
      * @return a Response indicating the success or failure of the request
      */
     @PUT
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{username}/groups")
     @RolesAllowed("admin")
     @Operation(
-            tags = "users",
-            summary = "Add a Mobi user to a group",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-            }
+            summary = "Adds a User to a Group",
+            description = "Requires the 'admin' role."
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "User successfully added to the Group",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided User data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response addUserGroup(
             @Parameter(description = "Username of the User to add to the group", required = true)
             @PathParam("username") String username,
@@ -711,16 +1003,38 @@ public class UserRest {
      * @return a Response indicating the success or failure of the request
      */
     @DELETE
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{username}/groups")
     @RolesAllowed("admin")
     @Operation(
-            tags = "users",
-            summary = "Remove a Mobi User from a group",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-            }
+            summary = "Removes a User from a Group",
+            description = "Requires the 'admin' role."
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "User successfully removed from the Group",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided User data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response removeUserGroup(
             @Parameter(description = "Username of the User to remove from a group", required = true)
             @PathParam("username") String username,

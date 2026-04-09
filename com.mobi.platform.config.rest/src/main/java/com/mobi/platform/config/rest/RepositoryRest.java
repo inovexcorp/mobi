@@ -32,10 +32,12 @@ import com.mobi.repository.api.RepositoryManager;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -55,9 +57,8 @@ import javax.ws.rs.core.Response;
 @Path("/repositories")
 public class RepositoryRest {
     private static final ObjectMapper mapper = new ObjectMapper();
-    private static final String SWAGGER_REPO = "repositories";
-    private static final String SWAGGER_REPO_DESC = "Operations related to Repositories";
-
+    private static final String TAG_NAME = "repositories";
+    private static final String TAG_DESC = "Operations for retrieving configured repository details";
 
     @Reference
     protected RepositoryManager repositoryManager;
@@ -71,31 +72,40 @@ public class RepositoryRest {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Tag(name = RepositoryRest.SWAGGER_REPO, description = RepositoryRest.SWAGGER_REPO_DESC)
-    @Operation(
-            summary = "Retrieves all the configured repositories",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "The repository details",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    array = @ArraySchema(schema = @Schema(implementation = RepositoryResponse.class)
-                                    )
+    @Tag(name = TAG_NAME, description = TAG_DESC)
+    @Operation(summary = "Retrieves all the configured repositories")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A JSON array of repository objects with ID, title, and type",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            array = @ArraySchema(
+                                    schema = @Schema(
+                                            implementation = RepositoryResponse.class)
                             )
-                    ),
-                    @ApiResponse(
-                            responseCode = "403",
-                            description = "Permission Denied",
-                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
-                    ),
-                    @ApiResponse(
-                            responseCode = "500",
-                            description = "INTERNAL SERVER ERROR",
-                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
                     )
-            }
-    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view repositories",
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving repositories",
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
+            )
+    })
     public Response getRepositories() {
         Map<String, OsgiRepository> repos = repositoryManager.getAllRepositories();
         ArrayNode array = repos.values().stream()
@@ -114,32 +124,49 @@ public class RepositoryRest {
     @Path("{repoId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Tag(name = RepositoryRest.SWAGGER_REPO, description = RepositoryRest.SWAGGER_REPO_DESC)
-    @Operation(
-            summary = "Retrieves a repository based on its id",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "The repository details",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    schema = @Schema(implementation = RepositoryResponse.class)
-                            )
-                    ),
-                    @ApiResponse(
-                            responseCode = "403",
-                            description = "Permission Denied",
-                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
-                    ),
-                    @ApiResponse(
-                            responseCode = "500",
-                            description = "INTERNAL SERVER ERROR",
-                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
+    @Tag(name = TAG_NAME, description = TAG_DESC)
+    @Operation(summary = "Retrieves a repository based on its ID")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A JSON object with the repository ID, title, and type",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = RepositoryResponse.class)
                     )
-            }
-    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "No repository found with the provided ID",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view this repository",
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the repository",
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
+            )
+    })
     public Response getRepository(@PathParam("repoId") String repoId) {
         OsgiRepository repo = repositoryManager.getRepository(repoId).orElseThrow(() ->
+                // TODO: Should be Response.Status.NOT_FOUND (404) — missing resource is not a bad request
                 ErrorUtils.sendError("No repository found for that id", Response.Status.BAD_REQUEST));
         ObjectNode obj = createRepoJson(repo);
         return Response.ok(obj.toString()).build();

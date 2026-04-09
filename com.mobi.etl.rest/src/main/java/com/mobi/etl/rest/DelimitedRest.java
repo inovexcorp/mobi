@@ -56,6 +56,7 @@ import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.CharsetUtils;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
+import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
@@ -63,10 +64,13 @@ import com.opencsv.CSVReaderBuilder;
 import com.opencsv.exceptions.CsvException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.StopWatch;
@@ -125,23 +129,22 @@ import javax.ws.rs.core.StreamingOutput;
 @JaxrsResource
 @javax.ws.rs.Path("/delimited-files")
 public class DelimitedRest {
+    private final Logger logger = LoggerFactory.getLogger(DelimitedRest.class);
     private final ValueFactory vf = new ValidatingValueFactory();
+
+    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final String TAG_NAME = "Delimited";
+    private static final String TAG_DESC = "Operations for uploading, previewing, and mapping delimited data files";
+    private static final long NUM_LINE_PREVIEW = 10;
+    private static final String PARSING_DELIMITED_ERROR = "Error parsing delimited file";
+    private static final String PROVIDE_IRI_MAPPING = "Must provide the IRI of a mapping record";
+    protected static final String TEMP_DIR = System.getProperty("java.io.tmpdir") + "/com.mobi.etl.rest.impl.tmp";
 
     private DelimitedConverter converter;
     private MappingManager mappingManager;
     private EngineManager engineManager;
     private RDFImportService rdfImportService;
     private OntologyImportService ontologyImportService;
-
-    private final Logger logger = LoggerFactory.getLogger(DelimitedRest.class);
-    private static final ObjectMapper mapper = new ObjectMapper();
-
-    private static final long NUM_LINE_PREVIEW = 10;
-
-    private static final String PARSING_DELIMITED_ERROR = "Error parsing delimited file";
-    private static final String PROVIDE_IRI_MAPPING = "Must provide the IRI of a mapping record";
-
-    public static final String TEMP_DIR = System.getProperty("java.io.tmpdir") + "/com.mobi.etl.rest.impl.tmp";
 
     @Reference
     public void setDelimitedConverter(DelimitedConverter delimitedConverter) {
@@ -186,28 +189,66 @@ public class DelimitedRest {
      * @return Response with the name of the file created on the server
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
     @Operation(
-            tags = "delimited-files",
-            summary = "Upload delimited file sent as form data",
-            responses = {
-                    @ApiResponse(responseCode = "201",
-                            description = "Response with the name of the file created on the server"),
-                    @ApiResponse(responseCode = "400",
-                            description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403",
-                            description = "Permission Denied"),
-            },
+            summary = "Uploads a delimited file",
             requestBody = @RequestBody(
-                    content = {
-                            @Content(mediaType = MediaType.MULTIPART_FORM_DATA,
-                                    schema = @Schema(implementation = DelimitedRestFileUpload.class)
-                            )
-                    }
+                    content = @Content(
+                        mediaType = MediaType.MULTIPART_FORM_DATA,
+                        schema = @Schema(implementation = DelimitedRestFileUpload.class)
+                    )
             )
     )
-    public Response upload(@Context HttpServletRequest servletRequest) {
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Name of the file created on the server",
+                    content = @Content(
+                            mediaType = MediaType.TEXT_PLAIN,
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided delimited file data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to perform this action",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while uploading the delimited file",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
+    public Response upload(@Parameter(hidden = true) @Context HttpServletRequest servletRequest) {
         try {
             Path pathWithoutExt = Paths.get(TEMP_DIR + "/" + UUID.randomUUID());
             Map<String, Object> formData = RestUtils.getFormData(servletRequest, new HashMap<>(), pathWithoutExt,
@@ -237,29 +278,67 @@ public class DelimitedRest {
      * @return Response with the name of the file replaced on the server
      */
     @PUT
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @javax.ws.rs.Path("{documentName}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
     @Operation(
-            tags = "delimited-files",
-            summary = "Replace an uploaded delimited file with another",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response with the name of the file replaced on the server"),
-                    @ApiResponse(responseCode = "400",
-                            description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403",
-                            description = "Permission Denied"),
-            },
+            summary = "Replaces an uploaded delimited file",
             requestBody = @RequestBody(
-                    content = {
-                            @Content(mediaType = MediaType.MULTIPART_FORM_DATA,
-                                    schema = @Schema(implementation = DelimitedRestFileUpload.class)
-                            )
-                    }
+                    content = @Content(
+                            mediaType = MediaType.MULTIPART_FORM_DATA,
+                            schema = @Schema(implementation = DelimitedRestFileUpload.class)
+                    )
             )
     )
-    public Response upload(@Context HttpServletRequest servletRequest,
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Name of the file replaced on the server",
+                    content = @Content(
+                            mediaType = MediaType.TEXT_PLAIN,
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided delimited file data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to perform this action",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while replacing the delimited file",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
+    public Response upload(@Parameter(hidden = true) @Context HttpServletRequest servletRequest,
                            @Parameter(schema = @Schema(type = "string",
                                    description = "Name of the uploaded file on the server to replace", required = true))
                            @PathParam("documentName") String fileName) {
@@ -301,21 +380,55 @@ public class DelimitedRest {
      *      string containing the converted data in the requested format
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @javax.ws.rs.Path("{documentName}/map-preview")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @RolesAllowed("user")
-    @Operation(
-            tags = "delimited-files",
-            summary = "ETL an uploaded delimited document using mapping JSON-LD",
-            responses = {
-                    @ApiResponse(responseCode = "201",
-                            description = "Response with a JSON object containing the mapping "
-                            + "file name and a string containing the converted data in the requested format"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-            }
-    )
+    @Operation(summary = "Transforms an uploaded delimited document using mapping JSON-LD")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A JSON object containing the mapping file name and a string "
+                            + "containing the converted data in the requested format"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided delimited file data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to perform this action",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while transforming the delimited document",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response etlFilePreview(
             @Parameter(description = "Name of the delimited document in the data/tmp/ directory", required = true)
             @PathParam("documentName") String fileName,
@@ -369,21 +482,53 @@ public class DelimitedRest {
      * @return Response with the converted data in the requested format to download
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @javax.ws.rs.Path("{documentName}/map")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
-    @Operation(
-            tags = "delimited-files",
-            summary = "ETL an uploaded delimited document using an uploaded Mapping file and download the data",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response with the converted data in the requested format to download"),
-                    @ApiResponse(responseCode = "400",
-                            description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403",
-                            description = "Permission Denied"),
-            }
-    )
+    @Operation(summary = "Transforms and downloads a delimited document using a Mapping file")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The converted data in the requested format to download"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided delimited file data or parameters are invalid",
+                    headers = @Header(
+                        name = "HTTP Status",
+                        description = "Reason Phrase contains error message",
+                        schema = @Schema(type = "string")
+                )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to perform this action",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while downloading the transformed document",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response etlFile(
             @Parameter(description = "Name of the delimited document in the data/tmp/ directory", required = true)
             @PathParam("documentName") String fileName,
@@ -457,17 +602,53 @@ public class DelimitedRest {
      * @return a Response indicating the success of the request
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @javax.ws.rs.Path("{documentName}/map")
     @RolesAllowed("user")
-    @Operation(
-            tags = "delimited-files",
-            summary = "ETL an uploaded delimited document using an uploaded Mapping file and load data into a Dataset",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Success"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Transforms a delimited document and loads data into a Dataset")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Data successfully transformed and loaded into Dataset",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided delimited file data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to perform this action",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while loading data into the Dataset",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.QUERY, value = "datasetRecordIRI")
     public Response etlFile(
@@ -537,28 +718,66 @@ public class DelimitedRest {
      * @return a Response indicating the success of the request
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @javax.ws.rs.Path("{documentName}/map-to-ontology")
     @RolesAllowed("user")
-    @Operation(
-            tags = "delimited-files",
-            summary = "ETL an uploaded delimited document using an uploaded Mapping file "
-                    + "and commit it to an OntologyRecord",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-                    @ApiResponse(responseCode = "204",
-                            description = "No data committed. Possible duplicate data."),
-                    @ApiResponse(responseCode = "403",
-                            description = "Permission Denied"),
-            }
-    )
+    @Operation(summary = "Transforms a delimited document and commits it to an OntologyRecord")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Data successfully committed",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "No data committed. Possible duplicate data.",
+                    content = @Content(
+                            mediaType = MediaType.TEXT_PLAIN,
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "An error occurred while committing data to the OntologyRecord",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to perform this action",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while committing data to the OntologyRecord",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            )
+    })
     @ActionId(value = Modify.TYPE)
     @ActionAttributes(
             @AttributeValue(type = ValueType.QUERY, id = OntologyRecord.branch_IRI, value = "branchIRI")
     )
     @ResourceId(type = ValueType.QUERY, value = "ontologyRecordIRI")
     public Response etlFileOntology(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "Name of the delimited document in the data/tmp/ directory", required = true)
             @PathParam("documentName") String fileName,
             @Parameter(description = "ID of  the MappingRecord", required = true)
@@ -596,6 +815,7 @@ public class DelimitedRest {
 
             Response response;
             if (committedData.getAdditions().isEmpty() && committedData.getDeletions().isEmpty()) {
+                // TODO: HTTP 204 with entity body violates spec — should use 200 with body or 204 without body
                 response = Response.status(204).entity("No data committed. Possible duplicate data.").build();
             } else {
                 response = Response.ok().build();
@@ -629,6 +849,7 @@ public class DelimitedRest {
     private File etlFileToResult(String fileName, SupplierWithException<Model> mappingSupplier,
                                  boolean containsHeaders, String separator, boolean limit, RDFFormat format) {
         // Collect the delimited file and its extension
+        // TODO: Should be NOT_FOUND (404) — missing resource is not a bad request
         File delimitedFile = getUploadedFile(fileName).orElseThrow(() ->
                 ErrorUtils.sendError("Document not found", BAD_REQUEST));
         String extension = FilenameUtils.getExtension(delimitedFile.getName());
@@ -692,19 +913,53 @@ public class DelimitedRest {
      *         in the document.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @javax.ws.rs.Path("{documentName}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "delimited-files",
-            summary = "Gather rows from an uploaded delimited document",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
-            }
-    )
+    @Operation(summary = "Retrieves rows from an uploaded delimited document")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Rows from the delimited document"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided delimited file data or parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Delimited file with the provided name does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving rows from the delimited document",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response getRows(
             @Parameter(description = "Name of the delimited document in the data/tmp/ directory", required = true)
             @PathParam("documentName") String fileName,
@@ -880,6 +1135,7 @@ public class DelimitedRest {
         try {
             mappingOpt = mappingManager.retrieveMapping(vf.createIRI(mappingRecordIRI));
         } catch (IllegalArgumentException e) {
+            // TODO: Should be NOT_FOUND (404) — missing resource is not a bad request
             throw ErrorUtils.sendError("Mapping " + mappingRecordIRI + " does not exist", BAD_REQUEST);
         }
         MappingWrapper mapping = mappingOpt.orElseThrow(() ->
@@ -922,6 +1178,7 @@ public class DelimitedRest {
         try {
             data = new FileInputStream(delimited);
         } catch (FileNotFoundException e) {
+            // TODO: Should be NOT_FOUND (404) — missing resource is not a bad request
             throw ErrorUtils.sendError("Document not found", BAD_REQUEST);
         }
         return data;

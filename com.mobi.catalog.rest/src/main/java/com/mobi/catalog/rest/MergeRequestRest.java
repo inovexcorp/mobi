@@ -12,12 +12,12 @@ package com.mobi.catalog.rest;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -64,6 +64,7 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.MobiNotFoundException;
 import com.mobi.rest.util.RestUtils;
+import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import com.mobi.security.policy.api.Decision;
 import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.Request;
@@ -72,10 +73,13 @@ import com.mobi.security.policy.api.ontologies.policy.Update;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.Explode;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
@@ -123,7 +127,10 @@ import javax.ws.rs.core.UriInfo;
 public class MergeRequestRest {
     private final Logger log = LoggerFactory.getLogger(MergeRequestRest.class);
     private final ValueFactory vf = new ValidatingValueFactory();
+
     private static final ObjectMapper mapper = new ObjectMapper();
+    private static final String TAG_NAME = "MergeRequest";
+    private static final String TAG_DESC = "Operations for managing merge requests, their status, and comments";
     private static final String COULD_NOT_BE_FOUND = " could not be found";
     private static final String MERGE_REQUEST = "Merge Request ";
     private static final String COMMENT = "Comment ";
@@ -170,34 +177,64 @@ public class MergeRequestRest {
      * and optionally filtered by records, creators, and whether they are accepted. This list respects the Read access
      * on the attached Records on the Merge Requests.
      *
-     * @param sort IRI of the predicate to sort by
-     * @param offset An optional offset for the results.
-     * @param limit An optional limit for the results.
-     * @param asc Whether the results should be sorted ascending or descending. Default is false.
+     * @param sort          IRI of the predicate to sort by
+     * @param offset        An optional offset for the results.
+     * @param limit         An optional limit for the results.
+     * @param asc           Whether the results should be sorted ascending or descending. Default is false.
      * @param requestStatus Whether the results should only be accepted, closed, or open requests.
-     * @param searchText An optional search text for the list.
-     * @param creators An optional creator user IRI list to filter the list by.
-     * @param records An optional record IRI list to filter the list by.
+     * @param searchText    An optional search text for the list.
+     * @param creators      An optional creator user IRI list to filter the list by.
+     * @param records       An optional record IRI list to filter the list by.
      * @return The list of all {@link MergeRequest}s that match the criteria
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "merge-requests",
-            summary = "Retrieves all MergeRequests in the application",
-            responses = {
-                    @ApiResponse(responseCode = "201",
-                            description = "List of all MergeRequests that match the criteria"),
-                    @ApiResponse(responseCode = "403",
-                            description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500",
-                            description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves all MergeRequests")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "List of all MergeRequests that match the criteria"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided MergeRequest data or parameters are invalid",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to retrieve MergeRequests",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving MergeRequests",
+                    content = @Content(
+                        mediaType = MediaType.APPLICATION_JSON,
+                        schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            )
+    })
     public Response getMergeRequests(
-            @Context HttpServletRequest servletRequest,
-            @Context UriInfo uriInfo,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context UriInfo uriInfo,
             @Parameter(description = "The IRI of the predicate to sort by", required = true)
             @QueryParam("sort") String sort,
             @Parameter(description = "Whether the results should be sorted ascending or descending")
@@ -261,40 +298,70 @@ public class MergeRequestRest {
      * {@link MergeRequest}.
      *
      * @param servletRequest The HttpServletRequest.
-     * @param title The required title for the new {@link MergeRequest}.
-     * @param description Optional description for the new {@link MergeRequest}.
-     * @param recordId The required IRI of the {@link VersionedRDFRecord} to associate with the new
-     *                 {@link MergeRequest}. NOTE: Assumes ID represents an IRI unless String begins with "_:".
+     * @param title          The required title for the new {@link MergeRequest}.
+     * @param description    Optional description for the new {@link MergeRequest}.
+     * @param recordId       The required IRI of the {@link VersionedRDFRecord} to associate with the new
+     *                       {@link MergeRequest}. NOTE: Assumes ID represents an IRI unless String begins with "_:".
      * @param sourceBranchId The required IRI of the source {@link Branch} with the new commits to add to the target
      *                       {@link Branch} of the new {@link MergeRequest}. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
      * @param targetBranchId The required IRI of the target {@link Branch} which will receive the new commits from the
      *                       source {@link Branch} of the new {@link MergeRequest}. NOTE: Assumes ID represents an IRI
      *                       unless String begins with "_:".
-     * @param assignees The list of username of {@link User}s to assign the new {@link MergeRequest} to
-     * @param removeSource Boolean value to remove source
+     * @param assignees      The list of username of {@link User}s to assign the new {@link MergeRequest} to
+     * @param removeSource   Boolean value to remove source
      * @return A Response with the IRI string of the created {@link MergeRequest}.
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
-    @Operation(
-            tags = "merge-requests",
-            summary = "Creates a new MergeRequest in the application with the provided information",
-            responses = {
-                    @ApiResponse(responseCode = "201",
-                            description = "Response with the IRI string of the created MergeRequest"),
-                    @ApiResponse(responseCode = "400",
-                            description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403",
-                            description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500",
-                            description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Creates a new MergeRequest")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The IRI string of the created MergeRequest"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided MergeRequest data is invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to create a MergeRequest",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while creating the MergeRequest",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response createMergeRequests(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(schema = @Schema(type = "string",
                     description = "Required title for the new MergeRequest", required = true))
             @FormParam("title") String title,
@@ -302,25 +369,24 @@ public class MergeRequestRest {
                     description = "Optional description for the new MergeRequest"))
             @FormParam("description") String description,
             @Parameter(schema = @Schema(type = "string",
-                    description = "Required IRI of the VersionedRDFRecord to associate with the "
-                    + "new MergeRequest", required = true))
+                    description = "Required IRI of the VersionedRDFRecord to associate "
+                            + "with the new MergeRequest", required = true))
             @FormParam("recordId") String recordId,
             @Parameter(schema = @Schema(type = "string",
-                    description = "Required IRI of the source Branch with the new commits to add "
-                    + "to the target Branch of the new MergeRequest", required = true))
+                    description = "Required IRI of the source Branch with the new commits to add to the target "
+                            + "Branch of the new MergeRequest", required = true))
             @FormParam("sourceBranchId") String sourceBranchId,
             @Parameter(schema = @Schema(type = "string",
-                    description = "Required IRI of the target Branch which will receive the new commits "
-                    + "from the source Branch of the new MergeRequest", required = true))
+                    description = "Required IRI of the target Branch which will receive the new commits from "
+                            + "the source Branch of the new MergeRequest", required = true))
             @FormParam("targetBranchId") String targetBranchId,
             @Parameter(explode = Explode.TRUE, array = @ArraySchema(
-                    arraySchema = @Schema(description = "List of username of Users to assign the new MergeRequest to"),
+                    arraySchema = @Schema(description = "List of usernames of Users to assign the new MergeRequest to"),
                     schema = @Schema(implementation = String.class, description = "Username")))
             @FormParam("assignees") List<String> assignees,
             @Parameter(schema = @Schema(type = "string",
                     description = "Boolean value to remove source"))
             @FormParam("removeSource") @DefaultValue("false") boolean removeSource) {
-
         checkStringParam(title, "Merge Request title is required");
         checkStringParam(recordId, "Merge Request record is required");
         checkStringParam(sourceBranchId, "Merge Request source branch is required");
@@ -335,6 +401,7 @@ public class MergeRequestRest {
             assignees.forEach(username -> {
                 Optional<User> assignee = engineManager.retrieveUser(username);
                 if (assignee.isEmpty()) {
+                    // TODO: Should be Response.Status.NOT_FOUND (404) — missing resource is not a bad request
                     throw ErrorUtils.sendError("User " + username + " does not exist", Response.Status.BAD_REQUEST);
                 }
                 builder.addAssignee(assignee.get());
@@ -358,34 +425,67 @@ public class MergeRequestRest {
      * Retrieves a list of all the Merge Request creators with counts of how many Merge Requests they've made and their
      * display name. Parameters can be passed to control paging.
      *
-     * @param uriInfo Information about the request URI.
+     * @param uriInfo    Information about the request URI.
      * @param searchText Optional text to search the list with.
-     * @param offset Optional offset for the page of results.
-     * @param limit Optional limit for the page of results.
+     * @param offset     Optional offset for the page of results.
+     * @param limit      Optional limit for the page of results.
      * @return List of User IRIs with their names and their Merge Request counts.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("creators")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "merge-requests",
-            summary = "Retrieves the list of creators of the MergeRequests in the application with their counts",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response with JSON containing the User count details",
-                            content = @Content(mediaType = MediaType.APPLICATION_JSON, array = @ArraySchema(
-                                    uniqueItems = true, schema = @Schema(example = "{\"user\": "
-                                    + "\"http://test.com/some-uri\", \"name\": \"Joe\", \"count\": 5}")))),
-                    @ApiResponse(responseCode = "400",
-                            description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403",
-                            description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500",
-                            description = "INTERNAL SERVER ERROR"),
-            }
-    )
-    public Response getCreators(@Context HttpServletRequest servletRequest, @Context UriInfo uriInfo,
+    @Operation(summary = "Retrieves MergeRequest creators with their request counts")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "JSON containing the User count details",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            array = @ArraySchema(uniqueItems = true,
+                                    schema = @Schema(example = "{\"user\": \"http://test.com/some-uri\","
+                                            + "\"name\": \"Joe\", \"count\": 5}")
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided request parameters are invalid",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to perform this action",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving MergeRequest creators",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            )
+    })
+    public Response getCreators(@Parameter(hidden = true) @Context HttpServletRequest servletRequest,
+                                @Parameter(hidden = true) @Context UriInfo uriInfo,
                                 @Parameter(description = "String used to filter out creators")
                                 @QueryParam("searchText") String searchText,
                                 @Parameter(description = "Offset for the page")
@@ -420,40 +520,68 @@ public class MergeRequestRest {
      * Retrieves a list of all the Merge Request creators with counts of how many Merge Requests they've made and their
      * display name. Parameters can be passed to control paging.
      *
-     * @param uriInfo Information about the request URI.
+     * @param uriInfo    Information about the request URI.
      * @param searchText Optional text to search the list with.
-     * @param offset Optional offset for the page of results.
-     * @param limit Optional limit for the page of results.
+     * @param offset     Optional offset for the page of results.
+     * @param limit      Optional limit for the page of results.
      * @return List of User IRIs with their names and their Merge Request counts.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("assignees")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "merge-requests",
-            summary = "Retrieves the list of assignees of the MergeRequests in the application with their counts",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response with JSON containing the User count details",
-                            content = @Content(mediaType = MediaType.APPLICATION_JSON, array = @ArraySchema(
-                                    uniqueItems = true, schema = @Schema(example = "{\"user\": "
-                                    + "\"http://test.com/some-uri\", \"name\": \"Joe\", \"count\": 5}")))),
-                    @ApiResponse(responseCode = "400",
-                            description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403",
-                            description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500",
-                            description = "INTERNAL SERVER ERROR"),
-            }
-    )
-    public Response getAssignees(@Context HttpServletRequest servletRequest, @Context UriInfo uriInfo,
-                                @Parameter(description = "String used to filter out assignees")
-                                @QueryParam("searchText") String searchText,
-                                @Parameter(description = "Offset for the page")
-                                @QueryParam("offset") int offset,
-                                @Parameter(description = "Number of assignees to return in one page")
-                                @QueryParam("limit") int limit) {
+    @Operation(summary = "Retrieves MergeRequest assignees with their request counts")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "JSON containing the User count details",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            array = @ArraySchema(uniqueItems = true,
+                                    schema = @Schema(example = "{\"user\": \"http://test.com/some-uri\","
+                                            + "\"name\": \"Joe\", \"count\": 5}")
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided request parameters are invalid",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to perform this action"
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving MergeRequest assignees",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            )
+    })
+    public Response getAssignees(@Parameter(hidden = true) @Context HttpServletRequest servletRequest,
+                                 @Parameter(hidden = true) @Context UriInfo uriInfo,
+                                 @Parameter(description = "String used to filter out assignees")
+                                 @QueryParam("searchText") String searchText,
+                                 @Parameter(description = "Offset for the page")
+                                 @QueryParam("offset") int offset,
+                                 @Parameter(description = "Number of assignees to return in one page")
+                                 @QueryParam("limit") int limit) {
         try {
             LinksUtils.validateParams(limit, offset);
             PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder();
@@ -482,40 +610,75 @@ public class MergeRequestRest {
      * Retrieves a list of all the Merge Request records with counts of how many Merge Requests they're associated with
      * and their title. Parameters can be passed to control paging.
      *
-     * @param uriInfo Information about the request URI.
+     * @param uriInfo    Information about the request URI.
      * @param searchText Optional text to search the list with.
-     * @param offset Optional offset for the page of results.
-     * @param limit Optional limit for the page of results.
+     * @param offset     Optional offset for the page of results.
+     * @param limit      Optional limit for the page of results.
      * @return List of Record IRIs with their titles and their Merge Request counts.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("records")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "merge-requests",
-            summary = "Retrieves the list of records of the MergeRequests in the application with their counts",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response with JSON containing the Record count details",
-                            content = @Content(mediaType = MediaType.APPLICATION_JSON, array = @ArraySchema(
-                                    uniqueItems = true, schema = @Schema(example = "{\"record\": "
-                                    + "\"http://test.com/some-uri\", \"title\": \"Pizza Ontology\", \"count\": 5}")))),
-                    @ApiResponse(responseCode = "400",
-                            description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403",
-                            description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500",
-                            description = "INTERNAL SERVER ERROR"),
-            }
-    )
-    public Response getRecords(@Context HttpServletRequest servletRequest, @Context UriInfo uriInfo,
-                                @Parameter(description = "String used to filter out records")
-                                @QueryParam("searchText") String searchText,
-                                @Parameter(description = "Offset for the page")
-                                @QueryParam("offset") int offset,
-                                @Parameter(description = "Number of records to return in one page")
-                                @QueryParam("limit") int limit) {
+    @Operation(summary = "Retrieves MergeRequest records with their request counts")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "JSON containing the Record count details",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            array = @ArraySchema(
+                                    uniqueItems = true,
+                                    schema = @Schema(
+                                            example = "{\"record\": \"http://test.com/some-uri\","
+                                                    + "\"title\": \"Pizza Ontology\", \"count\": 5}")
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided request parameters are invalid",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to perform this action",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving MergeRequest records",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            )
+    })
+    public Response getRecords(@Parameter(hidden = true) @Context HttpServletRequest servletRequest,
+                               @Parameter(hidden = true) @Context UriInfo uriInfo,
+                               @Parameter(description = "String used to filter out records")
+                               @QueryParam("searchText") String searchText,
+                               @Parameter(description = "Offset for the page")
+                               @QueryParam("offset") int offset,
+                               @Parameter(description = "Number of records to return in one page")
+                               @QueryParam("limit") int limit) {
         try {
             LinksUtils.validateParams(limit, offset);
             PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder();
@@ -548,23 +711,53 @@ public class MergeRequestRest {
      * @return Response with the {@link MergeRequest} with the provided ID
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{requestId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "merge-requests",
-            summary = "Retrieves a MergeRequest from the application by its ID",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response with the MergeRequest with the provided ID"),
-                    @ApiResponse(responseCode = "403",
-                            description = "Permission Denied"),
-                    @ApiResponse(responseCode = "404",
-                            description = "Response indicating NOT_FOUND"),
-                    @ApiResponse(responseCode = "500",
-                            description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the MergeRequest specified by the provided ID")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The MergeRequest with the provided ID"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to perform this action",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Requested resource does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the MergeRequest",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response getMergeRequest(
             @Parameter(description = "String representing the MergeRequest", required = true)
             @PathParam("requestId") String requestId) {
@@ -581,35 +774,61 @@ public class MergeRequestRest {
     }
 
     /**
-     * Updates an existing {@link MergeRequest} that has the {@code requestId} with the provided JSONLD of
+     * Updates an existing {@link MergeRequest} that has the {@code requestId} with the provided JSON-LD of
      * {@code newMergeRequest}.
      *
-     * @param requestId String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
-     *                  String begins with "_:".
-     * @param newMergeRequest String representing the JSONLD representation of the updated {@link MergeRequest}.
+     * @param requestId       String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
+     *                        String begins with "_:".
+     * @param newMergeRequest String representing the JSON-LD representation of the updated {@link MergeRequest}.
      * @return Response indicating the status of the update.
      */
     @PUT
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{requestId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "merge-requests",
-            summary = "Updates an existing MergeRequest that has the requestId with the provided "
-                    + "JSONLD of newMergeRequest",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Response indicating the status of the update"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Updates an existing MergeRequest with the provided JSON-LD")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "MergeRequest successfully updated",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to perform this action",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while updating the MergeRequest",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response updateMergeRequest(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the MergeRequest ID", required = true)
             @PathParam("requestId") String requestId,
-            @Parameter(description = "String representing the JSONLD representation of the updated MergeRequest",
+            @Parameter(description = "String representing the JSON-LD representation of the updated MergeRequest",
                     required = true)
-                    String newMergeRequest) {
+            String newMergeRequest) {
         Resource requestIdResource = createIRI(requestId, vf);
         User activeUser = getActiveUser(servletRequest, engineManager);
         try {
@@ -628,36 +847,69 @@ public class MergeRequestRest {
      * type to an {@link com.mobi.catalog.api.ontologies.mergerequests.AcceptedMergeRequest}.
      *
      * @param servletRequest The HttpServletRequest.
-     * @param requestId String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
-     *                  String begins with "_:".
+     * @param requestId      String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
      * @return Response containing the plaintext status of the Merge Request.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{requestId}/status")
     @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
-    @Operation(
-            tags = "merge-requests",
-            summary = "Returns the status of the Merge Request in plaintext",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the status of the changed. "
-                                    + "Plaintext can be closed, accepted, and open"),
-                    @ApiResponse(responseCode = "400",
-                            description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403",
-                            description = "Permission Denied"),
-                    @ApiResponse(responseCode = "404",
-                            description = "Merge Request not found"),
-                    @ApiResponse(responseCode = "500",
-                            description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the status of a MergeRequest")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The status of the MergeRequest as plaintext (open, closed, or accepted)"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided request parameters are invalid",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to perform this action",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "MergeRequest with the provided ID does not exist",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the MergeRequest status",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            )
+    })
     @ActionId(Read.TYPE)
     @ResourceId(type = ValueType.PROP_PATH, value = "<" + MergeRequest.onRecord_IRI + ">",
             start = @Value(type = ValueType.PATH, value = "requestId"))
     public Response retrieveMergeRequestStatus(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the MergeRequest ID", required = true)
             @PathParam("requestId") String requestId) {
         Resource requestIdResource = createIRI(requestId, vf);
@@ -694,32 +946,71 @@ public class MergeRequestRest {
      * type to an {@link com.mobi.catalog.api.ontologies.mergerequests.AcceptedMergeRequest}.
      *
      * @param servletRequest The HttpServletRequest.
-     * @param requestId String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
-     *                  String begins with "_:".
-     * @param action The action to be taken against the Merge Request linked to the requestId
+     * @param requestId      String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @param action         The action to be taken against the Merge Request linked to the requestId
      * @return Response indicating the status of the taken action.
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{requestId}/status")
     @RolesAllowed("user")
-    @Operation(
-            tags = "merge-requests",
-            summary = "Updates the type (open, closed, accepted) of the Merge Request and performs the "
-                    + "subsequent action",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the status of the changed"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "404", description = "Merge Request not found"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Updates the type (open, closed, accepted) of the MergeRequest and performs "
+            + "the subsequent action")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "MergeRequest status successfully updated",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided request parameters are invalid",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to perform this action",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "MergeRequest with the provided ID does not exist",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while updating the MergeRequest status",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            )
+    })
     public Response updateMergeRequestStatus(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the MergeRequest ID", required = true)
             @PathParam("requestId") String requestId,
-            @Parameter(schema = @Schema(description = "The corresponding action to take on the merge request",
+            @Parameter(schema = @Schema(description = "The corresponding action to take on the MergeRequest",
                     allowableValues = {"accept", "close", "open"},
                     required = true))
             @QueryParam("action") @DefaultValue("") String action) {
@@ -754,20 +1045,55 @@ public class MergeRequestRest {
      * @return Response indicating the status of the delete action.
      */
     @DELETE
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{requestId}")
     @RolesAllowed("user")
-    @Operation(
-            tags = "merge-requests",
-            summary = "Deletes a MergeRequest that has the provided requestId",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Response indicating the status of the delete"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Deletes a MergeRequest by the provided ID")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "MergeRequest successfully deleted",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to perform this action",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Requested resource does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while deleting the MergeRequest",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response deleteMergeRequest(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the MergeRequest ID to delete", required = true)
             @PathParam("requestId") String requestId) {
         Resource requestIdResource = createIRI(requestId, vf);
@@ -789,10 +1115,10 @@ public class MergeRequestRest {
     /**
      * Checks Manage Permission for MergeRequests.
      *
-     * @param requestId MergeRequest IRI
+     * @param requestId  MergeRequest IRI
      * @param activeUser Request User
      * @return True if user is creator or has manage permission of associated RDF record,
-     *      False if user is not a creator or has manage permission of associated RDF record
+     * False if user is not a creator or has manage permission of associated RDF record
      */
     protected boolean checkMergeRequestManagePermissions(Resource requestId, User activeUser) {
         MergeRequest mergeRequest = manager.getMergeRequest(requestId).orElseThrow(() ->
@@ -831,21 +1157,54 @@ public class MergeRequestRest {
      * @return The list of all {@link Comment} chains for the specified {@link MergeRequest}
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{requestId}/comments")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "merge-requests",
-            summary = "Retrieves all Comment threads on a MergeRequest sorted by issued date of the head "
-                    + "of each comment chain",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "list of all Comment chains for the "
-                            + "specified MergeRequest"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves all Comment threads on a MergeRequest sorted by issued date of the head "
+            + "of each comment chain")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "List of all Comment chains for the specified MergeRequest"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided request parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to perform this action",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving Comments",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response getComments(
             @Parameter(description = "String representing the MergeRequest ID", required = true)
             @PathParam("requestId") String requestId) {
@@ -875,24 +1234,66 @@ public class MergeRequestRest {
      * @param requestId String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
      *                  String begins with "_:".
      * @param commentId String representing the {@link Comment} ID. NOTE: Assumes ID represents an IRI unless String
-     *                 begins with "_:".
+     *                  begins with "_:".
      * @return A Response with the {@link Comment} with the provided ID
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{requestId}/comments/{commentId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "merge-requests",
-            summary = "Retrieves a Comment from the application by its ID",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Response with the Comment with the provided ID"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the Comment specified by the provided ID")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The Comment with the provided ID"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided request parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to perform this action",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Comment with the provided ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the Comment",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response getComment(
             @Parameter(description = "String representing the MergeRequest ID", required = true)
             @PathParam("requestId") String requestId,
@@ -921,41 +1322,71 @@ public class MergeRequestRest {
      * chain. Returns a Response with the IRI of the new {@link Comment}.
      *
      * @param servletRequest The HttpServletRequest.
-     * @param requestId String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
-     *                  String begins with "_:".
-     * @param commentId Optional IRI of the parent {@link Comment} that the newly created Comment is a reply
+     * @param requestId      String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @param commentId      Optional IRI of the parent {@link Comment} that the newly created Comment is a reply
      *                       to. NOTE: Assumes ID represents an IRI unless String begins with "_:".
-     * @param commentStr String containing comment text for the {@link Comment}.
+     * @param commentStr     String containing comment text for the {@link Comment}.
      * @return A Response with the IRI string of the created {@link Comment}.
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{requestId}/comments")
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
-    @Operation(
-            tags = "merge-requests",
-            summary = "Creates a new Comment on the MergeRequest in the application with the provided information",
-            responses = {
-                    @ApiResponse(responseCode = "201",
-                            description = "Response with the IRI string of the created Comment"),
-                    @ApiResponse(responseCode = "400",
-                            description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403",
-                            description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500",
-                            description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Creates a new Comment on a MergeRequest")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The IRI string of the created Comment"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided request parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to perform this action",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while creating the Comment",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response createComment(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the MergeRequest ID", required = true)
             @PathParam("requestId") String requestId,
-            @Parameter(description = "Optional IRI of the parent Comment that the newly created "
-                    + "Comment is a reply to", required = false)
+            @Parameter(description = "Optional IRI of the parent Comment that the newly created Comment is a reply to",
+                    required = false)
             @QueryParam("commentId") String commentId,
             @Parameter(description = "String containing comment text for the Comment", required = true)
-                    String commentStr) {
+            String commentStr) {
         checkStringParam(commentStr, "Comment string is required");
         User activeUser = getActiveUser(servletRequest, engineManager);
 
@@ -980,35 +1411,79 @@ public class MergeRequestRest {
      * {@code newCommentStr}.
      *
      * @param servletRequest The HttpServletRequest.
-     * @param requestId String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
-     *                  String begins with "_:".
-     * @param commentId String representing the {@link Comment} ID. NOTE: Assumes ID represents an IRI unless
-     *                  String begins with "_:".
-     * @param newCommentStr String representing the new description of the updated {@link Comment}.
+     * @param requestId      String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @param commentId      String representing the {@link Comment} ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @param newCommentStr  String representing the new description of the updated {@link Comment}.
      * @return Response indicating the status of the update.
      */
     @PUT
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{requestId}/comments/{commentId}")
     @Consumes(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
-    @Operation(
-            tags = "merge-requests",
-            summary = "Updates a Comment by its ID using the provided String",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Response indicating the status of the update"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Updates the Comment specified by the provided ID")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Comment successfully updated",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided request parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to perform this action",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Comment with the provided ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while updating the Comment",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response updateComment(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the MergeRequest ID", required = true)
             @PathParam("requestId") String requestId,
             @Parameter(description = "String representing the Comment ID", required = true)
             @PathParam("commentId") String commentId,
             @Parameter(description = "String representing the new description of the updated Comment", required = true)
-                    String newCommentStr) {
+            String newCommentStr) {
         manager.getMergeRequest(createIRI(requestId, vf)).orElseThrow(() ->
                 ErrorUtils.sendError(MERGE_REQUEST + requestId + COULD_NOT_BE_FOUND,
                         Response.Status.NOT_FOUND));
@@ -1040,29 +1515,71 @@ public class MergeRequestRest {
      * Deletes an existing {@link Comment} that has the {@code commentId} if it belongs to the active {@link User}.
      *
      * @param servletRequest The HttpServletRequest.
-     * @param requestId String representing the {@link MergeRequest} ID the comment is on. NOTE: Assumes ID
-     *                  represents an IRI unless String begins with "_:".
-     * @param commentId String representing the {@link Comment} ID to delete. NOTE: Assumes ID represents an IRI
-     *                  unless String begins with "_:".
+     * @param requestId      String representing the {@link MergeRequest} ID the comment is on. NOTE: Assumes ID
+     *                       represents an IRI unless String begins with "_:".
+     * @param commentId      String representing the {@link Comment} ID to delete. NOTE: Assumes ID represents an IRI
+     *                       unless String begins with "_:".
      * @return Response indicating the status of the delete.
      */
     @DELETE
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{requestId}/comments/{commentId}")
+    @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "merge-requests",
-            summary = "Deletes a Comment that has the provided commentId",
-            responses = {
-                    @ApiResponse(responseCode = "201", description = "Response indicating the status of the delete"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "401", description = "Response indicating UNAUTHORIZED"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Deletes a Comment specified by the provided ID")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Comment successfully deleted"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Provided request parameters are invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to perform this action",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Requested resource does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while deleting the Comment",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response deleteComment(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the MergeRequest ID the comment is on", required = true)
             @PathParam("requestId") String requestId,
             @Parameter(description = "String representing the Comment ID to delete", required = true)

@@ -40,7 +40,12 @@ import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -68,8 +73,10 @@ import javax.ws.rs.core.Response;
 @JaxrsResource
 @Path("/policies")
 public class PolicyRest {
-
     private final ValueFactory vf = new ValidatingValueFactory();
+
+    private static final String TAG_NAME = "Policy";
+    private static final String TAG_DESC = "Operations for managing XACML security policies";
 
     @Reference
     XACMLPolicyManager policyManager;
@@ -87,17 +94,34 @@ public class PolicyRest {
      * @return A JSON array of JSON representations of matching policies
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "policies",
-            summary = "Retrieves security policies matching the provided filters",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves security policies matching the provided filters")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Security policies matching the provided filters"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving security policies",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response getPolicies(
             @Parameter(description = "String representing a subject ID")
             @QueryParam("relatedSubject") String relatedSubject,
@@ -139,18 +163,47 @@ public class PolicyRest {
      * @return The new policy ID
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("admin")
     @Operation(
-            tags = "policies",
             summary = "Creates a new security policy using the provided JSON body",
-            responses = {
-                    @ApiResponse(responseCode = "201", description = "New policy ID"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
+            description = "Requires the 'admin' role."
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The IRI string of the newly created security policy"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid policy JSON or missing required policy ID",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while creating the security policy",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response createPolicy(
             @Parameter(description = "A JSON representation of a policy to add to Mobi", required = true)
             String policyJson) {
@@ -172,18 +225,43 @@ public class PolicyRest {
      * @return A JSON representation of the identified policy
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("{policyId}")
     @RolesAllowed("user")
-    @Operation(
-            tags = "policies",
-            summary = "Retrieves a specific security policy by its ID",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "A JSON representation of the identified policy"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the security policy specified by the provided ID")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A JSON representation of the identified policy"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Policy with the provided ID could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string"))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the security policy",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "policyId")
     public Response retrievePolicy(
             @Parameter(description = "String representing a policy ID", required = true)
@@ -191,6 +269,7 @@ public class PolicyRest {
         try {
             Optional<XACMLPolicy> policy = policyManager.getPolicy(vf.createIRI(policyId));
             if (policy.isEmpty()) {
+                // TODO: Should be Response.Status.NOT_FOUND (404) — missing resource is not a bad request
                 throw ErrorUtils.sendError("Policy could not be found", Response.Status.BAD_REQUEST);
             }
             return Response.ok(policyToJson(policy.get())).build();
@@ -209,19 +288,48 @@ public class PolicyRest {
      * @return A Response indicating the success of the request
      */
     @PUT
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{policyId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("admin")
     @Operation(
-            tags = "policies",
             summary = "Updates an existing security policy using the provided JSON body",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Success"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
+            description = "Requires the 'admin' role."
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Policy successfully updated",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid policy JSON or policy ID mismatch",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while updating the security policy",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "policyId")
     public Response updatePolicy(
             @Parameter(description = "String representing a policy ID", required = true)

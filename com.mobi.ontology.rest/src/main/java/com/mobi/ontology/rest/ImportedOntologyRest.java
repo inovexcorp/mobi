@@ -26,7 +26,12 @@ package com.mobi.ontology.rest;
 import com.mobi.rest.util.ErrorUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
 
@@ -44,26 +49,63 @@ import javax.ws.rs.core.Response;
 @JaxrsResource
 public class ImportedOntologyRest {
 
+    private static final String TAG_NAME = "ImportedOntology";
+    private static final String TAG_DESC = "Operations for verifying imported ontology URLs";
+
     /**
      * Checks to see if the provided URL is resolvable.
      *
      * @param url String representing the URL to verify
      * @return OK if the provided URL is resolvable. BAD_REQUEST if the URL is not resolvable. INTERNAL_SERVER_ERROR if
      *         a HttpURLConnection cannot be made.
-     * @param url
-     * @return
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{url}")
-    @Operation(
-            tags = "groups",
-            summary = "Checks to see if the provided URL is resolvable",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "URL is resolvable"),
-                    @ApiResponse(responseCode = "400", description = "URL is not resolvable"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "An HttpURLConnection cannot be made"),
-            })
+    @Operation(summary = "Checks to see if the provided URL is resolvable")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The provided URL is resolvable and accessible",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The provided URL is not resolvable or is invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                        )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                        )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to verify this URL",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while attempting to resolve the URL",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                        )
+            )
+    })
     @RolesAllowed("user")
     public Response verifyUrl(
             @Parameter(description = "String representing the URL to verify.", required = true)
@@ -73,11 +115,11 @@ public class ImportedOntologyRest {
         try {
             conn = (HttpURLConnection) new URL(url).openConnection();
             conn.setRequestMethod("HEAD");
-            if (conn.getResponseCode() == HttpURLConnection.HTTP_OK ||
-                    conn.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP ||
-                    conn.getResponseCode() == HttpURLConnection.HTTP_MOVED_PERM ||
-                    conn.getResponseCode() == HttpURLConnection.HTTP_SEE_OTHER ||
-                    conn.getResponseCode() == 307 || conn.getResponseCode() == 308) {
+            if (conn.getResponseCode() == HttpURLConnection.HTTP_OK
+                    || conn.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP
+                    || conn.getResponseCode() == HttpURLConnection.HTTP_MOVED_PERM
+                    || conn.getResponseCode() == HttpURLConnection.HTTP_SEE_OTHER
+                    || conn.getResponseCode() == 307 || conn.getResponseCode() == 308) {
                 return Response.ok().build();
             } else {
                 throw ErrorUtils.sendError("The provided URL was unresolvable.", Response.Status.BAD_REQUEST);

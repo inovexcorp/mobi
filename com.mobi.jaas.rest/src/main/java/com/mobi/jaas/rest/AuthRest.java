@@ -30,16 +30,16 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.principals.UserPrincipal;
 import com.mobi.jaas.api.token.TokenManager;
 import com.mobi.jaas.engines.RdfEngine;
-import com.mobi.rest.util.ErrorUtils;
-import com.mobi.rest.util.MobiWebException;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.web.security.util.RestSecurityUtils;
-import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.osgi.service.component.annotations.Component;
@@ -48,9 +48,7 @@ import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.security.Principal;
-import java.text.ParseException;
 import java.util.List;
 import java.util.Optional;
 import java.util.StringTokenizer;
@@ -64,7 +62,6 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -73,10 +70,11 @@ import javax.ws.rs.core.Response;
 @JaxrsResource
 @Path("/session")
 public class AuthRest {
-
-    static final String REQUIRED_ROLE = "user";
-
     private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
+
+    private static final String TAG_NAME = "Auth";
+    private static final String TAG_DESC = "Operations for user authentication and session management";
+    protected static final String REQUIRED_ROLE = "user";
 
     private EngineManager engineManager;
     private MobiConfiguration configuration;
@@ -104,17 +102,26 @@ public class AuthRest {
      * @return a plaintext response with the current User's username
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Produces(MediaType.TEXT_PLAIN)
-    @Operation(
-            tags = "session",
-            summary = "Gets the current user token",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "A plaintext response with the current User's username"),
-            }
-    )
+    @Operation(summary = "Retrieves the current user session")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A plaintext response with the current User's username"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response getCurrentUser(
-            @Context HttpServletRequest servletRequest) {
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest) {
         Optional<String> optUsername = RestUtils.optActiveUsername(servletRequest);
         if (optUsername.isPresent()) {
             log.debug("Found username in request headers");
@@ -133,19 +140,27 @@ public class AuthRest {
      * @return a plaintext response with the newly logged in User's username
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.TEXT_PLAIN)
-    @Operation(
-            tags = "session",
-            summary = "Logs in into Mobi creating a new token",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "A plaintext response with the newly logged in User's username"),
-                    @ApiResponse(responseCode = "401", description = "UNAUTHORIZED response"),
-            }
-    )
+    @Operation(summary = "Authenticates a User and creates a new session token")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A plaintext response with the newly logged in User's username"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Invalid username or password, or user lacks the required role",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response login(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "Username of user", required = true)
             @FormParam("username") String username,
             @Parameter(description = "Password of user",
@@ -189,15 +204,24 @@ public class AuthRest {
      * @return an empty response representing an anonymous User's session
      */
     @DELETE
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Produces(MediaType.TEXT_PLAIN)
-    @Operation(
-            tags = "session",
-            summary = "Logs out of Mobi by setting unauth token",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "An empty response representing an anonymous User's session"),
-            }
-    )
+    @Operation(summary = "Logs out the current User and invalidates the session")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "An empty response representing an anonymous User's session"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response logout() {
         log.debug("Requested logout. Generating unauthenticated token.");
         SignedJWT unauthToken = tokenManager.generateUnauthToken();
@@ -296,20 +320,4 @@ public class AuthRest {
         }
     }
 
-    private MobiWebException handleIOError(IOException ex) {
-        return handleError("Problem Creating JWT Token", ex);
-    }
-
-    private MobiWebException handleJOSEError(JOSEException ex) {
-        return handleError("Problem Creating or Verifying JWT Token", ex);
-    }
-
-    private MobiWebException handleParseError(ParseException ex) {
-        return handleError("Problem Parsing JWT Token", ex);
-    }
-
-    private MobiWebException handleError(String msg, Exception ex) {
-        log.error(msg, ex);
-        return ErrorUtils.sendError(msg, Response.Status.INTERNAL_SERVER_ERROR);
-    }
 }

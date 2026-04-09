@@ -23,10 +23,20 @@ package com.mobi.jaas.rest;
  * #L%
  */
 
+import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.rest.util.ErrorUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.GET;
@@ -36,17 +46,13 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import com.mobi.jaas.api.engines.EngineManager;
-import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
-
 @Component(service = UsernameRest.class, immediate = true)
 @JaxrsResource
 @Path("/username")
 public class UsernameRest {
+    private static final String TAG_NAME = "Username";
+    private static final String TAG_DESC = "Operations for resolving user IRIs to usernames";
+    
     final ValueFactory vf = new ValidatingValueFactory();
 
     @Reference
@@ -60,16 +66,43 @@ public class UsernameRest {
      * @return a Response with the username of the User associated with the IRI
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @RolesAllowed("user")
     @Produces(MediaType.TEXT_PLAIN)
-    @Operation(
-            tags = "users",
-            summary = "Retrieve a username based on the passed User IRI",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-            }
-    )
+    @Operation(summary = "Retrieves a username by User IRI")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The username string for the User identified by the provided IRI"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The provided IRI is not valid",
+                    headers = @Header(
+                        name = "HTTP Status",
+                        description = "Reason Phrase contains error message",
+                        schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                        name = "HTTP Status",
+                        description = "Reason Phrase contains error message",
+                        schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "User with the provided IRI does not exist",
+                    headers = @Header(
+                        name = "HTTP Status",
+                        description = "Reason Phrase contains error message",
+                        schema = @Schema(type = "string")
+                    )
+            )
+    })
     public Response getUsername(
             @Parameter(description = "IRI to search for", required = true)
             @QueryParam("iri") String userIri) {

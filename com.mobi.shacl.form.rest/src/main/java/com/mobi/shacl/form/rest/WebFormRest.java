@@ -35,14 +35,19 @@ import com.mobi.ontologies.shacl.PropertyShape;
 import com.mobi.ontologies.shacl.PropertyShapeFactory;
 import com.mobi.ontologies.shacl.SPARQLConstraint;
 import com.mobi.rest.util.RestUtils;
+import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.ontologies.policy.Read;
 import com.mobi.security.policy.api.xacml.XACML;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.IRI;
@@ -89,6 +94,10 @@ import javax.ws.rs.core.Response;
 @JaxrsResource
 @Path("/web-forms")
 public class WebFormRest {
+    public final ValueFactory vf = new ValidatingValueFactory();
+
+    private static final String TAG_NAME = "WebForm";
+    private static final String TAG_DESC = "Operations for retrieving SHACL-based form autocomplete options";
     private static final String GET_NAMES;
 
     static {
@@ -114,18 +123,18 @@ public class WebFormRest {
     @Reference
     public PDP pdp;
 
-    public final ValueFactory vf = new ValidatingValueFactory();
-
     /**
-     * Handles a POST request to retrieve autocomplete options based on a given property shape and an optional focus node.
-     * This method accepts JSON-LD representations of the property shape and the focus node, processes them,
+     * Handles a POST request to retrieve autocomplete options based on a given property shape and an optional focus
+     * node. This method accepts JSON-LD representations of the property shape and the focus node, processes them,
      * and returns a list of autocomplete options that match the criteria defined by these shapes.
      *
      * <p>Responses:
      * <ul>
      * <li>200 - Successful retrieval of options. The response includes a JSON array of the options.</li>
-     * <li>400 - Bad Request. This could occur if required parameters are missing or if the provided JSON-LD is not valid.</li>
-     * <li>500 - Internal Server Error. This typically occurs if there's an error during processing within the server.</li>
+     * <li>400 - Bad Request. This could occur if required parameters are missing or if the provided JSON-LD is not
+     * valid.</li>
+     * <li>500 - Internal Server Error. This typically occurs if there's an error during processing within the
+     * server.</li>
      * </ul></p>
      *
      * @param servletRequest the HttpServletRequest providing request information for HTTP servlets.
@@ -138,25 +147,51 @@ public class WebFormRest {
      * @throws IllegalStateException if no property shape is found or more than one property shape exists.
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("options")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
-    @Operation(
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Success"),
-                    @ApiResponse(responseCode = "400", description = "Bad Request"),
-                    @ApiResponse(responseCode = "500", description = "Internal Server Error")
-            }
-    )
-    public Response retrieveAutoCompleteOptions(@Context HttpServletRequest servletRequest,
-                                  @Parameter(schema = @Schema(type = "string",
-                                          description = "the json-ld representation of the property shape", required = true))
-                                      @FormParam("propertyShape") String propertyShape,
-                                  @Parameter(schema = @Schema(type = "string",
-                                          description = "the json-ld representation of the focus node"))
-                                      @FormParam("focusNode") String focusNode
-                                  ) {
+    @Operation(summary = "Retrieves autocomplete options for a given property shape and optional focus node")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "JSON array of autocomplete options"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid property shape JSON-LD or missing required parameters",
+                    content = @Content(
+                        mediaType = MediaType.APPLICATION_JSON,
+                        schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving autocomplete options",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            )
+    })
+    public Response retrieveAutoCompleteOptions(
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
+            @Parameter(schema = @Schema(type = "string", description = "The JSON-LD representation of the property "
+                    + "shape",
+                    required = true))
+            @FormParam("propertyShape") String propertyShape,
+            @Parameter(schema = @Schema(type = "string", description = "The JSON-LD representation of the focus node"))
+            @FormParam("focusNode") String focusNode) {
         checkStringParam(propertyShape, "propertyShape is required");
         Optional<Resource> focusNodeIRIOpt = Optional.empty();
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
@@ -185,12 +220,16 @@ public class WebFormRest {
                         options = getExplicitOptions(webFormPropertyShape);
                     } else {
                         if (!hasClassPredicate(webFormPropertyShape)) {
-                            throw new IllegalArgumentException("Autocomplete Property Shape must have either sh:in or sh:class predicate");
+                            throw new IllegalArgumentException("Autocomplete Property Shape must have either sh:in or "
+                                    + "sh:class predicate");
                         }
 
                         options = getAutoCompleteOptions(webFormPropertyShape, focusNodeIRIOpt, conn);
-                        Set<String> viewableRecords = getViewableRecords((IRI) getActiveUser(servletRequest, engineManager).getResource(), options.stream().map(option -> (IRI) option.getValue()).collect(Collectors.toList()));
-                        options = options.stream().filter(option -> viewableRecords.contains(option.getValue().stringValue()))
+                        Set<String> viewableRecords = getViewableRecords(
+                                (IRI) getActiveUser(servletRequest, engineManager).getResource(),
+                                options.stream().map(option -> (IRI) option.getValue()).collect(Collectors.toList()));
+                        options = options.stream()
+                                .filter(option -> viewableRecords.contains(option.getValue().stringValue()))
                                 .collect(Collectors.toList());
                         options.sort(Comparator.comparing(Entity::getName));
                     }
@@ -228,13 +267,12 @@ public class WebFormRest {
                 .equals("https://mobi.solutions/ontologies/form#AutocompleteInput"));
     }
 
-    private List<Entity> getAutoCompleteOptions(PropertyShape propertyShape, Optional<Resource> focusNodeIRIOpt, RepositoryConnection conn) {
+    private List<Entity> getAutoCompleteOptions(PropertyShape propertyShape, Optional<Resource> focusNodeIRIOpt,
+                                                RepositoryConnection conn) {
         List<Entity> shClassInstances = getAllShClassInstances(propertyShape, conn);
-        if (focusNodeIRIOpt.isPresent()) {
-            shClassInstances.forEach(shClassInstance -> {
-                conn.add(focusNodeIRIOpt.get(), (IRI) propertyShape.getPath().stream().findFirst().get(), shClassInstance.getValue(), vf.createIRI("http://mobi.com/testgraph"));
-            });
-        }
+        focusNodeIRIOpt.ifPresent(resource -> shClassInstances.forEach(shClassInstance ->
+                conn.add(resource, (IRI) propertyShape.getPath().stream().findFirst().get(),
+                        shClassInstance.getValue(), vf.createIRI("http://mobi.com/testgraph"))));
         List<Resource> irisToFilterOut = getIRIsToFilter(propertyShape, focusNodeIRIOpt, conn);
         return shClassInstances.stream().filter(entity -> {
             return !irisToFilterOut.contains(entity.getValue());
@@ -252,7 +290,8 @@ public class WebFormRest {
         return pdp.filter(request, vf.createIRI(POLICY_PERMIT_OVERRIDES));
     }
 
-    private List<Resource> getIRIsToFilter(PropertyShape propertyShape, Optional<Resource> focusNodeIRIOpt, RepositoryConnection conn) {
+    private List<Resource> getIRIsToFilter(PropertyShape propertyShape, Optional<Resource> focusNodeIRIOpt,
+                                           RepositoryConnection conn) {
         String query = buildSparqlQuery(propertyShape, focusNodeIRIOpt);
         if (query.isBlank()) {
             return new ArrayList<>();
@@ -298,8 +337,8 @@ public class WebFormRest {
         String queryString = "";
         if (!propertyShape.getSparql().isEmpty()) {
             if (focusNodeIRIOpt.isEmpty()) {
-                throw new IllegalArgumentException("Focus node must be present when property shape has a " +
-                        "SPARQL constraint");
+                throw new IllegalArgumentException("Focus node must be present when property shape has a SPARQL "
+                        + "constraint");
             }
             String path = propertyShape.getPath().stream()
                     .findFirst()   // Assume you only expect a single sh:path
@@ -330,5 +369,4 @@ public class WebFormRest {
         }
         return queryString;
     }
-
 }

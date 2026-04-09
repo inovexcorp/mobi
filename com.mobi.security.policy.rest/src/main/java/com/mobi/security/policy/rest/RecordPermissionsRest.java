@@ -56,9 +56,13 @@ import com.mobi.security.policy.api.xacml.jaxb.RuleType;
 import com.mobi.security.policy.api.xacml.jaxb.TargetType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Statement;
@@ -94,10 +98,12 @@ import javax.xml.namespace.QName;
 @Path("/record-permissions")
 public class RecordPermissionsRest {
     private final Logger LOGGER = LoggerFactory.getLogger(RecordPermissionsRest.class);
-    private static final ObjectMapper mapper = new ObjectMapper();
-
-    private static final String ONTOLOGIES_CATALOG_MODIFY = "http://mobi.com/ontologies/catalog#Modify";
     private final ValueFactory vf = new ValidatingValueFactory();
+
+    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final String TAG_NAME = "RecordPermissions";
+    private static final String TAG_DESC = "Operations for managing record-level access control policies";
+    private static final String ONTOLOGIES_CATALOG_MODIFY = "http://mobi.com/ontologies/catalog#Modify";
 
     @Reference
     XACMLPolicyManager policyManager;
@@ -121,31 +127,48 @@ public class RecordPermissionsRest {
      * @return A JSON representation of which user can perform each rule.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("{recordId}")
-    @Operation(
-            tags = "record-permissions",
-            summary = "Retrieves a specific record security policy by its ID",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "JSON representation of which user can perform each rule",
-                            content = @Content(
-                                    examples = {@ExampleObject(value = "{"
-                                            + "\"urn:read\": {"
-                                            + "\"everyone\": false,"
-                                            + "\"users\": [\n"
-                                            + "\"http://mobi.com/users/userIRI1\","
-                                            + "\"http://mobi.com/users/userIRI2\""
-                                            + "],"
-                                            + "\"groups\": []"
-                                            + "  }, ..."
-                                            + "}")
-                                    })
-                    ),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the record's security policy specified by the provided ID")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "JSON representation of which user can perform each rule",
+                    content = @Content(
+                            examples = {
+                                    @ExampleObject(value = "{\"urn:read\": {\"everyone\": false,\"users\": "
+                                            + "[\n\"http://mobi.com/users/userIRI1\",\"http://mobi.com/users/userIRI2\"],"
+                                            + "\"groups\": []  }, ...}") })
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Policy for the specified record could not be found",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the record policy",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionId(Update.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response retrieveRecordPolicy(
@@ -154,11 +177,13 @@ public class RecordPermissionsRest {
             @PathParam("recordId") String recordId) {
         try (RepositoryConnection conn = policyManager.getRepository().getConnection()) {
             Optional<String> recordPolicyIdOpt = getRelatedResourceId(recordId, conn);
+            // TODO: Should be Response.Status.NOT_FOUND (404) — missing resource is not a bad request
             String recordPolicyId = recordPolicyIdOpt.orElseThrow(() -> ErrorUtils.sendError("Policy for record "
                     + recordId + " does not exist in repository", Response.Status.BAD_REQUEST));
 
             Optional<XACMLPolicy> policy = policyManager.getPolicy(vf.createIRI(recordPolicyId));
             if (policy.isEmpty()) {
+                // TODO: Should be Response.Status.NOT_FOUND (404) — missing resource is not a bad request
                 throw ErrorUtils.sendError("Policy could not be found", Response.Status.BAD_REQUEST);
             }
 
@@ -182,26 +207,53 @@ public class RecordPermissionsRest {
      *   }, ...
      * }
      *
-     * @param recordId String representing a recordId whose corresponding policy should be updated.
+     * @param recordId String representing a Record ID whose corresponding policy should be updated.
      *                   NOTE: Assumes ID represents an IRI unless String begins with "_:"
      * @param policyJson A JSON representation of the new version of the record policy
      * @return A Response indicating the success of the request
      */
     @PUT
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}")
     @Consumes(MediaType.APPLICATION_JSON)
-    @Operation(
-            tags = "record-permissions",
-            summary = "Updates an existing record security policy using the provided JSON body",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Success"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Updates an existing record's security policy using the provided JSON body")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Policy successfully updated",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid policy JSON or policy for the record does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while updating the record policy",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateRecordPolicy(
-            @Parameter(description = "String representing a recordId whose corresponding policy should be updated",
+            @Parameter(description = "String representing a Record ID whose corresponding policy should be updated",
                     required = true)
             @PathParam("recordId") String recordId,
             @Parameter(description = "JSON representation of the new version of the record policy", required = true)
@@ -209,11 +261,13 @@ public class RecordPermissionsRest {
         try (RepositoryConnection conn = policyManager.getRepository().getConnection()) {
             // Record Policy
             Optional<String> recordPolicyIdOpt = getRelatedResourceId(recordId, conn);
+            // TODO: Should be Response.Status.NOT_FOUND (404) — missing resource is not a bad request
             String recordPolicyId = recordPolicyIdOpt.orElseThrow(() -> ErrorUtils.sendError("Policy for record "
                     + recordId + " does not exist in repository", Response.Status.BAD_REQUEST));
             IRI recordPolicyIRI = vf.createIRI(recordPolicyId);
             Optional<XACMLPolicy> recordPolicy = policyManager.getPolicy(recordPolicyIRI);
             if (recordPolicy.isEmpty()) {
+                // TODO: Should be Response.Status.NOT_FOUND (404) — missing resource is not a bad request
                 throw ErrorUtils.sendError("Record policy to update could not be found", Response.Status.BAD_REQUEST);
             }
 
@@ -225,8 +279,9 @@ public class RecordPermissionsRest {
 
             // Policy Policy
             Optional<String> policyPolicyIdOpt = getRelatedResourceId(recordPolicyId, conn);
-            String policyPolicyId = policyPolicyIdOpt.orElseThrow(() -> ErrorUtils.sendError("Policy for record "
-                    + "policy " + recordId + " does not exist in repository", Response.Status.BAD_REQUEST));
+            String policyPolicyId = policyPolicyIdOpt.orElseThrow(() ->
+                    ErrorUtils.sendError("Policy for record policy " + recordId
+                            + " does not exist in repository", Response.Status.BAD_REQUEST));
             if (StringUtils.isEmpty(policyPolicyId)) {
                 throw ErrorUtils.sendError("Policy for policy " + recordPolicyId + "does not exist in repository",
                         Response.Status.BAD_REQUEST);
@@ -312,8 +367,8 @@ public class RecordPermissionsRest {
             JsonNode usersArray = updateObj.get("users");
             JsonNode groupsArray = updateObj.get("groups");
             if (usersArray == null || groupsArray == null || !usersArray.isArray() || !groupsArray.isArray()) {
-                throw new IllegalArgumentException("Invalid JSON representation of a Policy."
-                        + " Users or groups not set properly for update rule");
+                throw new IllegalArgumentException("Invalid JSON representation of a Policy. Users or groups not set "
+                        + "properly for update rule");
             }
             addUsersOrGroupsToAnyOf((ArrayNode) usersArray, subjectIdAttrDesig, readUserAnyOf, updateUserAnyOf);
             addUsersOrGroupsToAnyOf((ArrayNode) groupsArray, groupAttrDesig, readUserAnyOf, updateUserAnyOf);
@@ -396,8 +451,8 @@ public class RecordPermissionsRest {
                 throw new IllegalArgumentException("Invalid JSON representation of a Policy. Missing rule " + key);
             }
             if (jsonRule.get("everyone") == null) {
-                throw new IllegalArgumentException("Invalid JSON representation of a Policy. Missing everyone field"
-                        + "for " + key);
+                throw new IllegalArgumentException("Invalid JSON representation of a Policy. Missing everyone "
+                        + "fieldfor " + key);
             }
             if (jsonRule.get("everyone").asBoolean()) {
                 MatchType userRoleMatch = createUserRoleMatch();
@@ -408,12 +463,12 @@ public class RecordPermissionsRest {
                 JsonNode usersArray = jsonRule.get("users");
                 JsonNode groupsArray = jsonRule.get("groups");
                 if (usersArray == null || groupsArray == null || !usersArray.isArray() || !groupsArray.isArray()) {
-                    throw new IllegalArgumentException("Invalid JSON representation of a Policy."
-                            + " Users or groups not set properly for " + key);
+                    throw new IllegalArgumentException("Invalid JSON representation of a Policy. Users or groups not "
+                            + "set properly for " + key);
                 }
                 if (usersArray.size() == 0 && groupsArray.size() == 0) {
-                    throw new IllegalArgumentException("Need to have at least one user or group since everybody is"
-                            + " false");
+                    throw new IllegalArgumentException("Need to have at least one user or group since everybody is "
+                            + "false");
                 }
                 addUsersOrGroupsToAnyOf((ArrayNode) usersArray, subjectIdAttrDesig, usersGroups);
                 addUsersOrGroupsToAnyOf((ArrayNode) groupsArray, groupAttrDesig, usersGroups);
@@ -442,8 +497,8 @@ public class RecordPermissionsRest {
         for (int i = 0; i < array.size(); i++) {
             String value = array.get(i).asText();
             if (StringUtils.isEmpty(value)) {
-                throw new IllegalArgumentException("Invalid JSON representation of a Policy."
-                        + " User or group not set properly.");
+                throw new IllegalArgumentException("Invalid JSON representation of a Policy. User or group not set "
+                        + "properly.");
             }
             AttributeValueType userAttrVal = createAttributeValue(XSD.STRING.stringValue(), value);
 

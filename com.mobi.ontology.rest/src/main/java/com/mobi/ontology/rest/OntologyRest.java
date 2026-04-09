@@ -94,18 +94,22 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.FileUpload;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.rest.util.swagger.ErrorObjectSchema;
+import com.mobi.rest.util.swagger.JsonLdObject;
 import com.mobi.security.policy.api.Decision;
 import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.ontologies.policy.Read;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Encoding;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NotImplementedException;
@@ -178,9 +182,57 @@ import javax.ws.rs.core.StreamingOutput;
 @Component(service = OntologyRest.class, immediate = true)
 @JaxrsResource
 public class OntologyRest {
+    private static final Logger log = LoggerFactory.getLogger(OntologyRest.class);
+    private static final String TAG_NAME = "Ontology";
+    private static final String TAG_DESC = "Operations for managing ontologies, their classes,"
+            + " properties, hierarchies, and imports";
 
     private final ModelFactory mf = new DynamicModelFactory();
     private final ValueFactory vf = new ValidatingValueFactory();
+
+    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final String GET_ENTITY_QUERY;
+    private static final String GET_PROPERTY_RANGES;
+    private static final String GET_CLASS_PROPERTIES;
+    private static final String GET_NO_DOMAIN_PROPERTIES;
+    private static final String GET_ENTITY_NAMES;
+    private static final String NAME_SPLITTER = "�";
+    private static final String ONTOLOGY_NOT_FOUND = "The ontology could not be found.";
+    private static final String ONTOLOGY = "Ontology ";
+    private static final String DOES_NOT_EXIST = " does not exist.";
+    private static final String ENTITIES = "%ENTITIES%";
+    private static final String TURTLE = "turtle";
+    private static final String RDF_XML = "rdf/xml";
+    private static final String OWL_XML = "owl/xml";
+    private static final String ONTOLOGY_ID = "ontologyId";
+    private static final String JSONLD = "jsonld";
+
+    static {
+        try {
+            GET_ENTITY_QUERY = IOUtils.toString(
+                    Objects.requireNonNull(OntologyRest.class.getResourceAsStream("/retrieve-entity.rq")),
+                    StandardCharsets.UTF_8
+            );
+            GET_PROPERTY_RANGES = IOUtils.toString(
+                    Objects.requireNonNull(OntologyRest.class.getResourceAsStream("/query-property-ranges.rq")),
+                    StandardCharsets.UTF_8
+            );
+            GET_CLASS_PROPERTIES = IOUtils.toString(
+                    Objects.requireNonNull(OntologyRest.class.getResourceAsStream("/query-class-properties.rq")),
+                    StandardCharsets.UTF_8
+            );
+            GET_NO_DOMAIN_PROPERTIES = IOUtils.toString(
+                    Objects.requireNonNull(OntologyRest.class.getResourceAsStream("/query-no-domain-properties.rq")),
+                    StandardCharsets.UTF_8
+            );
+            GET_ENTITY_NAMES = IOUtils.toString(
+                    Objects.requireNonNull(OntologyRest.class.getResourceAsStream("/query-entity-names.rq")),
+                    StandardCharsets.UTF_8
+            );
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+    }
 
     @Reference
     protected OntologyManager ontologyManager;
@@ -221,52 +273,6 @@ public class OntologyRest {
     @Reference
     protected RepositoryManager repoManager;
 
-    private static final Logger log = LoggerFactory.getLogger(OntologyRest.class);
-    private static final ObjectMapper mapper = new ObjectMapper();
-    private static final String GET_ENTITY_QUERY;
-    private static final String GET_PROPERTY_RANGES;
-    private static final String GET_CLASS_PROPERTIES;
-    private static final String GET_NO_DOMAIN_PROPERTIES;
-    private static final String GET_ENTITY_NAMES;
-    private static final String NAME_SPLITTER = "�";
-
-    private static final String ONTOLOGY_NOT_FOUND = "The ontology could not be found.";
-    private static final String ONTOLOGY = "Ontology ";
-    private static final String DOES_NOT_EXIST = " does not exist.";
-    private static final String ENTITIES = "%ENTITIES%";
-    private static final String TURTLE = "turtle";
-    private static final String RDF_XML = "rdf/xml";
-    private static final String OWL_XML = "owl/xml";
-    private static final String ONTOLOGY_ID = "ontologyId";
-    private static final String JSONLD = "jsonld";
-
-    static {
-        try {
-            GET_ENTITY_QUERY = IOUtils.toString(
-                    Objects.requireNonNull(OntologyRest.class.getResourceAsStream("/retrieve-entity.rq")),
-                    StandardCharsets.UTF_8
-            );
-            GET_PROPERTY_RANGES = IOUtils.toString(
-                    Objects.requireNonNull(OntologyRest.class.getResourceAsStream("/query-property-ranges.rq")),
-                    StandardCharsets.UTF_8
-            );
-            GET_CLASS_PROPERTIES = IOUtils.toString(
-                    Objects.requireNonNull(OntologyRest.class.getResourceAsStream("/query-class-properties.rq")),
-                    StandardCharsets.UTF_8
-            );
-            GET_NO_DOMAIN_PROPERTIES = IOUtils.toString(
-                    Objects.requireNonNull(OntologyRest.class.getResourceAsStream("/query-no-domain-properties.rq")),
-                    StandardCharsets.UTF_8
-            );
-            GET_ENTITY_NAMES = IOUtils.toString(
-                    Objects.requireNonNull(OntologyRest.class.getResourceAsStream("/query-entity-names.rq")),
-                    StandardCharsets.UTF_8
-            );
-        } catch (IOException e) {
-            throw new MobiException(e);
-        }
-    }
-
     /**
      * Ingests/uploads an ontology file or the JSON-LD of an ontology to a data store and creates and stores an
      * OntologyRecord using the form data in the repository to track the work done on it. A master Branch is created
@@ -278,33 +284,68 @@ public class OntologyRest {
      *      SERVER ERROR if there is a problem creating the OntologyRecord.
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-            tags = "ontologies",
             summary = "Uploads an ontology file to the data store",
             description = "Uploads and imports an ontology file to a data store and creates an associated "
                     + "OntologyRecord using the form data. A master Branch is created and stored with an initial "
                     + "Commit containing the data provided in the ontology file.",
-            responses = {
-                    @ApiResponse(responseCode = "201", description = "OntologyRecord created"),
-                    @ApiResponse(responseCode = "400", description = "Publisher can't be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "Problem creating OntologyRecord")
-            },
             requestBody = @RequestBody(
-                    content = {
-                            @Content(mediaType = MediaType.MULTIPART_FORM_DATA, encoding = {
-                                    @Encoding(name = "keywords", explode = true)
-                                }, schema = @Schema(implementation = OntologyFileUpload.class)
-                            )
-                    }
+                    content = @Content(
+                            mediaType = MediaType.MULTIPART_FORM_DATA,
+                            encoding = @Encoding(name = "keywords", explode = true),
+                            schema = @Schema(implementation = OntologyFileUpload.class)
+                    )
             )
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "JSON object with the OntologyRecord IRI, Record IRI, Branch IRI, and Commit IRI"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The provided ontology data or publisher information is invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to create an OntologyRecord",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while creating the OntologyRecord",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @RolesAllowed("user")
     @ActionAttributes(@AttributeValue(id = RDF.NAMESPACE + "type", value = OntologyRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
-    public Response uploadFile(@Context HttpServletRequest servletRequest) {
+    public Response uploadFile(@Parameter(hidden = true) @Context HttpServletRequest servletRequest) {
         Map<String, List<Class<?>>> fields = new HashMap<>();
         fields.put("title", List.of(String.class));
         fields.put("description", List.of(String.class));
@@ -395,42 +436,77 @@ public class OntologyRest {
      * @return a Response with the ontology in the requested format.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
-    @Operation(
-            tags = "ontologies",
-            summary = "Returns the ontology associated with the requested record ID in the requested format",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "The Ontology in the requested format"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves an Ontology by record ID in the requested format")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The Ontology in the requested format"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @RolesAllowed("user")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntology(
-            @Context HttpServletRequest servletRequest,
-            @Parameter(description = "String representing the Record Resource ID. NOTE: Assumes id represents an "
-                    + "IRI unless String begins with \"_:\"", required = true)
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
+            @Parameter(description = "String representing the Record Resource ID. NOTE: Assumes id represents"
+                    + " an IRI unless String begins with \"_:\"", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "Optional String representing the Branch Resource id. NOTE: Assumes id "
                     + "represents an IRI unless String begins with \"_:\". Defaults to Master branch if missing")
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "Optional String representing the Commit Resource id. NOTE: Assumes id "
-                    + "represents an IRI unless String begins with \"_:\". Defaults to head commit if missing. The "
-                    + "provided commitId must be on the Branch identified by the provided branchId; "
-                    + "otherwise, nothing will be returned")
+                    + "represents an IRI unless String begins with \"_:\". Defaults to head commit if missing. "
+                    + "The provided commitId must be on the Branch identified by the provided "
+                    + "branchId; otherwise, nothing will be returned")
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Desired RDF return format",
                     schema = @Schema(allowableValues = {JSONLD, RDF_XML, OWL_XML, TURTLE}))
             @DefaultValue(JSONLD) @QueryParam("rdfFormat") String rdfFormat,
-            @Parameter(description = "Whether or not the cached version of the identified Ontology should "
-                    + "be cleared before retrieval")
+            @Parameter(description = "Whether or not the cached version of the identified Ontology should be cleared "
+                    + "before retrieval")
             @DefaultValue("false") @QueryParam("clearCache") boolean clearCache,
             @Parameter(description = "Whether or not the JSON-LD of the ontology should be skolemized.")
             @DefaultValue("false") @QueryParam("skolemize") boolean skolemize,
-            @Parameter(description = "Whether or not any in progress commits by user should be applied "
-                    + "to the return value")
+            @Parameter(description = "Whether or not any InProgressCommits by user should be applied to the return "
+                    + "value")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
@@ -469,39 +545,34 @@ public class OntologyRest {
      * @return the ontology associated with requested record ID to download.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @Operation(
-            tags = "ontologies",
-            summary = "Streams the ontology associated with the requested record ID to an OutputStream",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "The Ontology associated with requested record ID to download"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-            },
-            hidden = true
+            summary = "Downloads the ontology associated with the requested record ID",
+            hidden = true  // Hide from Swagger docs since captured in annotations of other method
     )
     @RolesAllowed("user")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response downloadOntologyFile(
-            @Context HttpServletRequest servletRequest,
-            @Parameter(description = "String representing the Record Resource ID. "
-                    + "NOTE: Assumes id represents an IRI unless String begins with \"_:\"", required = true)
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
+            @Parameter(description = "String representing the Record Resource ID. NOTE: Assumes id represents "
+                    + "an IRI unless String begins with \"_:\"", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "Optional String representing the Branch Resource id. NOTE: Assumes id "
                     + "represents an IRI unless String begins with \"_:\". Defaults to Master branch if missing")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "Optional String representing the Commit Resource id. NOTE: Assumes id "
-                    + "represents an IRI unless String begins with \"_:\". Defaults to head commit if missing. The "
-                    + "provided commitId must be on the Branch identified by the provided branchId; otherwise, nothing "
-                    + "will be returned")
+            @Parameter(description = "Optional String representing the Commit Resource id. NOTE: Assumes"
+                    + " id represents an IRI unless String begins with \"_:\". Defaults to head commit if missing."
+                    + " The provided commitId must be on the Branch identified by the provided branchId; "
+                    + "otherwise, nothing will be returned")
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Desired RDF return format",
                     schema = @Schema(allowableValues = {JSONLD, RDF_XML, OWL_XML, TURTLE}))
             @DefaultValue(JSONLD) @QueryParam("rdfFormat") String rdfFormat,
             @Parameter(description = "File name for the ontology file")
             @DefaultValue("ontology") @QueryParam("fileName") String fileName,
-            @Parameter(description = "Whether to apply the in progress commit changes")
+            @Parameter(description = "Whether to apply the InProgressCommit changes")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
@@ -538,25 +609,59 @@ public class OntologyRest {
      * @return a Response indicating whether it was successfully updated.
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Updates the requester's InProgressCommit with the provided entity",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating whether it was successfully updated"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Updates the requester's InProgressCommit with the provided entity")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "InProgressCommit successfully updated with the provided entity",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The provided entity JSON or OntologyRecord ID is invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to modify this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while saving changes to the ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response saveChangesToOntology(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
@@ -592,30 +697,60 @@ public class OntologyRest {
      * @return OK if successful or METHOD_NOT_ALLOWED if the changes can not be applied to the commit specified.
      */
     @PUT
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-            tags = "ontologies",
-            summary = "Updates the specified ontology branch and commit with the data provided",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "OK if successful or METHOD_NOT_ALLOWED if the changes "
-                                    + "can not be applied to the commit specified"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "401", description = "User does not have permission"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            },
+            summary = "Updates an OntologyRecord with the provided data",
             requestBody = @RequestBody(
-                    content = {
-                            @Content(mediaType = MediaType.MULTIPART_FORM_DATA,
+                    content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA,
                                     schema = @Schema(implementation = OntologyFileUploadChanges.class)
-                            )
-                    }
+                    )
             )
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Ontology changes successfully applied, or METHOD_NOT_ALLOWED if changes conflict "
+                            + "with the specified Commit",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The uploaded file is missing or contains invalid RDF data",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User does not have permission to modify this branch",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to modify this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while uploading changes to the ontology",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            )
+    })
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     @ActionAttributes(
@@ -623,7 +758,7 @@ public class OntologyRest {
                     ValueType.QUERY)
     )
     public Response uploadChangesToOntology(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
@@ -637,7 +772,7 @@ public class OntologyRest {
 
         long totalTime = System.currentTimeMillis();
         if (fileInputStream == null) {
-            throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("The file is missing."));
         }
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Resource catalogIRI = configProvider.getLocalCatalogIRI();
@@ -647,7 +782,7 @@ public class OntologyRest {
             Optional<InProgressCommit> commit = commitManager.getInProgressCommitOpt(catalogIRI, recordId, user,  conn);
 
             if (commit.isPresent()) {
-                throw ErrorUtils.sendError("User has an in progress commit already.", Response.Status.BAD_REQUEST);
+                throw new IllegalArgumentException("User has an in progress commit already.");
             }
 
             Resource branchId;
@@ -664,8 +799,8 @@ public class OntologyRest {
                 branchId = branch.getResource();
                 Decision canModify = RestUtils.isBranchModifiable(user, (IRI) branchId, recordId, pdp);
                 if (canModify == Decision.DENY) {
-                    throw ErrorUtils.sendError("User does not have permission to modify the master branch.",
-                            Response.Status.UNAUTHORIZED);
+                    throw RestUtils.getErrorObjUnauthorized(
+                            new IllegalAccessException("User does not have permission to modify the master branch."));
                 }
                 commitId = branch.getHead_resource().orElseThrow(() -> new IllegalStateException("Branch "
                         + branchIdStr + " has no head Commit set"));
@@ -765,22 +900,46 @@ public class OntologyRest {
      * @return A Response indicating the success of the operation
      */
     @DELETE
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/cache")
     @RolesAllowed("user")
-    @Operation(tags = "ontologies",
-            summary = "Clears the cached version of an ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "The operation was successful"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR", content = {
-                            @Content(mediaType = MediaType.APPLICATION_JSON,
-                                    schema = @Schema(implementation = ErrorObjectSchema.class)
-                            )
-                    }),
-            })
+    @Operation(summary = "Clears the cached version of an ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Ontology cache successfully cleared",
+                    content = @Content(schema = @Schema(implementation = Void.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to clear this ontology cache",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while clearing the ontology cache",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            )
+    })
     @ActionId(Read.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response clearCache(@Context HttpServletRequest servletRequest,
+    public Response clearCache(@Parameter(hidden = true) @Context HttpServletRequest servletRequest,
                                @Parameter(description = "String representing the Record Resource ID", required = true)
                                @PathParam("recordId") String recordIdStr,
                                @Parameter(description = "String representing the Commit Resource ID")
@@ -812,24 +971,58 @@ public class OntologyRest {
      *      "conceptSchemes.hierarchy", and "conceptSchemes.index".
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/vocabulary-stuff")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets a JSON representation of all the SKOS vocabulary related information about the ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "JSON object with keys \"derivedConcepts\", "
-                            + "\"derivedConceptSchemes\", \"concepts.hierarchy\", \"concepts.index\","
-                            + "\"conceptSchemes.hierarchy\", and \"conceptSchemes.index\""),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves SKOS vocabulary information for an Ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "JSON object with keys \"derivedConcepts\", \"derivedConceptSchemes\","
+                            + "\"concepts.hierarchy\", \"concepts.index\",\"conceptSchemes.hierarchy\","
+                            + "and \"conceptSchemes.index\""
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving SKOS vocabulary information",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getVocabularyStuff(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
@@ -950,22 +1143,56 @@ public class OntologyRest {
      * @return JSON object with keys .
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/ontology-stuff")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets a JSON representation of all the OWL ontology related information about the ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "JSON object with keys"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves OWL ontology metadata and structure for an Ontology")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "JSON object with ontology metadata and structure"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving ontology information",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyStuff(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
@@ -974,7 +1201,7 @@ public class OntologyRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Boolean to decide to clear cache")
             @DefaultValue("false") @QueryParam("clearCache") boolean clearCache,
-            @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
+            @Parameter(description = "Whether or not to apply the InProgressCommit for the user making the request")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             if (clearCache) {
@@ -1159,29 +1386,63 @@ public class OntologyRest {
      * @return JSON object with keys
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/property-ranges")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets a JSON representation of the properties Ranges",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "JSON object with keys"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves property-to-range mappings for an Ontology")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "JSON object with property-to-range mappings"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving property ranges",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getPropertyToRanges(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
+            @Parameter(description = "Whether or not to apply the InProgressCommit for the user making the request")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Optional<Ontology> optionalOntology = optOntology(servletRequest,
@@ -1230,23 +1491,56 @@ public class OntologyRest {
      * @return IRIs in the ontology identified by the provided IDs.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/iris")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets the IRIs in the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "IRIs in the ontology identified by the provided IDs"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves all IRIs in an Ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "IRIs in the ontology identified by the provided IDs"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving ontology IRIs",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getIRIsInOntology(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
@@ -1278,23 +1572,56 @@ public class OntologyRest {
      * @return annotation properties in the ontology identified by the provided IDs.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/annotations")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets the annotations in the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Annotation properties in the ontology identified by the provided IDs"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves all annotation properties in an Ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Annotation properties in the ontology identified by the provided IDs"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving annotation properties",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getAnnotationsInOntology(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
@@ -1321,27 +1648,60 @@ public class OntologyRest {
      * @return a Response indicating whether it was successfully added.
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/annotations")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Adds a new annotation to the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "201",
-                            description = "Response indicating whether it was successfully added"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Adds a new annotation to the identified ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Annotation property successfully added to the InProgressCommit"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The provided annotation JSON-LD is invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to modify this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while adding the annotation property",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response addAnnotationToOntology(
-            @Context HttpServletRequest servletRequest,
-            @Parameter(description = "String representing the Record Resource ID. NOTE: Assumes id represents an "
-                    + "IRI unless String begins with \"_:\"")
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
+            @Parameter(description = "String representing the Record Resource ID. NOTE: Assumes id represents an IRI "
+                    + "unless String begins with \"_:\"")
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the new annotation in JSON-LD", required = true)
             String annotationJson) {
@@ -1372,27 +1732,57 @@ public class OntologyRest {
      * @return a Response indicating whether it was successfully deleted.
      */
     @DELETE
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/annotations/{annotationId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Updates the specified ontology branch and commit with the data provided",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating whether it was successfully deleted"),
-                    @ApiResponse(responseCode = "400", description = "The ontology could not be found"),
-                    @ApiResponse(responseCode = "401",
-                            description = "User does not has the permission to modify the record "
-                                    + "since deleting an annotation is part of modifying the record"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Deletes an annotation from the identified ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Annotation property successfully deleted from the InProgressCommit"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User does not have permission to modify this OntologyRecord",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to delete this annotation",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while deleting the annotation property",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteAnnotationFromOntology(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the annotation Resource ID", required = true)
@@ -1430,31 +1820,64 @@ public class OntologyRest {
      * @return classes in the ontology identified by the provided IDs.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/classes")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets the classes in the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Classes in the ontology identified by the provided IDs"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves all classes in an Ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of classes in the ontology identified by the provided IDs"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving ontology classes",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getClassesInOntology(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Boolean indicating whether any in progress commits by user should be "
-                    + "applied to the return value")
+            @Parameter(description = "Boolean indicating whether any InProgressCommits by user should be applied to "
+                    + "the return value")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             ArrayNode result = doWithOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
@@ -1476,25 +1899,58 @@ public class OntologyRest {
      * @return a Response indicating whether it was successfully added.
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/classes")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Adds a new class to the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "201",
-                            description = "Response indicating whether it was successfully added"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Adds a new class to the identified ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Class successfully added to the InProgressCommit"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The provided class JSON-LD is invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to modify this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while adding the class to the ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response addClassToOntology(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the new class model", required = true)
@@ -1525,24 +1981,57 @@ public class OntologyRest {
      * @return a Response indicating whether it was successfully deleted.
      */
     @DELETE
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/classes/{classId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Deletes the identified class from the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating whether it was successfully deleted"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Deletes the identified class from the identified ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Class successfully deleted from the InProgressCommit"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to modify this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while deleting the class from the ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteClassFromOntology(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the class Resource ID", required = true)
@@ -1578,23 +2067,56 @@ public class OntologyRest {
      * @return datatypes in the ontology identified by the provided IDs.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/datatypes")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets the datatypes in the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Datatypes in the ontology identified by the provided IDs"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves all datatypes in an Ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Datatypes in the ontology identified by the provided IDs"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving ontology datatypes",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getDatatypesInOntology(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
@@ -1621,25 +2143,58 @@ public class OntologyRest {
      * @return a Response indicating whether it was successfully added.
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/datatypes")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Adds a new datatype to the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "201",
-                            description = "Response indicating whether it was successfully added"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Adds a new datatype to the identified ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Datatype successfully added to the InProgressCommit"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The provided datatype JSON-LD is invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to modify this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while adding the datatype to the ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response addDatatypeToOntology(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "JSON String representing the new datatype model", required = true)
@@ -1670,24 +2225,57 @@ public class OntologyRest {
      * @return a Response indicating whether it was successfully deleted.
      */
     @DELETE
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/datatypes/{datatypeId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Deletes the identified datatype from the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating whether it was successfully deleted"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Deletes the identified datatype from the identified ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Datatype successfully deleted from the InProgressCommit"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to modify this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while deleting the datatype from the ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteDatatypeFromOntology(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the datatype Resource ID", required = true)
@@ -1723,23 +2311,56 @@ public class OntologyRest {
      * @return object properties in the ontology identified by the provided IDs.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/object-properties")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets the object properties in the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Object properties in the ontology identified by the provided IDs"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves all object properties in an Ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of object properties in the ontology identified by the provided IDs"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving object properties",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getObjectPropertiesInOntology(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
@@ -1766,25 +2387,58 @@ public class OntologyRest {
      * @return a Response indicating whether it was successfully added.
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/object-properties")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Adds a new object property to the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "201",
-                            description = "Response indicating whether it was successfully updated"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Adds a new object property to the identified ontology")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Object property successfully added to the InProgressCommit"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The provided object property JSON-LD is invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to modify this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while adding the object property",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response addObjectPropertyToOntology(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the new property model", required = true)
@@ -1815,27 +2469,60 @@ public class OntologyRest {
      * @return a Response indicating whether it was successfully deleted.
      */
     @DELETE
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/object-properties/{objectPropertyId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Deletes the identified object property from the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating whether it was successfully deleted"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Deletes the identified object property from the identified ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Object property successfully deleted from the InProgressCommit"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to modify this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while deleting the object property",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteObjectPropertyFromOntology(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the class Resource ID", required = true)
+            @Parameter(description = "String representing the object property Resource ID", required = true)
             @PathParam("objectPropertyId") String objectPropertyIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
@@ -1868,23 +2555,56 @@ public class OntologyRest {
      * @return data properties in the ontology identified by the provided IDs.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/data-properties")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets the data properties from the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Data properties in the ontology identified by the provided IDs"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves all data properties in an Ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of data properties in the ontology identified by the provided IDs"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving data properties",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getDataPropertiesInOntology(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
@@ -1911,25 +2631,58 @@ public class OntologyRest {
      * @return a Response indicating whether it was successfully added.
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/data-properties")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Adds a new data property to the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "201",
-                            description = "Response indicating whether it was successfully added"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Adds a new data property to the identified ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Data property successfully added to the InProgressCommit"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The provided data property JSON-LD is invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to modify this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while adding the data property",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response addDataPropertyToOntology(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "JSON String representing the new property model", required = true)
@@ -1960,27 +2713,60 @@ public class OntologyRest {
      * @return a Response indicating whether it was successfully deleted.
      */
     @DELETE
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/data-properties/{dataPropertyId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Deletes the identified data property from the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating whether it was successfully deleted"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Deletes the identified data property from the identified ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Data property successfully deleted from the InProgressCommit"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to modify this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while deleting the data property",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteDataPropertyFromOntology(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the class Resource ID", required = true)
+            @Parameter(description = "String representing the data property Resource ID", required = true)
             @PathParam("dataPropertyId") String dataPropertyIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
@@ -2013,23 +2799,56 @@ public class OntologyRest {
      * @return named individuals in the ontology identified by the provided IDs.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/named-individuals")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets the individuals in the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Named individuals in the ontology identified by the provided IDs"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves all named individuals in an Ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Named individuals in the ontology identified by the provided IDs"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving named individuals",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getNamedIndividualsInOntology(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
@@ -2056,25 +2875,58 @@ public class OntologyRest {
      * @return a Response indicating whether it was successfully added.
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/named-individuals")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Adds a new individual to the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "201",
-                            description = "Response indicating whether it was successfully added"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Adds a new individual to the identified ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Individual successfully added to the InProgressCommit"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The provided individual JSON-LD is invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to modify this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while adding the individual to the ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response addIndividualToOntology(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the new individual model", required = true)
@@ -2105,24 +2957,57 @@ public class OntologyRest {
      * @return a Response indicating whether it was successfully deleted.
      */
     @DELETE
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/named-individuals/{individualId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Deletes the identified individual from the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating whether it was successfully deleted"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Deletes the identified individual from the identified ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Individual successfully deleted from the InProgressCommit"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to modify this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while deleting the individual",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteIndividualFromOntology(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the individual Resource ID", required = true)
@@ -2160,30 +3045,63 @@ public class OntologyRest {
      * @return IRIs in the ontology identified by the provided IDs.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/imported-iris")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets the IRIs from the imported ontologies of the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "IRIs in the ontology identified by the provided IDs"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves IRIs from imported ontologies")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Imported IRIs in the imports closure of the ontology identified by the provided IDs"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving IRIs from imported ontologies",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getIRIsInImportedOntologies(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Whether to apply in progress commit")
+            @Parameter(description = "Whether to apply InProgressCommit")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr, this::getAllIRIs,
@@ -2209,24 +3127,57 @@ public class OntologyRest {
      * @return IRIs of the ontologies in the imports closure for the ontology identified by the provided IDs.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/imported-ontology-iris")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets the imported ontology IRIs of the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "IRIs of the ontologies in the imports closure for the "
-                                    + "ontology identified by the provided IDs"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the IRIs of imported ontologies")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "IRIs of the ontologies in the imports closure for the ontology identified by the "
+                            + "provided IDs"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving imported ontology IRIs",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getImportedOntologyIRIs(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
@@ -2277,24 +3228,58 @@ public class OntologyRest {
      * @return array of imported ontologies from the ontology with the requested ID in the requested format
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/imported-ontologies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Updates the specified ontology branch and commit with the data provided",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "array of imported ontologies from the ontology with the "
-                                    + "requested ID in the requested format"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the imports closure for the specified ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "array of imported ontologies from the ontology with the requested ID in the "
+                            + "requested format",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = JsonLdObject.class)))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the imports closure",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getImportsClosure(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "Desired RDF return format")
@@ -2303,7 +3288,7 @@ public class OntologyRest {
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Whether to apply in progress commit")
+            @Parameter(description = "Whether to apply InProgressCommit")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Set<Ontology> importedOntologies = getImportedOntologies(servletRequest, recordIdStr, branchIdStr,
@@ -2336,30 +3321,63 @@ public class OntologyRest {
      * @return annotation properties in the ontology identified by the provided IDs.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/imported-annotations")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets the annotations from the imported ontologies of the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Annotation properties in the ontology identified by the provided IDs"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves annotations from imported ontologies")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Imported annotation properties in the ontology identified by the provided IDs"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving imported annotations",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getAnnotationsInImportedOntologies(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Whether to apply in progress commit")
+            @Parameter(description = "Whether to apply InProgressCommit")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
@@ -2387,30 +3405,63 @@ public class OntologyRest {
      * @return classes in the ontology identified by the provided IDs.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/imported-classes")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets the classes from the imported ontologies of the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Classes in the ontology identified by the provided IDs"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves classes from imported ontologies")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Imported classes in the ontology identified by the provided IDs"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving imported classes",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getClassesInImportedOntologies(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Whether to apply in progress commit")
+            @Parameter(description = "Whether to apply InProgressCommit")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
@@ -2439,30 +3490,63 @@ public class OntologyRest {
      * @return datatypes in the ontology identified by the provided IDs.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/imported-datatypes")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets the datatypes from the imported ontologies of the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Datatypes in the ontology identified by the provided IDs"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves datatypes from imported ontologies")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Imported datatypes in the ontology identified by the provided IDs"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving imported datatypes",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getDatatypesInImportedOntologies(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Whether to apply in progress commit")
+            @Parameter(description = "Whether to apply InProgressCommit")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
@@ -2490,30 +3574,63 @@ public class OntologyRest {
      * @return object properties in the ontology identified by the provided IDs.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/imported-object-properties")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets the object properties from the imported ontologies of the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Object properties in the ontology identified by the provided IDs"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves object properties from imported ontologies")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Imported object properties in the ontology identified by the provided IDs"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving imported object properties",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getObjectPropertiesInImportedOntologies(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Whether to apply in progress commit")
+            @Parameter(description = "Whether to apply InProgressCommit")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
@@ -2541,31 +3658,63 @@ public class OntologyRest {
      * @return data properties in the ontology identified by the provided IDs.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/imported-data-properties")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets the data properties from the imported ontologies of the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Data properties in the ontology identified by "
-                                    + "the provided IDs"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves data properties from imported ontologies")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Imported data properties in the ontology identified by the provided IDs"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving imported data properties",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getDataPropertiesInImportedOntologies(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Whether to apply in progress commit")
+            @Parameter(description = "Whether to apply InProgressCommit")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
@@ -2593,30 +3742,63 @@ public class OntologyRest {
      * @return named individuals in the ontology identified by the provided IDs.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/imported-named-individuals")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets the named individuals from the imported ontologies of the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Named individuals in the ontology identified by the provided IDs"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves named individuals from imported ontologies")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Imported named individuals in the ontology identified by the provided IDs"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving imported named individuals",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getNamedIndividualsInImportedOntologies(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Whether to apply in progress commit")
+            @Parameter(description = "Whether to apply InProgressCommit")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
@@ -2648,24 +3830,57 @@ public class OntologyRest {
      * @return A JSON object that represents the class hierarchy for the ontology identified by the provided IDs.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/class-hierarchies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets the class hierarchies for the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "JSON object that represents the class hierarchy "
-                                    + "for the ontology identified by the provided IDs"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the class hierarchy of an Ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "JSON object that represents the class hierarchy for the "
+                            + "ontology identified by the provided IDs"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the class hierarchy",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyClassHierarchy(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
@@ -2674,7 +3889,7 @@ public class OntologyRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Whether to return the nested JSON-LD version of the hierarchy")
             @DefaultValue("false") @QueryParam("nested") boolean nested,
-            @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
+            @Parameter(description = "Whether or not to apply the InProgressCommit for the user making the request")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
@@ -2708,24 +3923,57 @@ public class OntologyRest {
      *         IDs.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/object-property-hierarchies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets the object property hierarchies for the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "A JSON object that represents the object property "
-                                    + "hierarchy for the ontology identified by the provided IDS"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the object property hierarchy of an Ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "JSON object that represents the object property hierarchy for "
+                            + "the ontology identified by the provided IDs"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the object property hierarchy",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyObjectPropertyHierarchy(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
@@ -2766,24 +4014,57 @@ public class OntologyRest {
      *         IDs.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/data-property-hierarchies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets the data property hierarchies for the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "A JSON object that represents the data property hierarchy"
-                                    + " for the ontology identified by the provided IDs"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the data property hierarchy of an Ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "JSON object that represents the data property hierarchy for the ontology "
+                            + "identified by the provided IDs"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the data property hierarchy",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyDataPropertyHierarchy(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
@@ -2825,24 +4106,57 @@ public class OntologyRest {
      *         provided IDs.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/annotation-property-hierarchies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets the data property hierarchies for the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "A JSON object that represents the annotation property "
-                                    + "hierarchy for the ontology identified by the provided IDs"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the annotation property hierarchy of an Ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "JSON object that represents the annotation property hierarchy for the "
+                            + "ontology identified by the provided IDs"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the annotation property hierarchy",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyAnnotationPropertyHierarchy(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
@@ -2882,24 +4196,57 @@ public class OntologyRest {
      * @return A JSON object that represents the SKOS concept hierarchy for the ontology identified by the provided IDs.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/concept-hierarchies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets the concept hierarchies for the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "JSON object that represents the SKOS concept hierarchy "
-                                    + "for the ontology identified by the provided IDs"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the SKOS concept hierarchy of an Ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "JSON object that represents the SKOS concept hierarchy for "
+                            + "the ontology identified by the provided IDs"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the SKOS concept hierarchy",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getConceptHierarchy(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
@@ -2941,24 +4288,57 @@ public class OntologyRest {
      *         the provided IDs.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/concept-scheme-hierarchies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets the concept hierarchies for the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "JSON object that represents the SKOS concept"
-                                    + " scheme hierarchy for the ontology identified by the provided IDs"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the SKOS concept scheme hierarchy of an Ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "JSON object that represents the SKOS concept scheme hierarchy for the "
+                            + "ontology identified by the provided IDs"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the concept scheme hierarchy",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getConceptSchemeHierarchy(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
@@ -2997,24 +4377,57 @@ public class OntologyRest {
      *         IDs.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/classes-with-individuals")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets the classes with individuals in a hierarchical structure for the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "A JSON object that represents the classes with individuals in "
-                                    + "the ontology identified by the provided IDS"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves classes with their individuals in a hierarchy")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A JSON object that represents the classes with individuals "
+                            + "in the ontology identified by the provided IDS"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving classes with individuals",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getClassesWithIndividuals(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
@@ -3055,25 +4468,58 @@ public class OntologyRest {
      * @return the proper JSON result described above.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/entity-usages/{entityIri}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets the usages of the identified entity in the identified ontology",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "JSON-LD containing statements with the requested entity"
-                                    + " IRI as the predicate or object of each statement when the "
-                                    + "queryType is \"construct\"."),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves usages of a specific entity in an Ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "JSON-LD array containing statements with the requested entity IRI as the "
+                            + "predicate or object of each statement when the queryType is \"construct\".",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = JsonLdObject.class)))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology or entity with the provided IDs does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving entity usages",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getEntityUsages(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the entity Resource IRI", required = true)
@@ -3124,26 +4570,58 @@ public class OntologyRest {
      * @return JSON String providing the sorted list of results from the search.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/search-results")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets the search results from the identified ontology using the provided searchText",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "JSON String of the resulting entities sorted "
-                                    + "by type from the ontology with the requested record ID "
-                                    + "that have statements which contain the requested searchText in a "
-                                    + "Literal Value."),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Searches for entities in an Ontology by text")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "JSON object of the resulting entities sorted by type from the ontology "
+                            + "with the requested record ID that have statements which contain the requested "
+                            + "searchText in a Literal Value."
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The search text is missing or the ontology does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while searching the ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getSearchResults(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String for the text that is searched for in all of the Literals within the "
@@ -3200,22 +4678,56 @@ public class OntologyRest {
      * @return JSON list of ontology IRIs that were not imported.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/failed-imports")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Gets a list of ontology IRIs that were not imported",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "List of ontology IRIs that were not imported"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the list of failed import IRIs for an Ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "List of ontology IRIs that were not imported"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the failed imports list",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getFailedImports(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
@@ -3270,25 +4782,57 @@ public class OntologyRest {
      * @return The RDF triples for a specified entity including all of is transitively attached Blank Nodes.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/entities/{entityId}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Retrieves the triples for a specified entity including all of is "
-                    + "transitively attached Blank Node",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "RDF triples for a specified entity including all of is "
-                                    + "transitively attached Blank Nodes"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the triples for a specified entity including transitively attached blank nodes")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "RDF triples for a specified entity including all of is transitively attached "
+                            + "Blank Nodes"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology or entity with the provided IDs does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the entity triples",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getEntity(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the entity Resource ID", required = true)
@@ -3297,14 +4841,12 @@ public class OntologyRest {
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Specified format for the return data. Valid values include 'jsonld', "
-                    + "'turtle', 'rdf/xml', and 'trig'")
+            @Parameter(description = "Specified format for the return data. Valid values include 'jsonld', 'turtle', "
+                    + "'rdf/xml', and 'trig'")
             @DefaultValue(JSONLD) @QueryParam("format") String format,
-            @Parameter(description = "Boolean indicating whether ontology imports "
-                    + "should be included in the query")
+            @Parameter(description = "Boolean indicating whether ontology imports should be included in the query")
             @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
-            @Parameter(description = "Whether or not to apply the in progress commit "
-                    + "for the user making the request")
+            @Parameter(description = "Whether or not to apply the InProgressCommit for the user making the request")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
@@ -3341,24 +4883,58 @@ public class OntologyRest {
      * @return Returns the list of EntityNames for the given Ontology.
      */
     @POST
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/entity-names")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Updates the specified ontology branch and commit with the data provided",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "List of EntityNames for the given Ontology"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves entity names for the specified ontology")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "List of EntityNames for the given Ontology"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist or filter is invalid",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving entity names",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ActionId(Read.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getEntityNames(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
@@ -3367,8 +4943,8 @@ public class OntologyRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Boolean indicating whether any imports")
             @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
-            @Parameter(description = "Boolean indicating whether any in progress commits by user should be "
-                    + "applied to the return value")
+            @Parameter(description = "Boolean indicating whether any InProgressCommits by user should be applied to "
+                    + "the return value")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit,
             @Parameter(description = "Filter JSON", required = true) String filterJson) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
@@ -3435,43 +5011,77 @@ public class OntologyRest {
      * @return A Response with the RDF of the converted shapes graph in the response body
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("{recordId}/shacl")
     @Produces({TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE, MediaType.APPLICATION_OCTET_STREAM})
     @RolesAllowed("user")
     @Operation(
-            tags = "ontologies",
-            summary = "Converts the identified ontology into a SHACL shapes graph and returns the resulting data in"
-                    + " the response body. The returned data will not include any of the original triples from the"
-                    + "source ontology.",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "The Ontology in the requested format",
-                            content = {
-                                    @Content(mediaType = "*/*"),
-                                    @Content(mediaType = TURTLE_MIME_TYPE),
-                                    @Content(mediaType = LDJSON_MIME_TYPE),
-                                    @Content(mediaType = RDFXML_MIME_TYPE),
-                                    @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM),
-                            }
-                    ),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
+            summary = "Converts an Ontology into a SHACL shapes graph",
+            description = "The returned data will not include any of the original triples from the source ontology."
     )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The converted Ontology in the requested format",
+                    content = {
+                            @Content(mediaType = MediaType.WILDCARD),
+                            @Content(mediaType = TURTLE_MIME_TYPE),
+                            @Content(mediaType = LDJSON_MIME_TYPE),
+                            @Content(mediaType = RDFXML_MIME_TYPE),
+                            @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM)
+                    }
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Ontology with the provided record ID does not exist",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to read this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while converting the ontology to SHACL",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            )
+    })
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response convertToSHACL(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Boolean indicating whether any in progress commits by user should be "
-                    + "applied to the return value")
+            @Parameter(description = "Boolean indicating whether any InProgressCommits by user should be applied "
+                    + "to the return value")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit,
-            @Parameter(description = "Desired RDF return format. Valid values include 'jsonld', 'turtle', and "
-                    + "'rdf/xml", schema = @Schema(allowableValues = {JSONLD, RDF_XML, TURTLE}))
+            @Parameter(description = "Desired RDF return format. Valid values include 'jsonld', 'turtle', and 'rdf/xml",
+                    schema = @Schema(allowableValues = {JSONLD, RDF_XML, TURTLE}))
             @DefaultValue(JSONLD) @QueryParam("format") String format
     ) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
@@ -3500,29 +5110,61 @@ public class OntologyRest {
      * @return The Ontology in the requested format. Format is turtle unless otherwise specified.
      */
     @GET
+    @Tag(name = TAG_NAME, description = TAG_DESC)
     @Path("/ontology/{ontologyIRI}")
     @Produces({TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE, MediaType.APPLICATION_OCTET_STREAM})
     @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Retrieves the ontology associated with the requested ontology iri in the requested format",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "The Ontology in the requested format",
-                            content = {
-                                    @Content(mediaType = "*/*"),
-                                    @Content(mediaType = TURTLE_MIME_TYPE),
-                                    @Content(mediaType = LDJSON_MIME_TYPE),
-                                    @Content(mediaType = RDFXML_MIME_TYPE),
-                                    @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM),
-                            }
-                    ),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
+    @Operation(summary = "Retrieves the ontology associated with the requested ontology IRI in the requested format")  
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The Ontology in the requested format",
+                    content = {
+                            @Content(mediaType = MediaType.WILDCARD),
+                            @Content(mediaType = TURTLE_MIME_TYPE),
+                            @Content(mediaType = LDJSON_MIME_TYPE),
+                            @Content(mediaType = RDFXML_MIME_TYPE),
+                            @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM)
+                    }
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The provided IRI does not correspond to any OntologyRecord",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to access this ontology",
+                    headers = @Header(
+                            name = "HTTP Status",
+                            description = "Reason Phrase contains error message",
+                            schema = @Schema(type = "string")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the ontology by IRI",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
+            )
+    })
     public Response getOntologyByIRI(
-            @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the IRI of the requested ontology", required = true)
             @PathParam("ontologyIRI") String ontologyIRI,
             @Parameter(description = "Desired RDF return format",
@@ -4475,17 +6117,17 @@ public class OntologyRest {
         public String branchId;
         @Schema(type = "string", description = "Optional Commit ID representing the commit IRI of the Record to query")
         public String commitId;
-        @Schema(type = "boolean", description = "Optional boolean representing whether to "
-                + "include imported ontologies when executing the query")
+        @Schema(type = "boolean", description = "Optional boolean representing whether to include imported ontologies "
+                + "when executing the query")
         public String includeImports;
-        @Schema(type = "boolean", description = "Optional boolean representing whether to "
-                + "apply the in progress commit when executing the query")
+        @Schema(type = "boolean", description = "Optional boolean representing whether to apply the InProgressCommit "
+                + "when executing the query")
         public String applyInProgressCommit;
-        @Schema(name = "fileName", description = "File name of the downloaded results file when the "
-                + "`ACCEPT` header is set to `application/octet-stream`")
+        @Schema(name = "fileName", description = "File name of the downloaded results file when the `ACCEPT` header is "
+                + "set to `application/octet-stream`")
         public String fileName;
-        @Schema(type = "string", description = "Format of the downloaded results file when the `ACCEPT` "
-                + "header is set to `application/octet-stream`",
+        @Schema(type = "string", description = "Format of the downloaded results file when the `ACCEPT` header is set "
+                + "to `application/octet-stream`",
                 allowableValues = {"xlsx", "csv", "tsv", "ttl", JSONLD, "rdf", "json"})
         public String fileType;
     }
