@@ -27,10 +27,18 @@ import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.webhooks.api.WebhookConfigurationService;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookConfiguration;
+import com.mobi.webhooks.api.ontology.webhooks.WebhookConfigurationFactory;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookRecord;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.UUID;
 
 /**
  * implementation of WebhookConfigurationService for managing webhook configurations.
@@ -39,7 +47,13 @@ import org.slf4j.LoggerFactory;
 public class WebhookConfigurationServiceImpl implements WebhookConfigurationService {
 
     private static final Logger LOG = LoggerFactory.getLogger(WebhookConfigurationServiceImpl.class);
+    //TODO ensure removal of PLACEHOLDER method by MVP completion.
     private static final String PLACEHOLDER = "Method not implemented yet";
+
+    protected final ValueFactory vf = new ValidatingValueFactory();
+
+    @Reference
+    WebhookConfigurationFactory webhookConfigurationFactory;
 
     @Override
     public void validateConfiguration(WebhookConfiguration configuration) {
@@ -65,12 +79,31 @@ public class WebhookConfigurationServiceImpl implements WebhookConfigurationServ
     }
 
     @Override
-    public void updateConfiguration(String recordIri) {
+    public void createConfiguration(WebhookRecord webhookRecord) {
+        IRI configIRI = vf.createIRI("http://mobi.solutions/webhooks/configurations/" + UUID.randomUUID());
+        WebhookConfiguration webhookConfig = webhookConfigurationFactory.createNew(configIRI);
+        webhookConfig.setUrl(DEFAULT_WEBHOOK_URL);
+        webhookConfig.setHttpMethod(DEFAULT_HTTP_METHOD);
+        webhookRecord.setHasWebhookConfiguration(webhookConfig);
+        webhookRecord.getModel().addAll(webhookConfig.getModel());
+    }
+
+    @Override
+    public void updateConfiguration(WebhookRecord webhookRecord) {
         LOG.info(PLACEHOLDER);
     }
 
     @Override
-    public void deleteConfiguration(String recordIri) {
-        LOG.info(PLACEHOLDER);
+    public void deleteConfiguration(WebhookRecord webhookRecord, RepositoryConnection conn) {
+        final long startTime = System.currentTimeMillis();
+        LOG.debug("Deleting WebhookConfiguration linked to WebhookRecord: {}", webhookRecord.getResource());
+        webhookRecord.getHasWebhookConfiguration_resource()
+                .ifPresent(configIRI -> {
+                    LOG.debug("Removing WebhookConfiguration: {}", configIRI);
+                    conn.remove(configIRI, null, null, webhookRecord.getResource());
+                    LOG.debug("WebhookConfiguration deletion for record: {} complete in {}ms", webhookRecord.getResource(),
+                            System.currentTimeMillis() - startTime);
+                });
+
     }
 }

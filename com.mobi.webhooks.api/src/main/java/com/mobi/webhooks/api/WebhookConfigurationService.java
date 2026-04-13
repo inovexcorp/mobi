@@ -4,6 +4,7 @@ import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookConfiguration;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookRecord;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 
 /*-
  * #%L
@@ -32,6 +33,9 @@ import com.mobi.webhooks.api.ontology.webhooks.WebhookRecord;
  * Service for managing webhook configurations.
  */
 public interface WebhookConfigurationService {
+    //TODO Both of these below variables should be removed by the time MVP is done
+    String DEFAULT_WEBHOOK_URL = "https://www.example.com";
+    String DEFAULT_HTTP_METHOD = "GET";
 
     /**
      * Validates the webhook configuration via SHACL to ensure all properties are properly set.
@@ -66,17 +70,25 @@ public interface WebhookConfigurationService {
     //TODO may need to return to above and update this to be a more specific paginatedSearchParam once further implementation is done.
 
     /**
+     * Creates a new webhook configuration associated with the specified record IRI.
+     *
+     * @param webhookRecord The {@link WebhookRecord} for which the webhook configuration is to be created
+     */
+    void createConfiguration(WebhookRecord webhookRecord);
+
+    /**
      * Updates the webhook configuration associated with the given record IRI.
      *
-     * @param recordIri the IRI of the record for which the webhook configuration is to be updated
+     * @param webhookRecord The {@link WebhookRecord} for which the webhook configuration is to be updated
      */
-    void updateConfiguration(String recordIri);
+    void updateConfiguration(WebhookRecord webhookRecord);
 
     /**
      * Deletes the webhook configuration associated with the specified record IRI.
      *
-     * @param recordIri the IRI of the record for which the webhook configuration is to be deleted
+     * @param webhookRecord The {@link WebhookRecord} for which the webhook configuration is to be deleted
+     * @param conn The {@link RepositoryConnection} in which the WebhookRecord artifacts are stored
      */
-    void deleteConfiguration(String recordIri);
+    void deleteConfiguration(WebhookRecord webhookRecord, RepositoryConnection conn);
 
 }

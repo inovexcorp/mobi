@@ -615,7 +615,8 @@ public class CatalogRest {
                             "http://mobi.com/ontologies/shapes-graph-editor#ShapesGraphRecord",
                             "http://mobi.com/ontologies/delimited#MappingRecord",
                             "http://mobi.com/ontologies/catalog#UnversionedRecord",
-                            "http://mobi.com/ontologies/dataset#DatasetRecord"}))
+                            "http://mobi.com/ontologies/dataset#DatasetRecord",
+                            "http://mobi.solutions/ontologies/webhooks#WebhookRecord"}))
             @QueryParam("type") List<String> recordTypes,
             @Parameter(description = "List of keywords")
             @QueryParam("keywords") List<String> keywords,

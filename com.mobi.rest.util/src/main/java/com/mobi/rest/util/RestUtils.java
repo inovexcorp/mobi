@@ -688,7 +688,7 @@ public class RestUtils {
      * Tests for the existence and value of a string, assumed to be from a REST parameter.
      *
      * @param param        The string parameter to check
-     * @param errorMessage The error message to send if parameter is not set
+     * @param errorMessage The error message to send if the parameter is not set
      */
     public static void checkStringParam(@Nullable String param, String errorMessage) {
         if (StringUtils.isBlank(param)) {

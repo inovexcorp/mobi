@@ -32,10 +32,10 @@ import java.util.List;
  * Class used for OpenAPI documentation for file upload endpoint.
  */
 public class WorkflowFileUpload {
-    @Schema(type = "string", format = "binary", description = "Mapping file to upload.")
+    @Schema(type = "string", format = "binary", description = "Workflow file to upload.")
     public String file;
 
-    @Schema(type = "string", description = "Mapping serialized as JSON-LD", required = true)
+    @Schema(type = "string", description = "Workflow serialized as JSON-LD", required = true)
     public String jsonld;
 
     @Schema(type = "string", description = "Required title for the new WorkflowRecord", required = true)
