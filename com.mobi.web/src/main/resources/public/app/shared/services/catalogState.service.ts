@@ -23,7 +23,7 @@
 import { Injectable } from '@angular/core';
 import { find, includes, get } from 'lodash';
 
-import { CATALOG, DATASET, DCTERMS, DELIM, ONTOLOGYEDITOR, SHAPESGRAPHEDITOR, WORKFLOWS } from '../../prefixes';
+import { CATALOG, DATASET, DCTERMS, DELIM, ONTOLOGYEDITOR, SHAPESGRAPHEDITOR, WEBHOOKS, WORKFLOWS } from '../../prefixes';
 import { CatalogManagerService } from './catalogManager.service';
 import { FilterItem } from '../models/filterItem.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
@@ -124,6 +124,7 @@ export class CatalogStateService {
         [`${DELIM}MappingRecord`]: 'fa-map',
         [`${SHAPESGRAPHEDITOR}ShapesGraphRecord`]: 'mat rule',
         [`${WORKFLOWS}WorkflowRecord`]: 'mat fact_check',
+        [`${WEBHOOKS}WebhookRecord`]: 'mat webhook',
         default: 'fa-book'
     };
 

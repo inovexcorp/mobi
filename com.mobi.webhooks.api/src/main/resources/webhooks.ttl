@@ -48,9 +48,9 @@
     rdfs:domain :WebhookConfiguration;
     rdfs:range xsd:string.
 
-:eventFilter a owl:DatatypeProperty;
+:eventFilter a owl:DatatypeProperty, owl:FunctionalProperty;
     rdfs:label "event filter"@en;
-    rdfs:comment "Optional filter string to specify which events should trigger the webhook."@en;
+    rdfs:comment "Filter string to specify which events should trigger the webhook."@en;
     rdfs:domain :WebhookConfiguration;
     rdfs:range xsd:string.
 
@@ -60,7 +60,7 @@
     rdfs:domain :WebhookConfiguration;
     rdfs:range xsd:boolean.
 
-:secretToken a owl:DatatypeProperty;
+:secretToken a owl:DatatypeProperty, owl:FunctionalProperty;
     rdfs:label "secret token"@en;
     rdfs:comment "Optional secret token used for authenticating webhook requests."@en;
     rdfs:domain :WebhookConfiguration;
