@@ -1,0 +1,8 @@
+PREFIX webhooks: <http://mobi.solutions/ontologies/webhooks#>
+
+SELECT ?recordId ?filterString WHERE {
+    ?recordId a webhooks:WebhookRecord ;
+            webhooks:hasWebhookConfiguration ?config .
+
+    ?config webhooks:eventFilter ?filterString .
+}

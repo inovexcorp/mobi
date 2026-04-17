@@ -4,7 +4,12 @@ import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookConfiguration;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookRecord;
+
+import java.util.Map;
+
+import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+
 
 /*-
  * #%L
@@ -90,5 +95,13 @@ public interface WebhookConfigurationService {
      * @param conn The {@link RepositoryConnection} in which the WebhookRecord artifacts are stored
      */
     void deleteConfiguration(WebhookRecord webhookRecord, RepositoryConnection conn);
+
+    /**
+     * Retrieves the cached map of event filters for all webhook records.
+     *
+     * @return an unmodifiable map where keys are {@link WebhookRecord} IRIs and values are
+     *         the corresponding event filter strings from their linked {@link WebhookConfiguration}
+     */
+    Map<Resource, String> retrieveEventFilters();
 
 }

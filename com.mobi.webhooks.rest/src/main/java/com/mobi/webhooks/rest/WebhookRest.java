@@ -70,7 +70,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-
 @Component(service = WebhookRest.class, immediate = true)
 @JaxrsResource
 @Path("/webhooks")

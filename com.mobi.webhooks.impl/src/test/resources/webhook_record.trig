@@ -16,7 +16,8 @@
   <http://mobi.solutions/webhooks/configurations/4068e6ce-808c-4a89-8946-137974593b7a>
     a <http://www.w3.org/2002/07/owl#Thing>, <http://mobi.solutions/ontologies/webhooks#WebhookConfiguration>;
     <http://mobi.solutions/ontologies/webhooks#url> "https://www.example.com";
-    <http://mobi.solutions/ontologies/webhooks#httpMethod> "GET" .
+    <http://mobi.solutions/ontologies/webhooks#httpMethod> "GET" ;
+    <http://mobi.solutions/ontologies/webhooks#eventFilter> "(&(event.topics=com/mobi/catalog/version))" .
 }
 
 <https://mobi.com/records#81c30bf3-3e31-42d6-861b-8877b71c242a> {

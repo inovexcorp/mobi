@@ -23,10 +23,23 @@ package com.mobi.webhooks.impl;
  * #L%
  */
 
+import com.mobi.sse.SSETopics;
+import com.mobi.webhooks.api.WebhookConfigurationService;
 import com.mobi.webhooks.api.WebhookExecutor;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookConfiguration;
 
+import java.util.Arrays;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.eclipse.rdf4j.model.Resource;
+import org.osgi.framework.Filter;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
@@ -45,15 +58,40 @@ public class WebhookExecutorImpl implements WebhookExecutor, EventHandler {
     private static final Logger LOG = LoggerFactory.getLogger(WebhookExecutorImpl.class);
     private static final String PLACEHOLDER = "Method not implemented yet";
 
+    @Reference
+    WebhookConfigurationService webhookConfigurationService;
 
     @Override
     public void executeWebhook(WebhookConfiguration configuration) {
         LOG.info(PLACEHOLDER);
-
     }
 
     @Override
     public void handleEvent(Event event) {
-        LOG.info(PLACEHOLDER);
+        if (!event.getTopic().startsWith(SSETopics.TOPIC_NAME)) {
+            Map<Resource, String> filters = webhookConfigurationService.retrieveEventFilters();
+            Hashtable<String, Object> data = new Hashtable<>(Arrays.stream(event.getPropertyNames())
+                    .collect(Collectors.toMap(k -> k, name -> String.valueOf(event.getProperty(name)))));
+
+            List<Resource> matchedRecordIRIs = filters.entrySet().stream()
+                    .filter(entry -> {
+                        try {
+                            Filter filter = FrameworkUtil.createFilter(entry.getValue());
+                            return filter.match(data);
+                        } catch (InvalidSyntaxException e) {
+                            LOG.error("Filter string for record: {}, has invalid syntax", entry.getKey());
+                            return false;
+                        }
+                    }).map(Map.Entry::getKey)
+                    .toList();
+
+            if (!matchedRecordIRIs.isEmpty()) {
+                // MP-3549 not yet merged — log instead of executing
+                LOG.info("Execution Logic not complete. {} webhook record(s) with IRI(s): {} Should be executed", matchedRecordIRIs.size(),
+                        matchedRecordIRIs);
+            } else {
+                LOG.info("No matching Webhook records found for event:");
+            }
+        }
     }
 }
