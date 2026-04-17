@@ -39,9 +39,9 @@ public class CatalogTopics {
 
     public static class VersionTopic implements CatalogTopic {
         public static final String TOPIC_NAME = "com/mobi/catalog/version";
-        public static final String TYPE_PROPERTY= "type";
-        public static final String VERSION_PROPERTY= "version";
-        public static final String VERSION_TITLE_PROPERTY= "versionTitle";
+        public static final String TYPE_PROPERTY = "type";
+        public static final String VERSION_PROPERTY = "version";
+        public static final String VERSION_TITLE_PROPERTY = "versionTitle";
 
     }
 }

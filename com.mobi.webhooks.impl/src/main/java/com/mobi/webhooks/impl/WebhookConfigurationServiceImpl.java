@@ -25,20 +25,37 @@ package com.mobi.webhooks.impl;
 
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
+import com.mobi.catalog.config.CatalogConfigProvider;
+import com.mobi.exception.MobiException;
+import com.mobi.persistence.utils.Bindings;
 import com.mobi.webhooks.api.WebhookConfigurationService;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookConfiguration;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookConfigurationFactory;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookRecord;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.UUID;
 
 /**
  * implementation of WebhookConfigurationService for managing webhook configurations.
@@ -49,11 +66,44 @@ public class WebhookConfigurationServiceImpl implements WebhookConfigurationServ
     private static final Logger LOG = LoggerFactory.getLogger(WebhookConfigurationServiceImpl.class);
     //TODO ensure removal of PLACEHOLDER method by MVP completion.
     private static final String PLACEHOLDER = "Method not implemented yet";
+    private static final String GET_EVENT_FILTERS_QUERY;
 
+    private final ConcurrentMap<Resource, String> eventFilters = new ConcurrentHashMap<>();
     protected final ValueFactory vf = new ValidatingValueFactory();
+
+    static {
+        try {
+            GET_EVENT_FILTERS_QUERY = IOUtils.toString(
+                    Objects.requireNonNull(WebhookConfigurationServiceImpl.class.getResourceAsStream("/get-webhook-event-filters.rq")),
+                    StandardCharsets.UTF_8
+            );
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+    }
 
     @Reference
     WebhookConfigurationFactory webhookConfigurationFactory;
+
+    @Reference
+    CatalogConfigProvider configProvider;
+
+    @Activate
+    @Modified
+    void start() {
+        eventFilters.clear();
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            TupleQuery query = conn.prepareTupleQuery(GET_EVENT_FILTERS_QUERY);
+            try (TupleQueryResult result = query.evaluate()) {
+                result.forEach(bindings -> {
+                    Resource recordId = Bindings.requiredResource(bindings, "recordId");
+                    String filterString = Bindings.requiredLiteral(bindings, "filterString").stringValue();
+                    eventFilters.put(recordId, filterString);
+                });
+            }
+        }
+        LOG.debug("Populated eventFilters cache with {} entries", eventFilters.size());
+    }
 
     @Override
     public void validateConfiguration(WebhookConfiguration configuration) {
@@ -86,6 +136,8 @@ public class WebhookConfigurationServiceImpl implements WebhookConfigurationServ
         webhookConfig.setHttpMethod(DEFAULT_HTTP_METHOD);
         webhookRecord.setHasWebhookConfiguration(webhookConfig);
         webhookRecord.getModel().addAll(webhookConfig.getModel());
+        webhookConfig.getEventFilter().ifPresent(filter ->
+                eventFilters.put(webhookRecord.getResource(), filter));
     }
 
     @Override
@@ -95,7 +147,7 @@ public class WebhookConfigurationServiceImpl implements WebhookConfigurationServ
 
     @Override
     public void deleteConfiguration(WebhookRecord webhookRecord, RepositoryConnection conn) {
-        final long startTime = System.currentTimeMillis();
+        long startTime = System.currentTimeMillis();
         LOG.debug("Deleting WebhookConfiguration linked to WebhookRecord: {}", webhookRecord.getResource());
         webhookRecord.getHasWebhookConfiguration_resource()
                 .ifPresent(configIRI -> {
@@ -104,6 +156,11 @@ public class WebhookConfigurationServiceImpl implements WebhookConfigurationServ
                     LOG.debug("WebhookConfiguration deletion for record: {} complete in {}ms", webhookRecord.getResource(),
                             System.currentTimeMillis() - startTime);
                 });
+        eventFilters.remove(webhookRecord.getResource());
+    }
 
+    @Override
+    public Map<Resource, String> retrieveEventFilters() {
+        return Collections.unmodifiableMap(eventFilters);
     }
 }

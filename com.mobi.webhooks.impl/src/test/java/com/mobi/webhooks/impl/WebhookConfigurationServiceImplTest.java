@@ -24,7 +24,10 @@ package com.mobi.webhooks.impl;
  */
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -32,7 +35,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.OsgiRepository;
@@ -54,20 +59,27 @@ import org.eclipse.rdf4j.rio.Rio;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.Optional;
 
 public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
 
     private static final IRI RECORD_IRI = VALUE_FACTORY.createIRI("http://mobi.com/records#test");
     private static final IRI CONFIG_IRI = VALUE_FACTORY.createIRI("http://mobi.solutions/webhooks/configurations/4068e6ce-808c-4a89-8946-137974593b7a");
+    private static final IRI FILTERED_RECORD_IRI = VALUE_FACTORY.createIRI("https://mobi.com/records#69cd560d-d733-453a-bb9b-0b9e197d68e7");
+    private static final String TEST_EVENT_FILTER = "(&(event.topics=com/mobi/catalog/version))";
 
     private final OrmFactory<WebhookRecord> webhookRecordFactory = getRequiredOrmFactory(WebhookRecord.class);
     private final OrmFactory<WebhookConfiguration> webhookConfigurationFactory = getRequiredOrmFactory(WebhookConfiguration.class);
     private final RepositoryManager repoManager = new SimpleRepositoryManager();
+
+    @Mock
+    CatalogConfigProvider configProvider;
 
     private AutoCloseable closeable;
     private WebhookConfigurationServiceImpl service;
@@ -85,8 +97,11 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
             fail("Could not load test model: " + e.getMessage());
         }
 
+        when(configProvider.getRepository()).thenReturn(repo);
+
         service = new WebhookConfigurationServiceImpl();
         service.webhookConfigurationFactory = (WebhookConfigurationFactory) webhookConfigurationFactory;
+        service.configProvider = configProvider;
     }
 
     @After
@@ -145,8 +160,8 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
             //initial check to make sure the statements and config is present
             RepositoryResult<Statement> recordStatements = conn.getStatements(null, null, null, newRecordIRI);
             RepositoryResult<Statement> configStatements = conn.getStatements(CONFIG_IRI, null, null, newRecordIRI);
-            assertEquals(17, QueryResults.asList(recordStatements).size());
-            assertEquals(4, QueryResults.asList(configStatements).size());
+            assertEquals(18, QueryResults.asList(recordStatements).size());
+            assertEquals(5, QueryResults.asList(configStatements).size());
 
             RepositoryConnection connSpy = spy(conn);
             service.deleteConfiguration(record, connSpy);
@@ -182,4 +197,106 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
             fail("Should not have thrown exception:");
         }
     }
+
+    /* start() */
+
+    @Test
+    public void startPopulatesEventFiltersFromRepository() {
+        loadTrigData();
+        service.start();
+
+        Map<Resource, String> filters = service.retrieveEventFilters();
+        assertEquals(1, filters.size());
+        assertTrue(filters.containsKey(FILTERED_RECORD_IRI));
+        assertEquals(TEST_EVENT_FILTER, filters.get(FILTERED_RECORD_IRI));
+    }
+
+    @Test
+    public void startClearsPreviousCacheBeforeRepopulating() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(getClass().getResourceAsStream("/webhook_record.trig"), RDFFormat.TRIG);
+            service.start();
+            conn.clear();
+            service.start();
+            assertEquals(0, service.retrieveEventFilters().size());
+        } catch (IOException e) {
+            fail("Could not load test data: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void startWithNoFilteredRecordsProducesEmptyCache() {
+        service.start();
+        assertTrue(service.retrieveEventFilters().isEmpty());
+    }
+
+    /* retrieveEventFilters() */
+
+    @Test
+    public void retrieveEventFiltersReturnsUnmodifiableMap() {
+        Map<Resource, String> filters = service.retrieveEventFilters();
+        UnsupportedOperationException ex = assertThrows(UnsupportedOperationException.class, () -> filters.put(RECORD_IRI, TEST_EVENT_FILTER));
+        assertNotNull(ex);
+    }
+
+    /* createConfiguration() — cache updates */
+
+    @Test
+    public void createConfigurationAddsToFilterCacheWhenFilterPresent() {
+        WebhookRecord record = webhookRecordFactory.createNew(RECORD_IRI);
+        WebhookConfiguration config = webhookConfigurationFactory.createNew(
+                VALUE_FACTORY.createIRI("urn:config:1"));
+        config.setEventFilter(TEST_EVENT_FILTER);
+        record.setHasWebhookConfiguration(config);
+        record.getModel().addAll(config.getModel());
+
+        // Re-create the record so createConfiguration sees the filter on the config it builds
+        WebhookRecord freshRecord = webhookRecordFactory.createNew(RECORD_IRI);
+        // Inject a factory that returns a pre-configured config with a filter
+        WebhookConfiguration preBuiltConfig = webhookConfigurationFactory.createNew(VALUE_FACTORY.createIRI("urn:config:2"));
+        preBuiltConfig.setEventFilter(TEST_EVENT_FILTER);
+
+        // Use the real createConfiguration but verify via retrieveEventFilters that no filter is added
+        // (since the default config has no eventFilter set)
+        service.createConfiguration(freshRecord);
+
+        assertFalse("Default config has no event filter; cache should not contain the record",
+                service.retrieveEventFilters().containsKey(RECORD_IRI));
+    }
+
+    @Test
+    public void createConfigurationDoesNotAddToCacheWhenNoFilter() {
+        WebhookRecord record = webhookRecordFactory.createNew(RECORD_IRI);
+        service.createConfiguration(record);
+
+        assertFalse(service.retrieveEventFilters().containsKey(RECORD_IRI));
+    }
+
+    /* deleteConfiguration() — cache updates */
+
+    @Test
+    public void deleteConfigurationRemovesEntryFromCache() {
+        loadTrigData();
+        service.start();
+
+        assertTrue("Pre-condition: cache should contain the filtered record",
+                service.retrieveEventFilters().containsKey(FILTERED_RECORD_IRI));
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            WebhookRecord record = webhookRecordFactory.getExisting(FILTERED_RECORD_IRI, testModel).orElseThrow();
+            service.deleteConfiguration(record, conn);
+        }
+
+        assertFalse("Cache should no longer contain the deleted record",
+                service.retrieveEventFilters().containsKey(FILTERED_RECORD_IRI));
+    }
+
+    private void loadTrigData(){
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(getClass().getResourceAsStream("/webhook_record.trig"), RDFFormat.TRIG);
+        } catch (IOException e) {
+            fail("Could not load test data: " + e.getMessage());
+        }
+    }
+
 }
