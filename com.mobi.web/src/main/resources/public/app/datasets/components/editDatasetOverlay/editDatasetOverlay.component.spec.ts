@@ -39,6 +39,7 @@ import {
 } from '../../../../../public/test/ts/Shared';
 import { CATALOG, DATASET, DCTERMS, ONTOLOGYEDITOR } from '../../../prefixes';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { RestErrorDisplayComponent } from '../../../shared/components/restErrorDisplay/restErrorDisplay.component';
 import { KeywordSelectComponent } from '../../../shared/components/keywordSelect/keywordSelect.component';
 import { Dataset } from '../../../shared/models/dataset.interface';
 import { Repository } from '../../../shared/models/repository.interface';
@@ -102,6 +103,7 @@ describe('Edit Dataset Overlay component', function () {
       declarations: [
         EditDatasetOverlayComponent,
         MockComponent(ErrorDisplayComponent),
+        MockComponent(RestErrorDisplayComponent),
         MockComponent(DatasetsOntologyPickerComponent),
         MockComponent(KeywordSelectComponent)
       ],
@@ -178,13 +180,14 @@ describe('Edit Dataset Overlay component', function () {
         component.ngOnInit();
       });
       it('unless an error occurs', fakeAsync(function () {
-        datasetManagerStub.updateDatasetRecord.and.callFake(() => throwError('Error Message'));
+        const errorObj = {error: 'Error', errorMessage: 'Error Message', errorDetails: []};
+        datasetManagerStub.updateDatasetRecord.and.callFake(() => throwError(errorObj));
         component.update();
         tick();
         expect(datasetManagerStub.updateDatasetRecord).toHaveBeenCalledWith(recordId, catalogId, jasmine.any(Array));
         expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
         expect(matDialogRef.close).not.toHaveBeenCalled();
-        expect(component.error).toBe('Error Message');
+        expect(component.error).toEqual(errorObj);
       }));
       describe('successfully', function () {
         beforeEach(function () {
@@ -198,7 +201,7 @@ describe('Edit Dataset Overlay component', function () {
           expect(datasetManagerStub.updateDatasetRecord).toHaveBeenCalledWith(recordId, catalogId, jasmine.any(Array));
           expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
           expect(matDialogRef.close).toHaveBeenCalledWith(true);
-          expect(component.error).toBe('');
+          expect(component.error).toBeUndefined();
         }));
         it('when all ontologies are removed.', fakeAsync(function () {
           component.selectedOntologies = [];
@@ -207,7 +210,7 @@ describe('Edit Dataset Overlay component', function () {
           expect(datasetManagerStub.updateDatasetRecord).toHaveBeenCalledWith(recordId, catalogId, [jasmine.objectContaining({ '@id': recordId })]);
           expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
           expect(matDialogRef.close).toHaveBeenCalledWith(true);
-          expect(component.error).toBe('');
+          expect(component.error).toBeUndefined();
         }));
         it('when an ontology is added.', fakeAsync(function () {
           const branch = { '@id': 'branch', [`${CATALOG}head`]: [{ '@id': 'commit' }] };
@@ -231,7 +234,7 @@ describe('Edit Dataset Overlay component', function () {
           expect(datasetManagerStub.updateDatasetRecord).toHaveBeenCalledWith(recordId, catalogId, [expectedBlankNode, jasmine.objectContaining({ '@id': recordId })]);
           expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
           expect(matDialogRef.close).toHaveBeenCalledWith(true);
-          expect(component.error).toBe('');
+          expect(component.error).toBeUndefined();
         }));
       });
     });
@@ -248,10 +251,10 @@ describe('Edit Dataset Overlay component', function () {
       });
     });
     it('depending on whether there is an error', function () {
-      expect(element.queryAll(By.css('error-display')).length).toEqual(0);
-      component.error = 'Error message';
+      expect(element.queryAll(By.css('rest-error-display')).length).toEqual(0);
+      component.error = {error: 'Error', errorMessage: 'Error message', errorDetails: []};
       fixture.detectChanges();
-      expect(element.queryAll(By.css('error-display')).length).toEqual(1);
+      expect(element.queryAll(By.css('rest-error-display')).length).toEqual(1);
     });
     it('depending on the validity of the form', function () {
       component.ngOnInit();

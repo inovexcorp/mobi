@@ -25,9 +25,6 @@ package com.mobi.rest.security;
 
 import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_OVERRIDES;
 import static com.mobi.web.security.util.AuthenticationProps.ANON_USER;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
-import static javax.ws.rs.core.Response.Status.UNAUTHORIZED;
 
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
@@ -43,7 +40,7 @@ import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.SubjectAttributes;
 import com.mobi.rest.security.annotations.Value;
 import com.mobi.rest.security.annotations.ValueType;
-import com.mobi.rest.util.ErrorUtils;
+import com.mobi.exception.MobiException;
 import com.mobi.rest.util.MobiWebException;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.security.policy.api.Decision;
@@ -144,7 +141,7 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
             Method method = resourceInfo.getResourceMethod();
 
             if (method.getAnnotation(ResourceId.class) == null) {
-                log.info(String.format("Request authorization skipped. %dms", System.currentTimeMillis() - start));
+                log.info("Request authorization skipped. {}ms", System.currentTimeMillis() - start);
                 return;
             }
 
@@ -227,18 +224,18 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
                 if (decision == Decision.DENY) {
                     String statusMessage = getMessageOrDefault(response,
                             "You do not have permission to perform this action");
-                    throw ErrorUtils.sendError(statusMessage, UNAUTHORIZED);
+                    throw RestUtils.getErrorObjForbidden(new IllegalAccessException(statusMessage));
                 }
                 if (decision == Decision.INDETERMINATE) {
                     String statusMessage = getMessageOrDefault(response, "Request indeterminate");
-                    throw ErrorUtils.sendError(statusMessage, INTERNAL_SERVER_ERROR);
+                    throw RestUtils.getErrorObjInternalServerError(new MobiException(statusMessage));
                 }
             }
-            log.info(String.format("Request permitted. %dms", System.currentTimeMillis() - start));
+            log.info("Request permitted. {}ms", System.currentTimeMillis() - start);
         } catch (IllegalArgumentException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(e);
         } catch (IllegalStateException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -270,8 +267,7 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
                     try (RepositoryConnection conn = repository.getConnection()) {
                         TupleQueryResult result = getPropPathResult(pathStart, resourceIdAnnotation.value(), conn);
                         if (!result.hasNext()) {
-                            throw ErrorUtils.sendError("No results returned for property path",
-                                    INTERNAL_SERVER_ERROR);
+                            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("No results returned for property path"));
                         }
                         resourceIdIri = (IRI) Bindings.requiredResource(result.next(), "value");
                         result.close();
@@ -326,29 +322,28 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
 
     private boolean validatePathParam(String key, MultivaluedMap<String, String> params, boolean isRequired) {
         if (!params.containsKey(key) && isRequired) {
-            throw ErrorUtils.sendError("Path does not contain parameter " + key, INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Path does not contain parameter " + key));
         }
         return params.containsKey(key);
     }
 
     private boolean validateQueryParam(String key, MultivaluedMap<String, String> params, boolean isRequired) {
         if (!params.containsKey(key) && isRequired) {
-            throw ErrorUtils.sendError("Query parameters do not contain " + key, INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Query parameters do not contain " + key));
         }
         return params.containsKey(key);
     }
 
     private boolean validateFormParam(String key, MultivaluedMap<String, String> params, boolean isRequired) {
         if ((!params.containsKey(key) || params.get(key) == null) && isRequired) {
-            throw ErrorUtils.sendError("Form parameters do not contain " + key, INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Form parameters do not contain " + key));
         }
         return params.containsKey(key) && params.get(key) != null;
     }
 
     private Value validatePropPathValue(Value[] values) {
         if (values.length != 1) {
-            throw ErrorUtils.sendError("A Property Path value requires exactly one starting point",
-                    INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("A Property Path value requires exactly one starting point"));
         }
         return values[0];
     }
@@ -357,7 +352,7 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
         if (!context.hasEntity()
                 || (!typeEqual(MediaType.MULTIPART_FORM_DATA_TYPE, context.getMediaType())
                 && !typeEqual(MediaType.APPLICATION_FORM_URLENCODED_TYPE, context.getMediaType()))) {
-            throw ErrorUtils.sendError("Expected Request to have form data", INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Expected Request to have form data"));
         }
 
         if (typeEqual(MediaType.MULTIPART_FORM_DATA_TYPE, context.getMediaType())) {
@@ -365,7 +360,7 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
         } else if (typeEqual(MediaType.APPLICATION_FORM_URLENCODED_TYPE, context.getMediaType())) {
             return getFormDataUrlEncoded(context);
         }
-        throw ErrorUtils.sendError("Expected Request to have form data", INTERNAL_SERVER_ERROR);
+        throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Expected Request to have form data"));
     }
 
     private MultivaluedMap<String, String> getFormDataMultipart(ContainerRequestContext context) {
@@ -411,7 +406,7 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
             context.setEntityStream(resettableIS);
             return formMap;
         } catch (Exception e) {
-            throw ErrorUtils.sendError(e, "Could not retrieve form from request: ", INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -427,7 +422,7 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
             context.setEntityStream(resettableIS);
             return form.asMap();
         } catch (Exception e) {
-            throw ErrorUtils.sendError(e, "Could not retrieve form from request: ", INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -474,14 +469,12 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
                                     if (isRequired) {
                                         value = null;
                                     } else {
-                                        throw ErrorUtils.sendError("No results returned for property path",
-                                                INTERNAL_SERVER_ERROR);
+                                        throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("No results returned for property path"));
                                     }
                                 } else {
                                     Binding binding = Optional.ofNullable(result.next().getBinding("value"))
                                             .orElseThrow(() ->
-                                                    ErrorUtils.sendError("Property Value binding is not present",
-                                                            INTERNAL_SERVER_ERROR));
+                                                    RestUtils.getErrorObjInternalServerError(new MobiException("Property Value binding is not present")));
                                     value = getLiteral(binding.getValue().stringValue(), datatype);
                                 }
                                 result.close();
@@ -522,8 +515,7 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
                         : null;
                 break;
             case PROP_PATH:
-                throw ErrorUtils.sendError("Property Path not supported as a property path starting point",
-                        INTERNAL_SERVER_ERROR);
+                throw RestUtils.getErrorObjInternalServerError(new MobiException("Property Path not supported as a property path starting point"));
             case PRIMITIVE:
             default:
                 propPathStart = vf.createIRI(valueAnnotation.value());

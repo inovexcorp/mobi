@@ -140,7 +140,7 @@ describe('Selected Details component', function () {
         expect(toastStub.createErrorToast).not.toHaveBeenCalled();
       }));
       it('when stateService.onEdit rejects', fakeAsync(function () {
-        ontologyStateStub.onIriEdit.and.returnValue(throwError('error'));
+        ontologyStateStub.onIriEdit.and.returnValue(throwError({error: '', errorMessage: 'error', errorDetails: []}));
         component.onEdit('begin', 'middle', 'end');
         tick();
         expect(component.stateService.onIriEdit).toHaveBeenCalledWith('begin', 'middle', 'end');

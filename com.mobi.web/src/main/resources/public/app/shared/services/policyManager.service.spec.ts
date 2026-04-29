@@ -34,7 +34,7 @@ describe('Policy Manager service', function() {
     let httpMock: HttpTestingController;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
 
-    const error = 'Error Message';
+    const error = {error: '', errorMessage: 'Error Message', errorDetails: []};
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -68,7 +68,7 @@ describe('Policy Manager service', function() {
                     done();
                 });
             const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(error, { status: 400, statusText: 'Error Message' });
         });
         it('successfully', function(done) {
             service.getPolicies()
@@ -111,7 +111,7 @@ describe('Policy Manager service', function() {
                     done();
                 });
             const request = httpMock.expectOne({url: `${service.prefix}/id`, method: 'GET'});
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(error, { status: 400, statusText: 'Error Message' });
         });
         it('successfully', function(done) {
             service.getPolicy('id')
@@ -135,7 +135,7 @@ describe('Policy Manager service', function() {
                 });
             const request = httpMock.expectOne({url: `${service.prefix}/${this.policy.PolicyId}`, method: 'PUT'});
             expect(request.request.body).toEqual(this.policy);
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(error, { status: 400, statusText: 'Error Message' });
         });
         it('when resolved', function(done) {
             service.updatePolicy(this.policy)

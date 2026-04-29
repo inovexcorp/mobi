@@ -28,6 +28,7 @@ import { trim, map } from 'lodash';
 
 import { REGEX } from '../../../constants';
 import { DatasetRecordConfig } from '../../../shared/models/datasetRecordConfig.interface';
+import { RESTError } from '../../../shared/models/RESTError.interface';
 import { Repository } from '../../../shared/models/repository.interface';
 import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
 import { RepositoryManagerService } from '../../../shared/services/repositoryManager.service';
@@ -49,7 +50,7 @@ import { OntologyDetails } from '../../models/ontologyDetails.interface';
 export class NewDatasetOverlayComponent implements OnInit {
   readyFlag = false;
   iriPattern = REGEX.IRI;
-  error = '';
+  error?: RESTError;
   createDatasetForm = this.fb.group({
     title: ['', [Validators.required]],
     description: [''],

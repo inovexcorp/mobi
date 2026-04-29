@@ -42,6 +42,7 @@ import { OntologyRecordActionI } from '../../services/ontologyRecordAction.inter
 import { OntologyStateService } from '../../services/ontologyState.service';
 import { OWL } from '../../../prefixes';
 import { PropertyManagerService } from '../../services/propertyManager.service';
+import { RESTError } from '../../models/RESTError.interface';
 import { ToastService } from '../../services/toast.service';
 import { VersionedRdfRecord } from '../../models/versionedRdfRecord.interface';
 import { ImportsBlockComponent } from './importsBlock.component';
@@ -58,6 +59,11 @@ describe('Imports Block component', function() {
   let _ontologyRecordActionSubject: Subject<OntologyRecordActionI>;
 
   const error = 'Error Message';
+  const errorObject: RESTError = {
+    errorMessage: 'Error Message',
+    errorDetails: [],
+    error: ''
+  };
   const ontologyId = 'ontologyId';
   const recordId = 'recordId';
   const branchId = 'branchId';
@@ -248,7 +254,7 @@ describe('Imports Block component', function() {
           expect(toastStub.createErrorToast).not.toHaveBeenCalled();
         }));
         it('rejected', fakeAsync(function() {
-          ontologyStateStub.changeVersion.and.returnValue(throwError(error));
+          ontologyStateStub.changeVersion.and.returnValue(throwError(errorObject));
           component.refresh();
           tick();
           expect(ontologyManagerStub.clearCache).toHaveBeenCalledWith(recordId, commitId);
@@ -256,11 +262,11 @@ describe('Imports Block component', function() {
           expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
           expect(component.setImports).not.toHaveBeenCalled();
           expect(component.setIndirectImports).not.toHaveBeenCalled();
-          expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
+          expect(toastStub.createErrorToast).toHaveBeenCalledWith(errorObject.errorMessage);
         }));
       });
       it('rejected', fakeAsync(function() {
-        ontologyManagerStub.clearCache.and.returnValue(throwError(error));
+        ontologyManagerStub.clearCache.and.returnValue(throwError(errorObject));
         component.refresh();
         tick();
         expect(ontologyManagerStub.clearCache).toHaveBeenCalledWith(recordId, commitId);
@@ -268,7 +274,7 @@ describe('Imports Block component', function() {
         expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
         expect(component.setImports).not.toHaveBeenCalled();
         expect(component.setIndirectImports).not.toHaveBeenCalled();
-        expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
+        expect(toastStub.createErrorToast).toHaveBeenCalledWith(errorObject.errorMessage);
       }));
     });
     it('setImports should set the value correctly', function() {

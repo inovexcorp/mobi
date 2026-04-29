@@ -27,6 +27,7 @@ import { Subscription } from 'rxjs';
 
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
+import { RESTError } from '../../../shared/models/RESTError.interface';
 
 /**
  * @class mapper.FileUploadFormComponent
@@ -41,7 +42,7 @@ import { MapperStateService } from '../../../shared/services/mapperState.service
   templateUrl: './fileUploadForm.component.html'
 })
 export class FileUploadFormComponent implements OnInit, OnDestroy {
-  errorMessage = '';
+  error: RESTError;
   uploadFileForm = this.fb.group({
     containsHeaders: [true],
     separator: [',']
@@ -78,7 +79,7 @@ export class FileUploadFormComponent implements OnInit, OnDestroy {
     if (this.dm.fileObj) {
       this.dm.upload(this.dm.fileObj).subscribe(data => {
         this.dm.fileName = data;
-        this.errorMessage = '';
+        this.error = undefined;
         this.dm.previewFile(50).subscribe(() => this.state.setInvalidProps(), error => this._onError(error));
       }, error => this._onError(error));
     }
@@ -86,13 +87,13 @@ export class FileUploadFormComponent implements OnInit, OnDestroy {
   changeSeparator(value: string): void {
     this.dm.separator = value;
     this.dm.previewFile(50).subscribe(() => {
-      this.errorMessage = '';
+      this.error = undefined;
       this.state.setInvalidProps();
     }, error => this._onError(error));
   }
 
-  private _onError(errorMessage) {
-    this.errorMessage = errorMessage;
+  private _onError(error: RESTError) {
+    this.error = error;
     this.dm.dataRows = undefined;
     this.state.invalidProps = [];
   }

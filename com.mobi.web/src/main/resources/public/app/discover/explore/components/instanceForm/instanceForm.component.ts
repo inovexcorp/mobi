@@ -207,8 +207,8 @@ export class InstanceFormComponent implements OnInit {
                         this.options = filter(options, item => this.eu.contains(item.title, this.searchText[propertyIRI]) || this.eu.contains(item.instanceIRI, this.searchText[propertyIRI]));
                     }
                     this.options = options;
-                }, errorMessage => {
-                    this.toast.createErrorToast(errorMessage);
+                }, error => {
+                    this.toast.createErrorToast(error.errorMessage);
                     this.options = [];
                 });
         }

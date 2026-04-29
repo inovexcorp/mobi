@@ -565,7 +565,7 @@ describe('Shapes Graph State service', function () {
   describe('create makes a new shapes graph record without opening it', function () {
     it('unless no file or JSON-LD was provided', fakeAsync(function () {
       service.create({ title: '' }).subscribe(() => fail('Observable should have failed'), error => {
-        expect(error).toEqual('Creation requires a file or JSON-LD');
+        expect(error).toEqual({error: '', errorMessage: 'Creation requires a file or JSON-LD', errorDetails: []});
       });
       tick();
       expect(shapesGraphManagerStub.createShapesGraphRecord).not.toHaveBeenCalled();
@@ -593,7 +593,7 @@ describe('Shapes Graph State service', function () {
     });
     it('unless no file or JSON-LD was provided', fakeAsync(function () {
       service.createAndOpen({ title: '' }).subscribe(() => fail('Observable should have failed'), error => {
-        expect(error).toEqual('Creation requires a file or JSON-LD');
+        expect(error).toEqual({error: '', errorMessage: 'Creation requires a file or JSON-LD', errorDetails: []});
       });
       tick();
       expect(shapesGraphManagerStub.createShapesGraphRecord).not.toHaveBeenCalled();
@@ -1243,7 +1243,7 @@ describe('Shapes Graph State service', function () {
       sparqlManagerStub.postQuery.and.returnValue(of(sparqlResults));
       service.checkForExcludedPredicates('http://stardog.com/tutorial/AlbumShape')
         .subscribe(() => fail('Observable should not have resolved'), error => {
-          expect(error).toEqual('Could not retrieve number of unsupported predicates.');
+          expect(error).toEqual({error: '', errorMessage: 'Could not retrieve number of unsupported predicates.', errorDetails: []});
           expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.any(String), 'recordId', SHAPES_STORE_TYPE,
             'branchId', 'commitId', true, true, 'jsonld');
         });
@@ -1456,7 +1456,7 @@ describe('Shapes Graph State service', function () {
       service.setSelected(entityIri, null).subscribe(() => {
         fail('Observable should have failed, but it succeeded.');
       }, error => {
-        expect(error).toEqual('Cannot set selected entity: The ShapesGraphListItem was not provided.');
+        expect(error).toEqual({error: '', errorMessage: 'Cannot set selected entity: The ShapesGraphListItem was not provided.', errorDetails: []});
       });
       tick();
       expect(shapesGraphManagerStub.getShapesGraphEntity).not.toHaveBeenCalled();
@@ -2226,7 +2226,7 @@ describe('Shapes Graph State service', function () {
           sparqlManagerStub.postQuery.and.returnValue(of({ head: { vars: [] }, results: { bindings: [] } }));
           spyOn(service, 'saveCurrentChanges');
           service.removePropertyShape(propertyShape).subscribe(() => fail('Observable should have failed'), result => {
-            expect(result).toContain('Associated usages were not updated due to an internal error');
+            expect(result.errorMessage).toContain('Associated usages were not updated due to an internal error');
             expect(propertyManagerStub.remove).not.toHaveBeenCalled();
             expect(service.listItem.selectedBlankNodes).toEqual([{ '@id': '_:b2' }, { '@id': '_:b3' }, { '@id': '_:b4' }]);
             expect(service.listItem.entityInfo[propertyShape.id]).toBeDefined();

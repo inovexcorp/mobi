@@ -132,7 +132,7 @@ describe('Commit Modal component', function() {
                 expect(matDialogRef.close).toHaveBeenCalledWith(true);
             });
             it('unless an error occurs', async function() {
-                catalogManagerStub.createBranchCommit.and.returnValue(throwError('There was an error'));
+                catalogManagerStub.createBranchCommit.and.returnValue(throwError({error: '', errorMessage: 'There was an error', errorDetails: []}));
                 stateStub.listItem.versionedRdfRecord.commitId = 'urn:originalCommitIri';
                 component.createCommitForm.controls['comment'].setValue('testComment');
                 component.createCommit('branch1');
@@ -283,7 +283,7 @@ describe('Commit Modal component', function() {
                 });
                 it('rejects', fakeAsync(function() {
                     spyOn(component, 'createCommit');
-                    catalogManagerStub.getRecordBranch.and.returnValue(throwError('Error'));
+                    catalogManagerStub.getRecordBranch.and.returnValue(throwError({error: '', errorMessage: 'Error', errorDetails: []}));
                     component.commit();
                     tick();
                     expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error');

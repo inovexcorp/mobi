@@ -34,6 +34,7 @@ import org.mockito.Mockito;
 import javax.ws.rs.core.Response;
 import java.util.Optional;
 
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorResponse;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
@@ -74,8 +75,13 @@ public class UsernameRestTest extends MobiRestTestCXF {
 
     @Test
     public void getUserForUserThatDoesNotExistTest() {
-        Response response = target().path("users/username").queryParam("iri", "http://example.com/error")
+        when(engineManager.getUsername(vf.createIRI(TEST_IRI)))
+                .thenReturn(Optional.empty());
+
+        Response response = target().path("username")
+                .queryParam("iri", TEST_IRI)
                 .request().get();
-        assertEquals(404, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "User not found");
     }
+
 }

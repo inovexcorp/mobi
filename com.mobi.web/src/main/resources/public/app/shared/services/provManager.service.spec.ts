@@ -35,7 +35,7 @@ describe('Prov Manager service', function() {
     let spinnerSvcStub: jasmine.SpyObj<ProgressSpinnerService>;
     let httpMock: HttpTestingController;
 
-    const error = 'Error Message';
+    const error = {error: '', errorMessage: 'Error Message', errorDetails: []};
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -74,7 +74,7 @@ describe('Prov Manager service', function() {
                     });
 
                 const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
-                request.flush('flush', { status: 400, statusText: error });
+                request.flush(error, { status: 400, statusText: 'Error Message' });
             });
             it('with all config passed', function() {
                 service.getActivities({offset: 2, limit: 5, entity: 'urn:test', agent: 'urn:user'}, isTracked)
@@ -111,7 +111,7 @@ describe('Prov Manager service', function() {
                     });
 
                 const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
-                request.flush('flush', { status: 400, statusText: error });
+                request.flush(error, { status: 400, statusText: 'Error Message' });
             });
             it('with all config passed', function() {
                 service.getActivities({offset: 2, limit: 5, entity: 'urn:test', agent: 'urn:user'})
@@ -154,7 +154,7 @@ describe('Prov Manager service', function() {
                      });
 
                  const request = httpMock.expectOne({url: `${service.prefix}/actions`, method: 'GET'});
-                 request.flush('flush', { status: 400, statusText: error });
+                 request.flush(error, { status: 400, statusText: 'Error Message' });
              });
              it('successfully', function() {
                  service.getActionWords(isTracked)
@@ -175,7 +175,7 @@ describe('Prov Manager service', function() {
                      });
 
                  const request = httpMock.expectOne({url: `${service.prefix}/actions`, method: 'GET'});
-                 request.flush('flush', { status: 400, statusText: error });
+                 request.flush(error, { status: 400, statusText: 'Error Message' });
              });
              it('successfully', function() {
                  service.getActionWords()

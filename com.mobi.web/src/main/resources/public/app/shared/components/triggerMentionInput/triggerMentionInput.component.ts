@@ -172,7 +172,7 @@ export class TriggerMentionInputComponent implements ControlValueAccessor, Valid
         this.onChange(value);
         // Run validation and sync errors to inputControl
         this._runValidation();
-      });
+      }, error => console.error('Form value error:', error));
   }
 
   ngOnDestroy(): void {

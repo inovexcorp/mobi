@@ -23,6 +23,8 @@ package com.mobi.web.security.jaxrs.provider.impl;
  * #L%
  */
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.web.security.jaxrs.provider.AuthenticationHandler;
 import com.mobi.web.security.jaxrs.provider.AuthorizationHandler;
 import com.mobi.web.security.util.api.SecurityHelper;
@@ -46,6 +48,7 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.ext.Provider;
@@ -84,6 +87,8 @@ public class AuthFilter implements ContainerRequestFilter {
 
     @Reference
     protected AuthorizationHandler authorizationHandler;
+
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private final Map<String, SecurityHelper> helpers = new HashMap<>();
 
@@ -128,7 +133,8 @@ public class AuthFilter implements ContainerRequestFilter {
         if (method.isAnnotationPresent(RolesAllowed.class)) {
             if (principal == null) {
                 // If the user is not authenticated, abort with a 401 Unauthorized status.
-                requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
+                requestContext.abortWith(buildErrorResponse(Response.Status.UNAUTHORIZED,
+                        "User is not authenticated or session has expired"));
             } else {
                 setSecurityContext(principal, requestContext);
                 Set<String> annotatedRoles = new HashSet<>(
@@ -136,7 +142,8 @@ public class AuthFilter implements ContainerRequestFilter {
                 boolean userAllowed = isUserAllowed(annotatedRoles, principal);
                 if (!userAllowed) {
                     // If the user does not have the required roles, abort with a 403 Forbidden status.
-                    requestContext.abortWith(Response.status(Response.Status.FORBIDDEN).build());
+                    requestContext.abortWith(buildErrorResponse(Response.Status.FORBIDDEN,
+                            "User does not have the required role(s) to access this resource"));
                 }
             }
         } else if (principal != null) {
@@ -180,5 +187,16 @@ public class AuthFilter implements ContainerRequestFilter {
             }
         }
         return false;
+    }
+
+    private Response buildErrorResponse(Response.Status status, String message) {
+        ObjectNode body = MAPPER.createObjectNode();
+        body.put("error", "IllegalAccessException");
+        body.put("errorMessage", message);
+        body.set("errorDetails", MAPPER.createArrayNode());
+        return Response.status(status)
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .entity(body.toString())
+                .build();
     }
 }

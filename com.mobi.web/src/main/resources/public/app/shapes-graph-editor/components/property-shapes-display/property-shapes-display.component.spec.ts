@@ -422,7 +422,7 @@ describe('PropertyShapesDisplayComponent', () => {
         expect(toastStub.createErrorToast).not.toHaveBeenCalled();
       }));
       it('unless an error occurs', fakeAsync(() => {
-        shapesGraphStateStub.removePropertyShape.and.returnValue(throwError('Error message'));
+        shapesGraphStateStub.removePropertyShape.and.returnValue(throwError({error: '', errorMessage: 'Error message', errorDetails: []}));
         const currentLength =component.propertyShapes.length;
         component.deletePropertyShape(component.propertyShapes[0]);
         tick();

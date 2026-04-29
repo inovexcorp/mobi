@@ -30,7 +30,7 @@ import { REST_PREFIX } from '../../constants';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { State } from '../models/state.interface';
 import { ToastService } from './toast.service';
-import { createHttpParams, handleError } from '../utility';
+import { createHttpParams, handleErrorObject } from '../utility';
 
 /**
  * @class shared.StateManagerService
@@ -82,7 +82,7 @@ export class StateManagerService {
             subjects
         });
         return this.http.get<State[]>(this.prefix, { params })
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
     /**
      * Calls the POST /mobirest/states endpoint with the provided state JSON-LD and a string identifying the
@@ -98,7 +98,7 @@ export class StateManagerService {
         const headers = new HttpHeaders().append('Content-Type', 'application/json');
         const params = createHttpParams(application ? { application } : {});
         return this.http.post(this.prefix, stateJson, { headers, params, responseType: 'text' }).pipe(
-            catchError(handleError),
+            catchError(handleErrorObject),
             map(stateId => {
                 this.states.push({id: stateId, model: stateJson});
                 return null;
@@ -115,7 +115,7 @@ export class StateManagerService {
      */
     getState(stateId: string): Observable<State> {
         return this.http.get<State>(`${this.prefix}/${encodeURIComponent(stateId)}`)
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
     /**
      * Calls the PUT /mobirest/states/{stateId} endpoint and updates the identified state with the provided IRI
@@ -129,7 +129,7 @@ export class StateManagerService {
      */
     updateState(stateId: string, stateJson: JSONLDObject[]): Observable<null> {
         return this.http.put(`${this.prefix}/${encodeURIComponent(stateId)}`, stateJson).pipe(
-            catchError(handleError),
+            catchError(handleErrorObject),
             map(() => {
                 this.states.forEach(state => {
                     if (get(state, 'id', '') === stateId) {
@@ -151,7 +151,7 @@ export class StateManagerService {
      */
     deleteState(stateId: string): Observable<null> {
         return this.http.delete(`${this.prefix}/${encodeURIComponent(stateId)}`).pipe(
-            catchError(handleError),
+            catchError(handleErrorObject),
             map(() => {
                 remove(this.states, {id: stateId});
                 return null;

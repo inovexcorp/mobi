@@ -255,7 +255,7 @@ describe('Instance Cards component', function() {
                         expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                     });
                     it('rejected', function() {
-                        exploreServiceStub.getClassDetails.and.returnValue(throwError('error'));
+                        exploreServiceStub.getClassDetails.and.returnValue(throwError({error: '', errorMessage: 'error', errorDetails: []}));
                         component.delete(data[0]);
                         fixture.detectChanges();
                         expect(exploreServiceStub.deleteInstance).toHaveBeenCalledWith(discoverStateStub.explore.recordId, data[0].instanceIRI);
@@ -263,7 +263,7 @@ describe('Instance Cards component', function() {
                         expect(exploreServiceStub.getClassDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId);
                         expect(exploreServiceStub.getClassInstanceDetails).not.toHaveBeenCalled();
                         expect(discoverStateStub.clickCrumb).not.toHaveBeenCalled();
-                        expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+                        expect(toastStub.createErrorToast).toHaveBeenCalledWith({error: '', errorMessage: 'error', errorDetails: []} as any);
                     });
                 });
                 describe('there are more instances and getClassInstanceDetails is', function() {
@@ -307,26 +307,26 @@ describe('Instance Cards component', function() {
                     });
                     it('rejected', function() {
                         exploreServiceStub.getClassInstanceDetails.and
-                            .returnValue(throwError('error'));
+                            .returnValue(throwError({error: '', errorMessage: 'error', errorDetails: []}));
                         component.delete(data[0]);
                         fixture.detectChanges();
                         expect(exploreServiceStub.deleteInstance).toHaveBeenCalledWith(discoverStateStub.explore.recordId, data[0].instanceIRI);
                         expect(toastStub.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
                         expect(exploreServiceStub.getClassDetails).not.toHaveBeenCalled();
                         expect(exploreServiceStub.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId, discoverStateStub.explore.classId, {pageIndex: 2, limit: 1});
-                        expect(toastStub.createErrorToast).toHaveBeenCalledWith('error');
+                        expect(toastStub.createErrorToast).toHaveBeenCalledWith({error: '', errorMessage: 'error', errorDetails: []} as any);
                     });
                 });
             });
             it('rejected', function() {
                 exploreServiceStub.deleteInstance.and
-                    .returnValue(throwError('error'));
+                    .returnValue(throwError({error: '', errorMessage: 'error', errorDetails: []}));
                 component.delete(data[1]);
                 fixture.detectChanges();
                 expect(exploreServiceStub.deleteInstance).toHaveBeenCalledWith(discoverStateStub.explore.recordId, data[1].instanceIRI);
                 expect(exploreServiceStub.getClassDetails).not.toHaveBeenCalled();
                 expect(exploreServiceStub.getClassInstanceDetails).not.toHaveBeenCalled();
-                expect(toastStub.createErrorToast).toHaveBeenCalledWith('error');
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith({error: '', errorMessage: 'error', errorDetails: []} as any);
             });
         });
         it('confirmDelete should call the correct methods', function() {

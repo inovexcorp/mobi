@@ -27,9 +27,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.exception.MobiException;
+import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -109,10 +109,9 @@ public class SSERest implements EventHandler {
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })

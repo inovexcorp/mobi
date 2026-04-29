@@ -39,7 +39,7 @@ import { WorkflowExecutionActivityI } from '../models/workflow-execution-activit
 import { WorkflowPaginatedConfig } from '../models/workflow-paginated-config.interface';
 import { WorkflowSchema } from '../models/workflow-record.interface';
 import {
-  condenseCommitId, createHttpParams, handleError, handleErrorObject, paginatedConfigToHttpParams, runningTime,
+  condenseCommitId, createHttpParams, handleErrorObject, paginatedConfigToHttpParams, runningTime,
   toFormattedDateString
 } from '../../shared/utility';
 import { XACMLRequest } from '../../shared/models/XACMLRequest.interface';
@@ -558,14 +558,14 @@ export class WorkflowsManagerService {
 
   private _handleCommitError(err: HttpErrorResponse, recordId: string, catalogId: string): Observable<void> {
     if (err.status === 404) {
-      return this._cm.createInProgressCommit(recordId, catalogId).pipe(catchError(handleError));
+      return this._cm.createInProgressCommit(recordId, catalogId).pipe(catchError(handleErrorObject));
     } else {
-      return handleError(err);
+      return handleErrorObject(err);
     }
   }
 
   private _handleCommitSuccess(recordId: string, catalogId: string, changes: Difference): Observable<void> {
-    return this._cm.updateInProgressCommit(recordId, catalogId, changes).pipe(catchError(handleError));
+    return this._cm.updateInProgressCommit(recordId, catalogId, changes).pipe(catchError(handleErrorObject));
   }
 
   private _buildWorkflowUrl(workflowRecordIRI: string): string {

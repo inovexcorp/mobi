@@ -71,7 +71,7 @@ export class InstancesDisplayComponent implements OnInit {
                             this.state.explore.hasPermissionError = false;
                             this.state.explore.instanceDetails.data = [];
                             merge(this.state.explore.instanceDetails, this.es.createPagedResultsObject(response));
-                        }, error => this.toast.createErrorToast(error)); 
+                        }, error => this.toast.createErrorToast(error.errorMessage));
                 } else {
                     this.toast.createErrorToast('You don\'t have permission to read dataset');
                     this.state.explore.instanceDetails.data = [];

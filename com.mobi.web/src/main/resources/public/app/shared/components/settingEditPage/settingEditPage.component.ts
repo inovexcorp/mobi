@@ -88,6 +88,6 @@ export class SettingEditPageComponent implements OnInit {
                 if (this.tabs.length) {
                     this.tabs[0].active = true;
                 }
-            }, (errorMessage) => this.toast.createErrorToast(errorMessage));
+            }, error => this.toast.createErrorToast(error.errorMessage));
     }
 }

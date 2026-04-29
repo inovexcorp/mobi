@@ -43,6 +43,7 @@ import { UserManagerService } from './userManager.service';
 import { OntologyManagerService } from './ontologyManager.service';
 import { ToastService } from './toast.service';
 import { User } from '../models/user.class';
+import { RESTError } from '../models/RESTError.interface';
 import { MergeRequestsStateService } from './mergeRequestsState.service';
 
 describe('Merge Requests State service', function() {
@@ -56,6 +57,7 @@ describe('Merge Requests State service', function() {
   const openRequest = { requestStatus: 'open' };
 
   const error = 'Error Message';
+  const errorObj: RESTError = {error: '', errorMessage: error, errorDetails: []};
   const catalogId = 'catalogId';
   const requestId = 'requestId';
   const recordId = 'recordId';
@@ -241,7 +243,7 @@ describe('Merge Requests State service', function() {
             expect(service.requests).toEqual([this.requestObj]);
           }));
           it('rejects', fakeAsync(function() {
-            catalogManagerStub.getRecord.and.returnValue(throwError(error));
+            catalogManagerStub.getRecord.and.returnValue(throwError(errorObj));
             service.setRequests(acceptedRequest);
             tick();
             expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({requestStatus: 'accepted'});
@@ -255,7 +257,7 @@ describe('Merge Requests State service', function() {
         });
       });
       it('rejects', fakeAsync(function() {
-        mergeRequestManagerStub.getRequests.and.returnValue(throwError(error));
+        mergeRequestManagerStub.getRequests.and.returnValue(throwError(errorObj));
         service.setRequests(acceptedRequest);
         tick();
         expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({requestStatus: 'accepted'});
@@ -286,7 +288,7 @@ describe('Merge Requests State service', function() {
             expect(service.requests).toEqual([this.requestObj]);
           }));
           it('rejects', fakeAsync(function() {
-            catalogManagerStub.getRecord.and.returnValue(throwError(error));
+            catalogManagerStub.getRecord.and.returnValue(throwError(errorObj));
             service.setRequests(openRequest);
             tick();
             expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({requestStatus: 'open'});
@@ -300,7 +302,7 @@ describe('Merge Requests State service', function() {
         });
       });
       it('rejects', fakeAsync(function() {
-        mergeRequestManagerStub.getRequests.and.returnValue(throwError(error));
+        mergeRequestManagerStub.getRequests.and.returnValue(throwError(errorObj));
         service.setRequests(openRequest);
         tick();
         expect(mergeRequestManagerStub.getRequests).toHaveBeenCalledWith({requestStatus: 'open'});
@@ -791,7 +793,7 @@ describe('Merge Requests State service', function() {
       spyOn(service, 'setDifference');
       service.processDifferenceResponse(recordId, sourceBranch['@id'], 'commitId', undefined, `${ONTOLOGYEDITOR}OntologyRecord`)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(jasmine.stringContaining('Difference is not set'));
+          expect(response.errorMessage).toEqual(jasmine.stringContaining('Difference is not set'));
           expect(ontologyManagerStub.getOntologyEntityNames).not.toHaveBeenCalled();
           expect(service.entityNames).toEqual({});
           expect(service.setDifference).not.toHaveBeenCalled();
@@ -972,7 +974,7 @@ describe('Merge Requests State service', function() {
     const paginationDetails = { limit: 100, offset: 10 };
     describe('when getDifference resolves', function() {
       it('unless processDifferenceResponse rejects', fakeAsync(function() {
-        spyOn(service, 'processDifferenceResponse').and.returnValue(throwError(error));
+        spyOn(service, 'processDifferenceResponse').and.returnValue(throwError(errorObj));
         service.selected = Object.assign({}, requestObj);
         service.selected.sourceBranch = sourceBranch;
         service.retrieveMoreResults(paginationDetails);
@@ -1035,7 +1037,7 @@ describe('Merge Requests State service', function() {
     });
     it('unless getDifference rejects', fakeAsync(function() {
       spyOn(service, 'processDifferenceResponse');
-      catalogManagerStub.getDifference.and.returnValue(throwError(error));
+      catalogManagerStub.getDifference.and.returnValue(throwError(errorObj));
       service.selected = requestObj;
       service.retrieveMoreResults(paginationDetails);
       tick();

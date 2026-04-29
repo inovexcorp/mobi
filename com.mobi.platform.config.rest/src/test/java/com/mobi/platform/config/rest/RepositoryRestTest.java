@@ -23,6 +23,7 @@ package com.mobi.platform.config.rest;
  * #L%
  */
 
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorResponse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -131,6 +132,7 @@ public class RepositoryRestTest extends MobiRestTestCXF {
     @Test
     public void getRepositoryFailureTest() {
         Response response = target().path("repositories/ERROR").request().get();
-        assertEquals(response.getStatus(), 400);
+        assertErrorResponse(response, 404, "MobiNotFoundException", "No repository found for that id");
     }
+
 }

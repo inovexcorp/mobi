@@ -131,7 +131,7 @@ describe('Create branch component', function() {
           expect(toastStub.createErrorToast).not.toHaveBeenCalled();
         });
         it('unless an error occurs', async function() {
-          stateStub.updateState.and.returnValue(throwError('Error'));
+          stateStub.updateState.and.returnValue(throwError({error: '', errorMessage: 'Error', errorDetails: []}));
           await component.createBranch();
 
           expect(catalogManagerStub.createRecordBranch).toHaveBeenCalledWith('recordId', 'catalog', this.branchConfig, 'commitId');
@@ -146,7 +146,7 @@ describe('Create branch component', function() {
         });
       });
       it('unless an error occurs', async function() {
-        catalogManagerStub.createRecordBranch.and.returnValue(throwError('Error'));
+        catalogManagerStub.createRecordBranch.and.returnValue(throwError({error: '', errorMessage: 'Error', errorDetails: []}));
         await component.createBranch();
 
         expect(catalogManagerStub.createRecordBranch).toHaveBeenCalledWith('recordId', 'catalog', this.branchConfig, 'commitId');

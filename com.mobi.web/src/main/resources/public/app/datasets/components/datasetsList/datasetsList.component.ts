@@ -139,7 +139,7 @@ export class DatasetsListComponent implements OnInit {
         }
         this.setResults();
         this.state.submittedSearch = !!this.state.paginationConfig.searchText;
-      }, error => this.toast.createErrorToast(error));
+      }, error => this.toast.createErrorToast(error.errorMessage));
   }
   setResults(): void {
     this.spinnerSvc.startLoadingForComponent(this.datasetsList);
@@ -162,7 +162,7 @@ export class DatasetsListComponent implements OnInit {
     this.dm.clearDatasetRecord(dataset.record['@id'])
       .subscribe(() => {
         this.toast.createSuccessToast('Dataset successfully cleared');
-      }, error => this.toast.createErrorToast(error));
+      }, error => this.toast.createErrorToast(error.errorMessage));
   }
   showUploadData(dataset: Dataset): void {
     const request = {

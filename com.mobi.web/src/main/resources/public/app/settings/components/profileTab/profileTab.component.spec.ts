@@ -36,6 +36,7 @@ import {
     cleanStylesFromDOM
 } from '../../../../../public/test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { RestErrorDisplayComponent } from '../../../shared/components/restErrorDisplay/restErrorDisplay.component';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { FOAF, USER } from '../../../prefixes';
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
@@ -60,7 +61,8 @@ describe('Profile Tab component', function() {
             ],
             declarations: [
                 ProfileTabComponent,
-                MockComponent(ErrorDisplayComponent)
+                MockComponent(ErrorDisplayComponent),
+                MockComponent(RestErrorDisplayComponent)
             ],
             providers: [
                 MockProvider(LoginManagerService),
@@ -132,12 +134,12 @@ describe('Profile Tab component', function() {
                 spyOn(component, 'reset');
             });
             it('unless an error occurs', fakeAsync(function() {
-                userManagerStub.updateUser.and.returnValue(throwError('Error message'));
+                userManagerStub.updateUser.and.returnValue(throwError({error: '', errorMessage: 'Error message', errorDetails: []}));
                 component.save();
                 tick();
                 expect(userManagerStub.updateUser).toHaveBeenCalledWith(loginManagerStub.currentUser, userManagerStub.users[0]);
                 expect(component.success).toEqual(false);
-                expect(component.errorMessage).toEqual('Error message');
+                expect(component.error).toEqual({error: '', errorMessage: 'Error message', errorDetails: []});
                 expect(component.reset).not.toHaveBeenCalled();
             }));
             it('with new values', fakeAsync(function() {
@@ -156,7 +158,7 @@ describe('Profile Tab component', function() {
                 }));
                 expect(userManagerStub.updateUser).toHaveBeenCalledWith(loginManagerStub.currentUser, userManagerStub.users[0]);
                 expect(component.success).toEqual(true);
-                expect(component.errorMessage).toEqual('');
+                expect(component.error).toBeFalsy();
                 expect(component.reset).toHaveBeenCalledWith();
             }));
             it('with no values', fakeAsync(function() {
@@ -170,7 +172,7 @@ describe('Profile Tab component', function() {
                 });
                 expect(userManagerStub.updateUser).toHaveBeenCalledWith(loginManagerStub.currentUser, userManagerStub.users[0]);
                 expect(component.success).toEqual(true);
-                expect(component.errorMessage).toEqual('');
+                expect(component.error).toBeFalsy();
                 expect(component.reset).toHaveBeenCalledWith();
             }));
         });
@@ -188,6 +190,13 @@ describe('Profile Tab component', function() {
         });
         it('with inputs', function() {
             expect(element.queryAll(By.css('input')).length).toEqual(3);
+        });
+        it('depending on whether an error occurred', function() {
+            expect(element.queryAll(By.css('rest-error-display')).length).toEqual(0);
+
+            component.error = {error: '', errorMessage: 'Test error', errorDetails: []};
+            fixture.detectChanges();
+            expect(element.queryAll(By.css('rest-error-display')).length).toEqual(1);
         });
         it('depending on whether the password was saved successfully', function() {
             expect(element.queryAll(By.css('.text-success')).length).toEqual(0);

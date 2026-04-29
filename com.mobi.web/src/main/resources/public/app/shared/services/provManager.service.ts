@@ -30,7 +30,8 @@ import { REST_PREFIX } from '../../constants';
 import { ActivityPaginatedConfig } from '../models/activity-paginated-config';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { ActivityAction } from '../models/activityAction.interface';
-import { handleError, paginatedConfigToHttpParams } from '../utility';
+import { RESTError } from '../models/RESTError.interface';
+import { handleErrorObject, paginatedConfigToHttpParams } from '../utility';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 
 /**
@@ -88,11 +89,11 @@ export class ProvManagerService {
         const request = this.http.get<{activities: JSONLDObject[], entities: JSONLDObject[]}>(this.prefix, 
             {params, observe: 'response'});
         return this.spinnerSvc.trackedRequest(request, isTracked)
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
 
     getActionWords(isTracked = false): Observable<ActivityAction[]> {
         return this.spinnerSvc.trackedRequest(this.http.get<ActivityAction[]>(`${this.prefix}/actions`), isTracked)
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
 }

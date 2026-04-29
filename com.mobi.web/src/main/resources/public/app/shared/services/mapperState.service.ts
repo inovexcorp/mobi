@@ -65,6 +65,7 @@ import { MappingState } from '../models/mappingState.interface';
 import { ONTOLOGY_STORE_TYPE } from '../../constants';
 import { OntologyManagerService } from './ontologyManager.service';
 import { PaginatedConfig } from '../models/paginatedConfig.interface';
+import { RESTError } from '../models/RESTError.interface';
 import { SettingManagerService } from './settingManager.service';
 import { SparqlManagerService } from './sparqlManager.service';
 import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
@@ -1012,7 +1013,7 @@ export class MapperStateService {
   setIriMap(): Observable<null> {
     const ontInfo = this.selected.mapping.getSourceOntologyInfo();
     if (!ontInfo?.recordId && !ontInfo?.branchId && !ontInfo?.commitId) {
-      return throwError('SourceOntologyInfo recordId, branchId, and commitId are empty');
+      return throwError({error: '', errorMessage: 'SourceOntologyInfo recordId, branchId, and commitId are empty', errorDetails: []} as RESTError);
     }
     const ontIri = getPropertyId(this.selected.ontology, `${CATALOG}trackedIdentifier`);
     return forkJoin([

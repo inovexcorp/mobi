@@ -34,7 +34,7 @@ import { CatalogStateService } from '../../../shared/services/catalogState.servi
 import { DatasetStateService } from '../../../shared/services/datasetState.service';
 import { Difference } from '../../../shared/models/difference.class';
 import { EntityNamesItem } from '../../../shared/models/entityNamesItem.interface';
-import { getDctermsValue, getPropertyId, handleError } from '../../../shared/utility';
+import { getDctermsValue, getPropertyId, handleErrorObject } from '../../../shared/utility';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
@@ -173,7 +173,7 @@ export class OpenRecordButtonComponent <TData extends VersionedRdfListItem>{
       };
       this._os.open(recordSelect).subscribe(() => {
         this._handleOntologyRecord();
-      }, error => this._toast.createErrorToast(error));
+      }, error => this._toast.createErrorToast(error.errorMessage));
     }
   }
 
@@ -214,7 +214,7 @@ export class OpenRecordButtonComponent <TData extends VersionedRdfListItem>{
         () => {
           this._handleShapesGraphRecord();
         },
-        error => this._toast.createErrorToast(error));
+        error => this._toast.createErrorToast(error.errorMessage));
     }
   }
 
@@ -268,7 +268,7 @@ export class OpenRecordButtonComponent <TData extends VersionedRdfListItem>{
     ).subscribe({
       next: diff => this._handleUpdateEntityRecordSuccess(diff),
       error: errorMsg => {
-        this._toast.createErrorToast(`Error fetching record: ${errorMsg}`);
+        this._toast.createErrorToast(`Error fetching record: ${errorMsg.errorMessage}`);
       }
     });
   }
@@ -287,7 +287,7 @@ export class OpenRecordButtonComponent <TData extends VersionedRdfListItem>{
       // Stop subsequent requests
       return EMPTY;
     } else {
-      return handleError(err);
+      return handleErrorObject(err);
     }
   }
 
@@ -395,7 +395,7 @@ export class OpenRecordButtonComponent <TData extends VersionedRdfListItem>{
       })
     ).subscribe(() => {
       this._resolveDestination();
-    }, error => this._toast.createErrorToast(error));
+    }, error => this._toast.createErrorToast(error.errorMessage));
   }
 
   /**

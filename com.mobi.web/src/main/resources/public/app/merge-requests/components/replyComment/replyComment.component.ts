@@ -64,7 +64,7 @@ export class ReplyCommentComponent {
             .subscribe(comments => {
                 this.request.comments = comments;
                 this.requestChange.emit(this.request);
-            }, error => this.toast.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error.errorMessage));
     }
     cancel(): void {
         this.replyComment = '';

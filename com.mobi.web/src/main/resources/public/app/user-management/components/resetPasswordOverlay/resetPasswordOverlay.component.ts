@@ -28,6 +28,7 @@ import { MatDialogRef } from '@angular/material/dialog';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { UserStateService } from '../../../shared/services/userState.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { RESTError } from '../../../shared/models/RESTError.interface';
 
 /**
  * @class user-management.ResetPasswordOverlayComponent
@@ -41,7 +42,7 @@ import { ToastService } from '../../../shared/services/toast.service';
     templateUrl: './resetPasswordOverlay.component.html'
 })
 export class ResetPasswordOverlayComponent {
-    errorMessage = '';
+    error: RESTError;
     resetPasswordForm = this.fb.group({
         unmaskPassword: ['', [Validators.required]],
     });
@@ -59,13 +60,13 @@ export class ResetPasswordOverlayComponent {
             .subscribe({
                 next: () => {
                     this.toast.createSuccessToast('Password successfully reset');
-                    this.errorMessage = '';
+                    this.error = undefined;
                     this.dialogRef.close();
                     isDialogClosed = true;
-                }, 
-                error: (error) => {
+                },
+                error: (error: RESTError) => {
                     requestErrorFlag = true;
-                    this.errorMessage = error;
+                    this.error = error;
                 },
                 complete: () => {
                     if (!isDialogClosed && !requestErrorFlag) {

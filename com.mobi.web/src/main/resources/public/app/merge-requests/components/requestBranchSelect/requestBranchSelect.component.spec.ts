@@ -55,7 +55,7 @@ describe('Request Branch Select component', function() {
     const recordId = 'recordId';
     const branchId = 'branchId';
     const commitId = 'commitId';
-    const error = 'error';
+    const error = {error: '', errorMessage: 'error', errorDetails: []};
     const branch: JSONLDObject = {
       '@id': branchId,
       [`${DCTERMS}title`]: [{ '@value': 'title' }],
@@ -182,7 +182,7 @@ describe('Request Branch Select component', function() {
             expect(component.branches).toEqual([]);
             expect(mergeRequestsStateStub.updateRequestConfigBranch).not.toHaveBeenCalled();
             expect(mergeRequestsStateStub.updateRequestConfigBranch).not.toHaveBeenCalled();
-            expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
+            expect(toastStub.createErrorToast).toHaveBeenCalledWith(error.errorMessage);
         }));
     });
     it('should clean up on destroy', function() {

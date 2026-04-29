@@ -112,6 +112,7 @@ import { RdfDownload } from '../models/rdfDownload.interface';
 import { RdfUpdate } from '../models/rdfUpdate.interface';
 import { RdfUpload } from '../models/rdfUpload.interface';
 import { RecordSelectFiltered } from '../../versioned-rdf-record-editor/models/record-select-filtered.interface';
+import { RESTError } from '../models/RESTError.interface';
 import { SettingManagerService } from './settingManager.service';
 import { SPARQLSelectBinding } from '../models/sparqlSelectResults.interface';
 import { splitIRI } from '../pipes/splitIRI.pipe';
@@ -321,7 +322,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
    */
   create(rdfUpload: RdfUpload): Observable<VersionedRdfUploadResponse> {
     if (!rdfUpload.jsonld && !rdfUpload.file) {
-      return throwError('Creation requires a file or JSON-LD');
+      return throwError({error: '', errorMessage: 'Creation requires a file or JSON-LD', errorDetails: []} as RESTError);
     }
     return this.om.uploadOntology(rdfUpload, true);
   }
@@ -333,7 +334,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
    */
   createAndOpen(rdfUpload: RdfUpload): Observable<VersionedRdfUploadResponse> {
     if (!rdfUpload.jsonld && !rdfUpload.file) {
-      return throwError('Creation requires a file or JSON-LD');
+      return throwError({error: '', errorMessage: 'Creation requires a file or JSON-LD', errorDetails: []} as RESTError);
     }
     let listItem: OntologyListItem;
     return this.om.uploadOntology(rdfUpload).pipe(
@@ -721,7 +722,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         listItem.conceptSchemes.flat = this.flattenHierarchy(listItem.conceptSchemes, listItem);
         unset(listItem.editorTabStates.concepts, 'entityIRI');
         unset(listItem.editorTabStates.concepts, 'usages');
-      }, error => this.toast.createErrorToast(error));
+      }, error => this.toast.createErrorToast(error.errorMessage));
   }
 
   /**
@@ -1082,16 +1083,16 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
    */
   onIriEdit(iriBegin: string, iriThen: string, iriEnd: string): Observable<void> {
     if (!iriBegin) {
-      return throwError('OnEdit validation failed for iriBegin');
+      return throwError({error: '', errorMessage: 'OnEdit validation failed for iriBegin', errorDetails: []} as RESTError);
     }
     if (!iriThen) {
-      return throwError('OnEdit validation failed for iriThen');
+      return throwError({error: '', errorMessage: 'OnEdit validation failed for iriThen', errorDetails: []} as RESTError);
     }
     if (!iriEnd) {
-      return throwError('OnEdit validation failed for iriEnd');
+      return throwError({error: '', errorMessage: 'OnEdit validation failed for iriEnd', errorDetails: []} as RESTError);
     }
     if (!this.listItem.versionedRdfRecord.recordId) {
-      return throwError('OnEdit validation failed for recordId');
+      return throwError({error: '', errorMessage: 'OnEdit validation failed for recordId', errorDetails: []} as RESTError);
     }
     const newIRI = iriBegin + iriThen + iriEnd;
     const oldEntity = cloneDeep(this.listItem.selected);
@@ -2125,9 +2126,9 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
       entityIRI,
       'construct'
     ).pipe(
-      catchError(errorMessage => {
-        this.toast.createErrorToast(errorMessage);
-        return throwError(errorMessage);
+      catchError(error => {
+        this.toast.createErrorToast(error.errorMessage);
+        return throwError(error);
       }),
       switchMap(statements => {
         this.removeEntity(entityIRI);
@@ -2658,7 +2659,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         this.openAt(flatHierarchy, iri, tabIndex);
         this.listItem.tabIndex = tabIndex;
       }
-    }, error => this.toast.createErrorToast(error));
+    }, error => this.toast.createErrorToast(error.errorMessage));
   }
 
   private _getScrollIndex(iri: string, flatHierarchy: HierarchyNode[], key: number = undefined, property = false, checkPropertyOpened: () => boolean = () => false): number {

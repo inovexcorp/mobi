@@ -23,12 +23,13 @@ package com.mobi.document.translator.rest;
  * #L%
  */
 
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorResponse;
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorType;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getOrmFactoryRegistry;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService;
 import static org.junit.Assert.assertEquals;
-
 import com.mobi.document.translator.SemanticTranslator;
 import com.mobi.document.translator.expression.DefaultIriExpressionProcessor;
 import com.mobi.document.translator.impl.csv.CsvSemanticTranslator;
@@ -133,7 +134,7 @@ public class DocumentTranslatorRestTest extends MobiRestTestCXF {
         Response response = target().path("translate").request()
                 .post(Entity.entity(formData.body(), MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(response.getStatus(), 500);
+        assertErrorType(response, 500, "SemanticTranslationException");
     }
 
     @Test
@@ -145,7 +146,7 @@ public class DocumentTranslatorRestTest extends MobiRestTestCXF {
         Response response = target().path("translate").request()
                 .post(Entity.entity(formData.body(), MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(response.getStatus(), 400);
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -161,6 +162,17 @@ public class DocumentTranslatorRestTest extends MobiRestTestCXF {
     }
 
     @Test
+    public void testMissingFile() {
+        FormDataMultiPart formData = new FormDataMultiPart();
+        formData.field("type", "csv");
+
+        Response response = target().path("translate").request().post(Entity.entity(formData.body(),
+                MediaType.MULTIPART_FORM_DATA));
+
+        assertErrorResponse(response, 400, "IllegalArgumentException", "The file is missing.");
+    }
+
+    @Test
     public void testInvalidFile() {
         FormDataMultiPart formData = new FormDataMultiPart();
         formData.bodyPart("file", "test.docx", getClass().getResourceAsStream("/test.docx"));
@@ -168,7 +180,7 @@ public class DocumentTranslatorRestTest extends MobiRestTestCXF {
         Response response = target().path("translate").request().post(Entity.entity(formData.body(),
                 MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(response.getStatus(), 400);
+        assertErrorResponse(response, 400, "UnsupportedOperationException", "No translator was found in the system for that file type");
     }
 
     private static Field getField(Class<?> clazz, String name) throws Exception {

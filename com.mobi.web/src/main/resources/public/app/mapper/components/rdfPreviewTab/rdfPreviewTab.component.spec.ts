@@ -34,6 +34,7 @@ import {
     cleanStylesFromDOM
 } from '../../../../../public/test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { RestErrorDisplayComponent } from '../../../shared/components/restErrorDisplay/restErrorDisplay.component';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { Mapping } from '../../../shared/models/mapping.class';
@@ -49,7 +50,7 @@ describe('RDF Preview tab component', function() {
     let mapperStateStub: jasmine.SpyObj<MapperStateService>;
     let delimitedManagerStub: jasmine.SpyObj<DelimitedManagerService>;
 
-    const error = 'Error message';
+    const error = {error: '', errorMessage: 'Error message', errorDetails: []};
 
     let mappingStub: jasmine.SpyObj<Mapping>;
 
@@ -64,6 +65,7 @@ describe('RDF Preview tab component', function() {
             declarations: [
                 RdfPreviewTabComponent,
                 MockComponent(ErrorDisplayComponent),
+                MockComponent(RestErrorDisplayComponent),
                 MockComponent(MapperSerializationSelectComponent),
                 MockComponent(CodemirrorComponent),
                 MockComponent(PreviewDataGridComponent),
@@ -137,8 +139,18 @@ describe('RDF Preview tab component', function() {
                 tick();
                 expect(delimitedManagerStub.previewMap).toHaveBeenCalledWith([], '');
                 expect(delimitedManagerStub.preview).toEqual('');
-                expect(component.errorMessage).toEqual(error);
+                expect(component.error).toEqual(error);
                 expect(component.previewForm.controls.preview.value).toEqual('');
+            }));
+            it('should succeed after a previous error', fakeAsync(function() {
+                component.error = error;
+                delimitedManagerStub.previewMap.and.returnValue(of('preview'));
+                component.previewForm.controls.serialization.setValue('turtle');
+                component.generatePreview();
+                tick();
+                expect(delimitedManagerStub.previewMap).toHaveBeenCalledWith([], 'turtle');
+                expect(delimitedManagerStub.preview).toEqual('preview');
+                expect(component.previewForm.controls.preview.value).toEqual('preview');
             }));
             describe('successfully', function() {
                 it('if format is JSON-LD', fakeAsync(function() {
@@ -191,11 +203,11 @@ describe('RDF Preview tab component', function() {
             });
         });
         it('depending on whether an error has occurred', function() {
-            expect(element.queryAll(By.css('error-display')).length).toEqual(0);
+            expect(element.queryAll(By.css('rest-error-display')).length).toEqual(0);
 
-            component.errorMessage = error;
+            component.error = error;
             fixture.detectChanges();
-            expect(element.queryAll(By.css('error-display')).length).toEqual(1);
+            expect(element.queryAll(By.css('rest-error-display')).length).toEqual(1);
         });
     });
     it('should call generatePreview when the Refresh button is clicked', function() {

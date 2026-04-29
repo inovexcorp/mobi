@@ -75,7 +75,7 @@ export class AppComponent implements OnInit {
                 if (title) {
                 this.titleService.setTitle(`${title} | Mobi`);
                 }
-            });
+            }, error => console.error('Router event error:', error));
     }
 
     // Throws an alert if there are unsaved changes that would be lost if you closed the page

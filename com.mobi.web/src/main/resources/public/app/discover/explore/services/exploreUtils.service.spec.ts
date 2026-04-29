@@ -212,7 +212,7 @@ describe('Explore Utils Service', function() {
                 .subscribe(function() {
                     fail('Observable should have rejected');
                 }, function(response) {
-                    expect(response).toEqual('Dataset could not be found');
+                    expect(response).toEqual({error: '', errorMessage: 'Dataset could not be found', errorDetails: []});
                 });
         });
         it('unless an error occurs', function() {
@@ -221,7 +221,7 @@ describe('Explore Utils Service', function() {
                 .subscribe(function() {
                     fail('Observable should have rejected'); 
                 }, function(response) {
-                    expect(response).toEqual('The Dataset ontologies could not be found');
+                    expect(response).toEqual({error: '', errorMessage: 'The Dataset ontologies could not be found', errorDetails: []});
                 });
             expect(datasetManagerStub.getOntologyIdentifiers).toHaveBeenCalledWith(datasetManagerStub.datasetRecords[0]);
             expect(ontologyManagerStub.getOntologyClasses).toHaveBeenCalledWith('recordId', 'branchId', 'commitId', false);
@@ -232,7 +232,7 @@ describe('Explore Utils Service', function() {
                 .subscribe(function() {
                     fail('Observable should have rejected');
                 }, function(response) {
-                    expect(response).toEqual('The Dataset classes could not be retrieved');
+                    expect(response).toEqual({error: '', errorMessage: 'The Dataset classes could not be retrieved', errorDetails: []});
                 });
             expect(datasetManagerStub.getOntologyIdentifiers).toHaveBeenCalledWith(datasetManagerStub.datasetRecords[0]);
             expect(ontologyManagerStub.getOntologyClasses).toHaveBeenCalledWith('recordId', 'branchId', 'commitId', false);

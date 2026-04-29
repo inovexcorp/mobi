@@ -99,7 +99,7 @@ export class SelectedDetailsComponent implements OnChanges {
         switchMap(() => this.stateService.saveCurrentChanges())
       ).subscribe(() => {
         this.stateService.updateLabel();
-      }, error => this._toast.createErrorToast(error));
+      }, error => this._toast.createErrorToast(error.errorMessage));
   }
 
   showTypesOverlay(): void {

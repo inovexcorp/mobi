@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
+<rest-error-display *ngIf="error" [error]="error"></rest-error-display>
 <div *ngFor="let settingIRI of settingIRIs" class="pb-2">
     <h4>{{settings[settingIRI].label}}</h4>
     <app-shacl-form [nodeShape]="settings[settingIRI].json" 

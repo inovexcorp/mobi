@@ -32,7 +32,7 @@ import { ProgressSpinnerService } from '../components/progress-spinner/services/
 import { Group } from '../models/group.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { User } from '../models/user.class';
-import { createHttpParams, getBeautifulIRI, getDctermsValue, handleError, handleErrorObject } from '../utility';
+import { createHttpParams, getBeautifulIRI, getDctermsValue, handleErrorObject } from '../utility';
 import { NewUserConfig } from '../models/new-user-config';
 
 /**
@@ -85,7 +85,7 @@ export class UserManagerService {
                     return null;
                 }),
                 catchError(error => {
-                    console.error(error.statusText);
+                    console.error(error.errorMessage);
                     return of(null);
                 })
             );
@@ -97,7 +97,7 @@ export class UserManagerService {
      */
     getUsers(): Observable<JSONLDObject[]> {
         return this.spinnerSvc.track(this.http.get<JSONLDObject[]>(this.userPrefix))
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
     /**
      * Calls the GET /mobirest/groups endpoint which retrieves a list of Groups.
@@ -106,7 +106,7 @@ export class UserManagerService {
      */
     getGroups(): Observable<JSONLDObject[]> {
         return this.spinnerSvc.track(this.http.get<JSONLDObject[]>(this.groupPrefix))
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
     /**
      * Finds the username of the user associated with the passed IRI. If it has not been found before, calls the GET
@@ -127,7 +127,7 @@ export class UserManagerService {
               params: createHttpParams({ iri }),
               responseType: 'text'
             })).pipe(
-                catchError(handleError),
+                catchError(handleErrorObject),
                 switchMap((response: string) => {
                     return this.getUser(response);
                 }),
@@ -174,7 +174,7 @@ export class UserManagerService {
 
         return this.spinnerSvc.track(this.http.post(this.userPrefix, fd, {responseType: 'text'}))
             .pipe(
-                catchError(handleError),
+                catchError(handleErrorObject),
                 switchMap(() => {
                     return this.getUser(newUserConfig.username);
                 }),
@@ -193,7 +193,7 @@ export class UserManagerService {
     getUser(username: string): Observable<User> {
         return this.spinnerSvc.track(this.http.get<JSONLDObject>(`${this.userPrefix}/${encodeURIComponent(username)}`))
             .pipe(
-                catchError(handleError),
+                catchError(handleErrorObject),
                 map((response: JSONLDObject) => {
                     const userObj: User = new User(response);
                     const existingIdx: number = this.users.findIndex(user => user.iri === userObj.iri);
@@ -220,7 +220,7 @@ export class UserManagerService {
     updateUser(username: string, newUser: User): Observable<void> {
         return this.spinnerSvc.track(this.http.put(`${this.userPrefix}/${encodeURIComponent(username)}`, newUser.jsonld))
             .pipe(
-                catchError(handleError),
+                catchError(handleErrorObject),
                 map(() => {
                     const idx: number = this.users.findIndex(user => user.username === username);
                     if (idx >= 0) {
@@ -266,7 +266,7 @@ export class UserManagerService {
     resetPassword(username: string, newPassword: string): Observable<void> {
         return this.spinnerSvc.track(this.http.put(`${this.userPrefix}/${encodeURIComponent(username)}/password`, null,
           {params: createHttpParams({ newPassword })})).pipe(
-            catchError(handleError),
+            catchError(handleErrorObject),
             map(() => {})
         );
     }
@@ -282,7 +282,7 @@ export class UserManagerService {
     deleteUser(username: string): Observable<void> {
         return this.spinnerSvc.track(this.http.delete(`${this.userPrefix}/${encodeURIComponent(username)}`))
             .pipe(
-                catchError(handleError),
+                catchError(handleErrorObject),
                 map(() => {
                     remove(this.users, user => user.username === username);
                     forEach(this.groups, group => pull(group.members, username));
@@ -303,7 +303,7 @@ export class UserManagerService {
         return this.spinnerSvc.track(this.http.put(`${this.userPrefix}/${encodeURIComponent(username)}/roles`, null,
           { params: createHttpParams({ roles }) }))
             .pipe(
-                catchError(handleError),
+                catchError(handleErrorObject),
                 switchMap(() => {
                     const user: User = this.users.find(user => user.username === username);
                     if (user) {
@@ -330,7 +330,7 @@ export class UserManagerService {
         return this.spinnerSvc.track(this.http.delete(`${this.userPrefix}/${encodeURIComponent(username)}/roles`,
           { params: createHttpParams({ role })}))
             .pipe(
-                catchError(handleError),
+                catchError(handleErrorObject),
                 switchMap(() => {
                     const user: User = this.users.find(user => user.username === username);
                     if (user) {
@@ -357,7 +357,7 @@ export class UserManagerService {
         return this.spinnerSvc.track(this.http.put(`${this.userPrefix}/${encodeURIComponent(username)}/groups`, null,
           {params: createHttpParams({ group: groupTitle })}))
             .pipe(
-                catchError(handleError),
+                catchError(handleErrorObject),
                 map(() => {
                     const group: Group = find(this.groups, {title: groupTitle});
                     group.members = union(get(group, 'members', []), [username]);
@@ -378,7 +378,7 @@ export class UserManagerService {
         return this.spinnerSvc.track(this.http.delete(`${this.userPrefix}/${encodeURIComponent(username)}/groups`,
           {params: createHttpParams({ group: groupTitle })}))
             .pipe(
-                catchError(handleError),
+                catchError(handleErrorObject),
                 map(() => {
                     const group: Group = find(this.groups, {title: groupTitle});
                     group.members = without(get(group, 'members'), username);
@@ -407,7 +407,7 @@ export class UserManagerService {
 
         return this.spinnerSvc.track(this.http.post(this.groupPrefix, fd, {responseType: 'text'}))
             .pipe(
-                catchError(handleError),
+                catchError(handleErrorObject),
                 switchMap(() => {
                     return this.getGroup(newGroup.title);
                 }),
@@ -426,7 +426,7 @@ export class UserManagerService {
     getGroup(groupTitle: string): Observable<Group> {
         return this.spinnerSvc.track(this.http.get<JSONLDObject>(`${this.groupPrefix}/${encodeURIComponent(groupTitle)}`))
             .pipe(
-                catchError(handleError),
+                catchError(handleErrorObject),
                 map((response: JSONLDObject) => {
                     const groupObj: Group = this.getGroupObj(response);
                     const existing: Group = find(this.groups, {iri: groupObj.iri});
@@ -455,7 +455,7 @@ export class UserManagerService {
         return this.spinnerSvc.track(this.http.put(`${this.groupPrefix}/${encodeURIComponent(groupTitle)}`,
           newGroup.jsonld))
             .pipe(
-                catchError(handleError),
+                catchError(handleErrorObject),
                 map(() => {
                     assign(find(this.groups, {title: groupTitle}), newGroup);
                 })
@@ -473,7 +473,7 @@ export class UserManagerService {
     deleteGroup(groupTitle: string): Observable<void> {
         return this.spinnerSvc.track(this.http.delete(`${this.groupPrefix}/${encodeURIComponent(groupTitle)}`))
             .pipe(
-                catchError(handleError),
+                catchError(handleErrorObject),
                 map(() => {
                     remove(this.groups, {title: groupTitle});
                 })
@@ -493,7 +493,7 @@ export class UserManagerService {
         return this.spinnerSvc.track(this.http.put(`${this.groupPrefix}/${encodeURIComponent(groupTitle)}/roles`, null,
           {params: createHttpParams({ roles })}))
             .pipe(
-                catchError(handleError),
+                catchError(handleErrorObject),
                 map(() => {
                     const group: Group = find(this.groups, {title: groupTitle});
                     group.roles = union(get(group, 'roles', []), roles);
@@ -514,7 +514,7 @@ export class UserManagerService {
         return this.spinnerSvc.track(this.http.delete(`${this.groupPrefix}/${encodeURIComponent(groupTitle)}/roles`,
           {params: createHttpParams({ role })}))
             .pipe(
-                catchError(handleError),
+                catchError(handleErrorObject),
                 map(() => {
                     pull(get(find(this.groups, {title: groupTitle}), 'roles'), role);
                 })
@@ -531,7 +531,7 @@ export class UserManagerService {
      */
     getGroupUsers(groupTitle: string): Observable<JSONLDObject[]> {
         return this.spinnerSvc.track(this.http.get<JSONLDObject[]>(`${this.groupPrefix}/${encodeURIComponent(groupTitle)}/users`))
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
     /**
      * Calls the PUT /mobirest/groups/{groupTitle}/users endpoint to add the Mobi users specified by the passed
@@ -547,7 +547,7 @@ export class UserManagerService {
         return this.spinnerSvc.track(this.http.put(`${this.groupPrefix}/${encodeURIComponent(groupTitle)}/users`, null,
           {params: createHttpParams({ users })}))
             .pipe(
-                catchError(handleError),
+                catchError(handleErrorObject),
                 map(() => {
                     const group: Group = find(this.groups, {title: groupTitle});
                     group.members = union(get(group, 'members', []), users);
@@ -568,7 +568,7 @@ export class UserManagerService {
         return this.spinnerSvc.track(this.http.delete(`${this.groupPrefix}/${encodeURIComponent(groupTitle)}/users`,
           {params: createHttpParams({ user: username })}))
             .pipe(
-                catchError(handleError),
+                catchError(handleErrorObject),
                 map(() => {
                     pull(get(find(this.groups, {title: groupTitle}), 'members'), username);
                 })

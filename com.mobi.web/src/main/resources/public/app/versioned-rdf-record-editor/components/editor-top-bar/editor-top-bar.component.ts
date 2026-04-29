@@ -99,7 +99,7 @@ export class EditorTopBarComponent<TData extends VersionedRdfListItem> implement
       })
     ).subscribe(
       () => this._toast.createSuccessToast(`${splitIRI(this.state.type).end} branch has been updated.`), 
-      error => this._toast.createErrorToast(error)
+      error => this._toast.createErrorToast(error.errorMessage)
     );
   }
   updateBranches(branches: JSONLDObject[]): void {

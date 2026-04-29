@@ -234,7 +234,7 @@ export class MergeRequestFilterComponent implements OnInit, OnDestroy {
             filterInstance.setFilterItems();
             pagingData.totalSize = Number(response.headers.get('x-total-count')) || 0;
             pagingData.hasNextPage = filterInstance.filterItems.length < pagingData.totalSize;
-          }, error => componentContext._toast.createErrorToast(error));
+          }, error => componentContext._toast.createErrorToast(error.errorMessage));
       },
       reset: function(): void {
         this.filterItems.filter(item => item.checked).forEach(item => {
@@ -322,7 +322,7 @@ export class MergeRequestFilterComponent implements OnInit, OnDestroy {
             filterInstance.setFilterItems();
             pagingData.totalSize = Number(response.headers.get('x-total-count')) || 0;
             pagingData.hasNextPage = filterInstance.filterItems.length < pagingData.totalSize;
-          }, error => componentContext._toast.createErrorToast(error));
+          }, error => componentContext._toast.createErrorToast(error.errorMessage));
       },
       reset: function(): void {
         this.filterItems.filter(item => item.checked).forEach(item => {
@@ -415,7 +415,7 @@ export class MergeRequestFilterComponent implements OnInit, OnDestroy {
           filterInstance.setFilterItems();
           pagingData.totalSize = Number(response.headers.get('x-total-count')) || 0;
           pagingData.hasNextPage = filterInstance.filterItems.length < pagingData.totalSize;
-        }, error => componentContext._toast.createErrorToast(error));
+        }, error => componentContext._toast.createErrorToast(error.errorMessage));
       },
       reset: function(): void {
         this.filterItems.filter(item => item.checked).forEach(item => {

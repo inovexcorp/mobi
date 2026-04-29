@@ -362,7 +362,7 @@ describe('Editor Branch Select component', function() {
         });
         describe('unless an error occurs', function() {
           it('when retrieving the branch', fakeAsync(function() {
-            catalogManagerStub.getRecordBranch.and.returnValue(throwError('Error'));
+            catalogManagerStub.getRecordBranch.and.returnValue(throwError({error: '', errorMessage: 'Error', errorDetails: []}));
             component.selectVersion(branchEvent);
             tick();
             expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(branch1.branchIri, 'recordId', 'catalog');
@@ -373,7 +373,7 @@ describe('Editor Branch Select component', function() {
             expect(component.resetSearch).not.toHaveBeenCalled();
           }));
           it('when updating the state', fakeAsync(function() {
-            stateStub.changeVersion.and.returnValue(throwError('Error'));
+            stateStub.changeVersion.and.returnValue(throwError({error: '', errorMessage: 'Error', errorDetails: []}));
             component.selectVersion(branchEvent);
             tick();
             expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(branch1.branchIri, 'recordId', 'catalog');
@@ -396,7 +396,7 @@ describe('Editor Branch Select component', function() {
         }));
         describe('unless an error occurs', function() {
           it('when retrieving the commit', fakeAsync(function() {
-            catalogManagerStub.getCommit.and.returnValue(throwError('Error'));
+            catalogManagerStub.getCommit.and.returnValue(throwError({error: '', errorMessage: 'Error', errorDetails: []}));
             component.selectVersion(tagEvent);
             tick();
             expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(tag1.commitIri);
@@ -405,7 +405,7 @@ describe('Editor Branch Select component', function() {
             expect(component.resetSearch).not.toHaveBeenCalled();
           }));
           it('when updating the state', fakeAsync(function() {
-            stateStub.changeVersion.and.returnValue(throwError('Error'));
+            stateStub.changeVersion.and.returnValue(throwError({error: '', errorMessage: 'Error', errorDetails: []}));
             component.selectVersion(tagEvent);
             tick();
             expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(tag1.commitIri);
@@ -526,7 +526,7 @@ describe('Editor Branch Select component', function() {
               }));
               describe('unless an error occurs', function() {
                 it('when deleting state', fakeAsync(function() {
-                  stateStub.deleteState.and.returnValue(throwError('Error'));
+                  stateStub.deleteState.and.returnValue(throwError({error: '', errorMessage: 'Error', errorDetails: []}));
                   spyOn(component.autocompleteTrigger, 'closePanel');
                   component.retrieveBranchesAndTags().subscribe(() => {}, 
                     () => fail('Observable should have succeeded'));
@@ -542,7 +542,7 @@ describe('Editor Branch Select component', function() {
                 }));
                 it('when opening a record', fakeAsync(function() {
                   stateStub.deleteState.and.returnValue(of(null));
-                  stateStub.open.and.returnValue(throwError('Error'));
+                  stateStub.open.and.returnValue(throwError({error: '', errorMessage: 'Error', errorDetails: []}));
                   spyOn(component.autocompleteTrigger, 'closePanel');
                   component.retrieveBranchesAndTags().subscribe(() => {}, 
                     () => fail('Observable should have succeeded'));
@@ -604,7 +604,7 @@ describe('Editor Branch Select component', function() {
               }));
               describe('unless an error occurs', function() {
                 it('when deleting state', fakeAsync(function() {
-                  stateStub.deleteState.and.returnValue(throwError('Error'));
+                  stateStub.deleteState.and.returnValue(throwError({error: '', errorMessage: 'Error', errorDetails: []}));
                   spyOn(component.autocompleteTrigger, 'closePanel');
                   component.retrieveBranchesAndTags().subscribe(() => {}, 
                     () => fail('Observable should have succeeded'));
@@ -620,7 +620,7 @@ describe('Editor Branch Select component', function() {
                 }));
                 it('when opening a record', fakeAsync(function() {
                   stateStub.deleteState.and.returnValue(of(null));
-                  stateStub.open.and.returnValue(throwError('Error'));
+                  stateStub.open.and.returnValue(throwError({error: '', errorMessage: 'Error', errorDetails: []}));
                   spyOn(component.autocompleteTrigger, 'closePanel');
                   component.retrieveBranchesAndTags().subscribe(() => {}, 
                     () => fail('Observable should have succeeded'));
@@ -673,7 +673,7 @@ describe('Editor Branch Select component', function() {
         expect(toastStub.createErrorToast).not.toHaveBeenCalled();
       }));
       it('unless the branch promise fails', fakeAsync(function() {
-        catalogManagerStub.getRecordBranches.and.returnValue(throwError('Error'));
+        catalogManagerStub.getRecordBranches.and.returnValue(throwError({error: '', errorMessage: 'Error', errorDetails: []}));
         component.retrieveBranchesAndTags().subscribe(() => {}, 
           () => fail('Observable should have succeeded'));
         tick();
@@ -681,7 +681,7 @@ describe('Editor Branch Select component', function() {
         expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error');
       }));
       it('unless the tag promise fails', fakeAsync(function() {
-        catalogManagerStub.getRecordVersions.and.returnValue(throwError('Error'));
+        catalogManagerStub.getRecordVersions.and.returnValue(throwError({error: '', errorMessage: 'Error', errorDetails: []}));
         component.retrieveBranchesAndTags().subscribe(() => {}, 
           () => fail('Observable should have succeeded'));
         tick();
@@ -728,7 +728,7 @@ describe('Editor Branch Select component', function() {
         expect(component.resetSearch).toHaveBeenCalledWith();
       }));
       it('the current state no longer exists', fakeAsync(function() {
-        stateStub.validateCurrentStateExists.and.returnValue(throwError('Error'));
+        stateStub.validateCurrentStateExists.and.returnValue(throwError({error: '', errorMessage: 'Error', errorDetails: []}));
         spyOn(component.autocompleteTrigger, 'closePanel');
         component.showDeleteBranchConfirmationOverlay(branch1, new Event('delete'));
         tick();
@@ -762,7 +762,7 @@ describe('Editor Branch Select component', function() {
         expect(component.resetSearch).toHaveBeenCalledWith();
       }));
       it('when the current state no longer exists', fakeAsync(function() {
-        stateStub.validateCurrentStateExists.and.returnValue(throwError('Error'));
+        stateStub.validateCurrentStateExists.and.returnValue(throwError({error: '', errorMessage: 'Error', errorDetails: []}));
         spyOn(component.autocompleteTrigger, 'closePanel');
         component.showDeleteTagConfirmationOverlay(tag1, new Event('delete'));
         tick();

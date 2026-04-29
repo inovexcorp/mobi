@@ -36,6 +36,7 @@ import { of, throwError } from 'rxjs';
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { FOAF, USER } from '../../../prefixes';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { RestErrorDisplayComponent } from '../../../shared/components/restErrorDisplay/restErrorDisplay.component';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { UserStateService } from '../../../shared/services/userState.service';
 import { ToastService } from '../../../shared/services/toast.service';
@@ -64,6 +65,7 @@ describe('Edit User Profile Overlay component', function() {
             declarations: [
                 EditUserProfileOverlayComponent,
                 MockComponent(ErrorDisplayComponent),
+                MockComponent(RestErrorDisplayComponent),
             ],
             providers: [
                 MockProvider(UserStateService),
@@ -119,11 +121,11 @@ describe('Edit User Profile Overlay component', function() {
                 component.editProfileForm.controls.email.setValue(this.newUser.email.replace('mailto:', ''));
             });
             it('unless an error occurs', fakeAsync(function() {
-                userManagerStub.updateUser.and.returnValue(throwError('Error message'));
+                userManagerStub.updateUser.and.returnValue(throwError({error: '', errorMessage: 'Error message', errorDetails: []}));
                 component.set();
                 tick();
                 expect(userManagerStub.updateUser).toHaveBeenCalledWith(userStateStub.selectedUser.username, this.newUser);
-                expect(component.errorMessage).toEqual('Error message');
+                expect(component.error).toEqual({error: '', errorMessage: 'Error message', errorDetails: []});
                 expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
                 expect(matDialogRef.close).not.toHaveBeenCalled();
             }));
@@ -141,7 +143,7 @@ describe('Edit User Profile Overlay component', function() {
                 component.set();
                 tick();
                 expect(userManagerStub.updateUser).toHaveBeenCalledWith(userStateStub.selectedUser.username, this.newUser);
-                expect(component.errorMessage).toEqual('');
+                expect(component.error).toBeFalsy();
                 expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(matDialogRef.close).toHaveBeenCalledWith();
             }));
@@ -150,7 +152,7 @@ describe('Edit User Profile Overlay component', function() {
                 component.set();
                 tick();
                 expect(userManagerStub.updateUser).toHaveBeenCalledWith(userStateStub.selectedUser.username, this.newUser);
-                expect(component.errorMessage).toEqual('');
+                expect(component.error).toBeFalsy();
                 expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(matDialogRef.close).toHaveBeenCalledWith();
             }));
@@ -194,10 +196,10 @@ describe('Edit User Profile Overlay component', function() {
             expect(button.properties['disabled']).toBeFalsy();
         });
         it('depending on whether there is an error', function() {
-            expect(element.queryAll(By.css('error-display')).length).toEqual(0);
-            component.errorMessage = 'Error message';
+            expect(element.queryAll(By.css('rest-error-display')).length).toEqual(0);
+            component.error = {error: '', errorMessage: 'Error message', errorDetails: []};
             fixture.detectChanges();
-            expect(element.queryAll(By.css('error-display')).length).toEqual(1);
+            expect(element.queryAll(By.css('rest-error-display')).length).toEqual(1);
         });
         it('with buttons to cancel and submit', function() {
             const buttons = element.queryAll(By.css('.mat-dialog-actions button'));

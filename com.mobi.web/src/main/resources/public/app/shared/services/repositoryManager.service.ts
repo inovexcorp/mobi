@@ -28,7 +28,7 @@ import { catchError } from 'rxjs/operators';
 import { REST_PREFIX } from '../../constants';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { Repository } from '../models/repository.interface';
-import { handleError } from '../utility';
+import { handleErrorObject } from '../utility';
 
 @Injectable()
 export class RepositoryManagerService {
@@ -43,7 +43,7 @@ export class RepositoryManagerService {
      */
     getRepositories(): Observable<Repository[]> {
         return this.spinnerSvc.track(this.http.get<Repository[]>(this.prefix))
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
 
     /**
@@ -54,6 +54,6 @@ export class RepositoryManagerService {
      */
     getRepository(id: string): Observable<Repository> {
         return this.spinnerSvc.track(this.http.get<Repository>(`${this.prefix}/${encodeURIComponent(id)}`))
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
 }

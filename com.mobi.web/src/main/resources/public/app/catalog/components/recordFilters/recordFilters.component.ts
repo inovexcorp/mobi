@@ -225,7 +225,7 @@ export class RecordFiltersComponent implements OnInit, OnChanges, OnDestroy {
           pagingData['totalSize'] = Number(response.headers.get('x-total-count')) || 0;
           pagingData['hasNextPage'] = filterInstance.filterItems.length < pagingData.totalSize;
           filterInstance.numChecked = componentContext.keywords.length;
-        }, error => componentContext._toast.createErrorToast(error));
+        }, error => componentContext._toast.createErrorToast(error.errorMessage));
       },
       getItemTooltip: function(filterItem: FilterItem) {
         return `${filterItem.value[`${CATALOG}keyword`]} (${filterItem.value['count']})`;

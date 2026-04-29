@@ -86,7 +86,7 @@ export class CreateBranchModalComponent<TData extends VersionedRdfListItem> {
               })
           ).subscribe(() => this._dialogRef.close(true), error => {
               this._dialogRef.close(false);
-              this._toast.createErrorToast(error);
+              this._toast.createErrorToast(error.errorMessage);
           });
     }
 }

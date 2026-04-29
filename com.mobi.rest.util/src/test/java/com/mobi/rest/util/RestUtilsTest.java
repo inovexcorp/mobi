@@ -40,6 +40,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.mobi.exception.MobiException;
 import com.mobi.catalog.api.CommitManager;
 import com.mobi.catalog.api.CompiledResourceManager;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
@@ -374,14 +375,16 @@ public class RestUtilsTest {
     }
 
     @Test
-    public void getActiveUsernameThatDoesNotExistTest() {
+    public void getActiveUsernameThatDoesNotExistTest() throws Exception {
         // Setup:
         when(context.getProperty(AuthenticationProps.USERNAME)).thenReturn(null);
         try {
             RestUtils.getActiveUsername(context);
             fail("Expected MobiWebException to have been thrown");
         } catch (MobiWebException e) {
-            assertEquals(401, e.getResponse().getStatus());
+            assertEquals(500, e.getResponse().getStatus());
+            ObjectNode body = mapper.readValue(e.getResponse().getEntity().toString(), ObjectNode.class);
+            assertEquals("Missing username", body.get("errorMessage").asText());
         }
     }
 
@@ -392,13 +395,16 @@ public class RestUtilsTest {
     }
 
     @Test
-    public void getActiveUserThatDoesNotExistTest() {
+    public void getActiveUserThatDoesNotExistTest() throws Exception {
         // Setup:
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
         try {
             RestUtils.getActiveUser(context, engineManager);
+            fail("Expected MobiWebException to have been thrown");
         } catch (MobiWebException e) {
-            assertEquals(401, e.getResponse().getStatus());
+            assertEquals(500, e.getResponse().getStatus());
+            ObjectNode body = mapper.readValue(e.getResponse().getEntity().toString(), ObjectNode.class);
+            assertEquals("User not found", body.get("errorMessage").asText());
         }
     }
 
@@ -456,11 +462,15 @@ public class RestUtilsTest {
     }
 
     @Test
-    public void createIRIInvalidInputTest() {
+    public void createIRIInvalidInputTest() throws Exception {
         try {
             RestUtils.createIRI("invalidIRI", vf);
+            fail("Expected MobiWebException to have been thrown");
         } catch (MobiWebException ex) {
             assertEquals(400, ex.getResponse().getStatus());
+            ObjectNode body = mapper.readValue(ex.getResponse().getEntity().toString(), ObjectNode.class);
+            assertEquals("IllegalArgumentException", body.get("error").asText());
+            assertNotNull(body.get("errorMessage").asText());
         }
     }
 
@@ -615,13 +625,15 @@ public class RestUtilsTest {
     }
 
     @Test
-    public void validatePaginationParamsInvalidSortResourceTest() {
+    public void validatePaginationParamsInvalidSortResourceTest() throws Exception {
         try {
             RestUtils.validatePaginationParams("urn:error", Collections.singleton("urn:no-error"), 10, 0);
+            fail("Expected MobiWebException to have been thrown");
         } catch (MobiWebException ex) {
             assertEquals(400, ex.getResponse().getStatus());
+            ObjectNode body = mapper.readValue(ex.getResponse().getEntity().toString(), ObjectNode.class);
+            assertEquals("Invalid sort property IRI", body.get("errorMessage").asText());
         }
-
     }
 
     @Test
@@ -653,10 +665,74 @@ public class RestUtilsTest {
     }
 
     @Test
+    public void getErrorObjBadRequestJsonBodyTest() throws Exception {
+        MobiWebException exception = RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Bad input"));
+        Response response = exception.getResponse();
+        assertEquals(400, response.getStatus());
+        assertEquals("application/json", response.getMediaType().toString());
+        ObjectNode body = mapper.readValue(response.getEntity().toString(), ObjectNode.class);
+        assertEquals("IllegalArgumentException", body.get("error").asText());
+        assertEquals("Bad input", body.get("errorMessage").asText());
+        assertNotNull(body.get("errorDetails"));
+        assertTrue(body.get("errorDetails").isArray());
+    }
+
+    @Test
+    public void getErrorObjNotFoundJsonBodyTest() throws Exception {
+        MobiWebException exception = RestUtils.getErrorObjNotFound(new MobiNotFoundException("Resource missing"));
+        Response response = exception.getResponse();
+        assertEquals(404, response.getStatus());
+        assertEquals("application/json", response.getMediaType().toString());
+        ObjectNode body = mapper.readValue(response.getEntity().toString(), ObjectNode.class);
+        assertEquals("MobiNotFoundException", body.get("error").asText());
+        assertEquals("Resource missing", body.get("errorMessage").asText());
+        assertNotNull(body.get("errorDetails"));
+        assertTrue(body.get("errorDetails").isArray());
+    }
+
+    @Test
+    public void getErrorObjForbiddenJsonBodyTest() throws Exception {
+        MobiWebException exception = RestUtils.getErrorObjForbidden(new IllegalAccessException("Access denied"));
+        Response response = exception.getResponse();
+        assertEquals(403, response.getStatus());
+        assertEquals("application/json", response.getMediaType().toString());
+        ObjectNode body = mapper.readValue(response.getEntity().toString(), ObjectNode.class);
+        assertEquals("IllegalAccessException", body.get("error").asText());
+        assertEquals("Access denied", body.get("errorMessage").asText());
+        assertNotNull(body.get("errorDetails"));
+        assertTrue(body.get("errorDetails").isArray());
+    }
+
+    @Test
+    public void getErrorObjUnauthorizedJsonBodyTest() throws Exception {
+        MobiWebException exception = RestUtils.getErrorObjUnauthorized(new IllegalAccessException("Forbidden"));
+        Response response = exception.getResponse();
+        assertEquals(401, response.getStatus());
+        assertEquals("application/json", response.getMediaType().toString());
+        ObjectNode body = mapper.readValue(response.getEntity().toString(), ObjectNode.class);
+        assertEquals("IllegalAccessException", body.get("error").asText());
+        assertEquals("Forbidden", body.get("errorMessage").asText());
+        assertNotNull(body.get("errorDetails"));
+    }
+
+    @Test
     public void getErrorObjInternalServerErrorTest() {
         MobiWebException exception = RestUtils.getErrorObjInternalServerError(new IllegalStateException("Exception"));
         assertEquals("Exception", exception.getMessage());
         assertEquals(500, exception.getResponse().getStatus());
+    }
+
+    @Test
+    public void getErrorObjInternalServerErrorJsonBodyTest() throws Exception {
+        MobiWebException exception = RestUtils.getErrorObjInternalServerError(new MobiException("Server broke"));
+        Response response = exception.getResponse();
+        assertEquals(500, response.getStatus());
+        assertEquals("application/json", response.getMediaType().toString());
+        ObjectNode body = mapper.readValue(response.getEntity().toString(), ObjectNode.class);
+        assertEquals("MobiException", body.get("error").asText());
+        assertEquals("Server broke", body.get("errorMessage").asText());
+        assertNotNull(body.get("errorDetails"));
+        assertTrue(body.get("errorDetails").isArray());
     }
 
     @Test
@@ -670,6 +746,49 @@ public class RestUtilsTest {
         assertEquals(500, exception.getResponse().getStatus());
 
         assertEquals(customErrorObject.toString(), exception.getResponse().getEntity());
+    }
+
+    @Test
+    public void getErrorObjMethodNotAllowedTest() {
+        MobiWebException exception = RestUtils.getErrorObjMethodNotAllowed(new UnsupportedOperationException("Exception"));
+        assertEquals("Exception", exception.getMessage());
+        assertEquals(405, exception.getResponse().getStatus());
+    }
+
+    @Test
+    public void getErrorObjMethodNotAllowedJsonBodyTest() throws Exception {
+        MobiWebException exception = RestUtils.getErrorObjMethodNotAllowed(new UnsupportedOperationException("Not allowed"));
+        Response response = exception.getResponse();
+        assertEquals(405, response.getStatus());
+        assertEquals("application/json", response.getMediaType().toString());
+        ObjectNode body = mapper.readValue(response.getEntity().toString(), ObjectNode.class);
+        assertEquals("UnsupportedOperationException", body.get("error").asText());
+        assertEquals("Not allowed", body.get("errorMessage").asText());
+        assertNotNull(body.get("errorDetails"));
+    }
+
+    @Test
+    public void getErrorObjWithDelimitedMessageTest() throws Exception {
+        String delimiter = Models.ERROR_OBJECT_DELIMITER;
+        String message = "Main error" + delimiter + "Detail 1" + delimiter + "Detail 2";
+        MobiWebException exception = RestUtils.getErrorObjBadRequest(new IllegalArgumentException(message));
+        Response response = exception.getResponse();
+        ObjectNode body = mapper.readValue(response.getEntity().toString(), ObjectNode.class);
+        assertEquals("IllegalArgumentException", body.get("error").asText());
+        assertEquals("Main error", body.get("errorMessage").asText());
+        assertEquals(2, body.get("errorDetails").size());
+        assertEquals("Detail 1", body.get("errorDetails").get(0).asText());
+        assertEquals("Detail 2", body.get("errorDetails").get(1).asText());
+    }
+
+    @Test
+    public void getErrorObjWithNullMessageTest() throws Exception {
+        MobiWebException exception = RestUtils.getErrorObjBadRequest(new IllegalArgumentException());
+        Response response = exception.getResponse();
+        assertEquals(400, response.getStatus());
+        ObjectNode body = mapper.readValue(response.getEntity().toString(), ObjectNode.class);
+        assertEquals("IllegalArgumentException", body.get("error").asText());
+        assertNotNull(body.get("errorDetails"));
     }
 
     @Test

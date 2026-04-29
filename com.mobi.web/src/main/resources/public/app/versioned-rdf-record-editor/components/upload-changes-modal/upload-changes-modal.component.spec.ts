@@ -40,6 +40,7 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { cleanStylesFromDOM, MockVersionedRdfState } from '../../../../test/ts/Shared';
 import { Difference } from '../../../shared/models/difference.class';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { RestErrorDisplayComponent } from '../../../shared/components/restErrorDisplay/restErrorDisplay.component';
 import { FileInputComponent } from '../../../shared/components/fileInput/fileInput.component';
 import { RdfUpdate } from '../../../shared/models/rdfUpdate.interface';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
@@ -85,6 +86,7 @@ describe('Upload Record Modal component', function () {
       declarations: [
         UploadChangesModalComponent,
         MockComponent(ErrorDisplayComponent),
+        MockComponent(RestErrorDisplayComponent),
         MockComponent(FileInputComponent)
       ],
       providers: [
@@ -139,7 +141,8 @@ describe('Upload Record Modal component', function () {
       });
       it('unless an error occurs', async function () {
         component.selectedFile = file;
-        stateStub.uploadChanges.and.returnValue(throwError({ error: '', errorMessage: '', errorDetails: [] }));
+        const restError = { error: 'Error', errorMessage: 'Upload failed', errorDetails: [] };
+        stateStub.uploadChanges.and.returnValue(throwError(restError));
         component.uploadChanges();
         fixture.detectChanges();
         await fixture.whenStable();
@@ -147,6 +150,20 @@ describe('Upload Record Modal component', function () {
         expect(stateStub.uploadChanges).toHaveBeenCalledWith(rdfUpdate);
         expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
         expect(matDialogRef.close).not.toHaveBeenCalled();
+        expect(component.error).toEqual(restError);
+      });
+      it('should clear error on successful upload', async function () {
+        component.error = { error: '', errorMessage: 'Previous error', errorDetails: [] };
+        component.selectedFile = file;
+        stateStub.uploadChanges.and.returnValue(of(null));
+        catalogManagerStub.getInProgressCommit.and.returnValue(of(inProgressCommit));
+        component.uploadChanges();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(stateStub.uploadChanges).toHaveBeenCalledWith(rdfUpdate);
+        expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+        expect(matDialogRef.close).toHaveBeenCalledWith(true);
       });
     });
   });
@@ -163,6 +180,15 @@ describe('Upload Record Modal component', function () {
       expect(buttons.length).toEqual(2);
       expect(['Cancel', 'Submit']).toContain(buttons[0].nativeElement.textContent.trim());
       expect(['Cancel', 'Submit']).toContain(buttons[1].nativeElement.textContent.trim());
+    });
+    it('should show rest-error-display when error exists', function () {
+      component.error = undefined;
+      fixture.detectChanges();
+      expect(element.queryAll(By.css('rest-error-display')).length).toEqual(0);
+
+      component.error = { error: '', errorMessage: 'Test error', errorDetails: [] };
+      fixture.detectChanges();
+      expect(element.queryAll(By.css('rest-error-display')).length).toEqual(1);
     });
   });
   it('should call uploadChanges when the submit button is clicked', function () {

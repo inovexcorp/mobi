@@ -23,6 +23,7 @@ package com.mobi.jaas.rest;
  * #L%
  */
 
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorResponse;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
@@ -30,7 +31,6 @@ import static com.mobi.rest.util.RestUtils.getRDFFormat;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -287,7 +287,7 @@ public class UserRestTest extends MobiRestTestCXF {
 
         Response response = target().path("users")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Password must be provided");
     }
 
     @Test
@@ -303,7 +303,7 @@ public class UserRestTest extends MobiRestTestCXF {
 
         Response response = target().path("users")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Username must be provided");
     }
 
     @Test
@@ -318,7 +318,7 @@ public class UserRestTest extends MobiRestTestCXF {
 
         Response response = target().path("users")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "User already exists");
     }
 
     @Test
@@ -335,8 +335,8 @@ public class UserRestTest extends MobiRestTestCXF {
     @Test
     public void getUserThatDoesNotExistTest() {
         Response response = target().path("users/error").request().get();
-        assertEquals(404, response.getStatus());
         verify(engineManager).retrieveUser("error");
+        assertErrorResponse(response, 404, "MobiNotFoundException", "User error not found");
     }
 
     @Test
@@ -359,7 +359,7 @@ public class UserRestTest extends MobiRestTestCXF {
         Response response = target().path("users/user2")
                 .request().put(Entity.entity(groupedModelToString(user.getModel(), getRDFFormat("jsonld")),
                         MediaType.APPLICATION_JSON_TYPE));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Provided username and the username in the data must match");
     }
 
     @Test
@@ -370,8 +370,8 @@ public class UserRestTest extends MobiRestTestCXF {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME)
                 .request().put(Entity.entity(groupedModelToString(user.getModel(), getRDFFormat("jsonld")),
                         MediaType.APPLICATION_JSON_TYPE));
-        assertEquals(400, response.getStatus());
         verify(engineManager, atLeastOnce()).retrieveUser(ENGINE_NAME, UsernameTestFilter.USERNAME);
+        assertErrorResponse(response, 404, "MobiNotFoundException", "User tester not found");
     }
 
     @Test
@@ -392,7 +392,7 @@ public class UserRestTest extends MobiRestTestCXF {
                 .queryParam("currentPassword", "ABC")
                 .queryParam("newPassword", "XYZ")
                 .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(401, response.getStatus());
+        assertErrorResponse(response, 401, "IllegalAccessException", "Not authorized to make this request");
     }
 
     @Test
@@ -400,12 +400,7 @@ public class UserRestTest extends MobiRestTestCXF {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/password")
                 .queryParam("newPassword", "XYZ")
                 .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
-
-        ObjectNode responseObject = getResponse(response);
-        assertEquals("MobiException", responseObject.get("error").asText());
-        assertEquals("Current password must be provided", responseObject.get("errorMessage").asText());
-        assertNotEquals(responseObject.get("errorDetails"), null);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Current password must be provided");
     }
 
     @Test
@@ -417,12 +412,7 @@ public class UserRestTest extends MobiRestTestCXF {
                 .queryParam("currentPassword", "error")
                 .queryParam("newPassword", "XYZ")
                 .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
-
-        ObjectNode responseObject = getResponse(response);
-        assertEquals("MobiException", responseObject.get("error").asText());
-        assertEquals("Current password is wrong", responseObject.get("errorMessage").asText());
-        assertNotEquals(responseObject.get("errorDetails"), null);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Current password is wrong");
     }
 
     @Test
@@ -430,12 +420,7 @@ public class UserRestTest extends MobiRestTestCXF {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/password")
                 .queryParam("currentPassword", "ABC")
                 .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
-
-        ObjectNode responseObject = getResponse(response);
-        assertEquals("MobiException", responseObject.get("error").asText());
-        assertEquals("New password must be provided", responseObject.get("errorMessage").asText());
-        assertNotEquals(responseObject.get("errorDetails"), null);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "New password must be provided");
     }
 
     @Test
@@ -447,12 +432,7 @@ public class UserRestTest extends MobiRestTestCXF {
                 .queryParam("currentPassword", "ABC")
                 .queryParam("newPassword", "XYZ")
                 .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
-
-        ObjectNode responseObject = getResponse(response);
-        assertEquals("MobiException", responseObject.get("error").asText());
-        assertEquals("User tester not found", responseObject.get("errorMessage").asText());
-        assertNotEquals(responseObject.get("errorDetails"), null);
+        assertErrorResponse(response, 404, "MobiNotFoundException", "User tester not found");
     }
 
     @Test
@@ -469,7 +449,7 @@ public class UserRestTest extends MobiRestTestCXF {
     public void resetPasswordWithoutNewPasswordTest() {
         Response response = target().path("users/username/password")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "New password must be provided");
     }
 
     @Test
@@ -477,11 +457,7 @@ public class UserRestTest extends MobiRestTestCXF {
         Response response = target().path("users/error/password")
                 .queryParam("newPassword", "XYZ")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
-        ObjectNode responseObject = getResponse(response);
-        assertEquals("MobiException", responseObject.get("error").asText());
-        assertEquals("User error not found", responseObject.get("errorMessage").asText());
-        assertNotEquals(responseObject.get("errorDetails"), null);
+        assertErrorResponse(response, 404, "MobiNotFoundException", "User error not found");
     }
 
     @Test
@@ -529,7 +505,7 @@ public class UserRestTest extends MobiRestTestCXF {
         when(engineManager.userExists("error")).thenReturn(false);
 
         Response response = target().path("users/error").request().delete();
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "User error not found");
     }
 
     @Test
@@ -537,7 +513,7 @@ public class UserRestTest extends MobiRestTestCXF {
         when(engineManager.retrieveUser("admin")).thenReturn(Optional.of(adminUserMock));
         when(adminUserMock.getResource()).thenReturn(vf.createIRI(UserRest.ADMIN_USER_IRI));
         Response response = target().path("users/" + UsernameTestFilter.ADMIN_USER).request().delete();
-        assertEquals(405, response.getStatus());
+        assertErrorResponse(response, 405, "UnsupportedOperationException", "The admin user cannot be deleted.");
     }
 
     @Test
@@ -569,7 +545,7 @@ public class UserRestTest extends MobiRestTestCXF {
     @Test
     public void getUserRolesThatDoNotExistTest() {
         Response response = target().path("users/error/roles").request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "User error not found");
     }
 
     @Test
@@ -605,7 +581,7 @@ public class UserRestTest extends MobiRestTestCXF {
 
         Response response = target().path("users/error/roles").queryParam("roles", roles)
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "User error not found");
     }
 
     @Test
@@ -616,14 +592,14 @@ public class UserRestTest extends MobiRestTestCXF {
 
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("roles", roles)
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Role testRole not found");
     }
 
     @Test
     public void addUserRolesWithoutRolesTest() {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Both username and roles must be provided");
     }
 
     @Test
@@ -647,14 +623,14 @@ public class UserRestTest extends MobiRestTestCXF {
         Response response = target().path("users/" + UsernameTestFilter.ADMIN_USER + "/roles")
                 .queryParam("role", "admin")
                 .request().delete();
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Cannot remove admin role from admin user");
     }
 
     @Test
     public void removeRoleFromUserThatDoesNotExistTest() {
         Response response = target().path("users/error/roles").queryParam("role", "testRole")
                 .request().delete();
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "User error not found");
     }
 
     @Test
@@ -664,7 +640,7 @@ public class UserRestTest extends MobiRestTestCXF {
 
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("role", "error")
                 .request().delete();
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Role error not found");
     }
 
     @Test
@@ -705,14 +681,14 @@ public class UserRestTest extends MobiRestTestCXF {
     public void addGroupToUserThatDoesNotExistTest() {
         Response response = target().path("users/error/groups").queryParam("group", "testGroup")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "User error not found");
     }
 
     @Test
     public void addGroupThatDoesNotExistToUserTest() {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/groups").queryParam("group", "error")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Group error not found");
     }
 
     @Test
@@ -733,19 +709,15 @@ public class UserRestTest extends MobiRestTestCXF {
     public void removeGroupFromUserThatDoesNotExistTest() {
         Response response = target().path("users/error/groups").queryParam("group", "testGroup")
                 .request().delete();
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "User error not found");
     }
 
     @Test
     public void removeGroupThatDoesNotExistFromUserTest() {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/groups").queryParam("group", "error")
                 .request().delete();
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Group error not found");
     }
 
-
-    private ObjectNode getResponse(Response response) throws Exception {
-        return mapper.readValue(response.readEntity(String.class), ObjectNode.class);
-    }
 
 }

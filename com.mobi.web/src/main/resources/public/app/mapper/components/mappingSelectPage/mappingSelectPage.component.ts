@@ -108,7 +108,7 @@ export class MappingSelectPageComponent implements OnInit {
           branch: getPropertyId(record, `${CATALOG}masterBranch`)
         }));
         this.state.totalSize = Number(response.headers.get('x-total-count')) || 0;
-      }, error => this.toast.createErrorToast(error));
+      }, error => this.toast.createErrorToast(error.errorMessage));
   }
 
   view(mappingRecord: MappingRecord): void {
@@ -119,7 +119,7 @@ export class MappingSelectPageComponent implements OnInit {
             state: mappingState
           }
         });
-      }, error => this.toast.createErrorToast(error));
+      }, error => this.toast.createErrorToast(error.errorMessage));
   }
 
   run(mappingRecord: MappingRecord): void {
@@ -134,7 +134,7 @@ export class MappingSelectPageComponent implements OnInit {
             this.state.step = this.state.fileUploadStep;
           });
         }
-      }, error => error ? this.toast.createErrorToast(error) : undefined);
+      }, error => error ? this.toast.createErrorToast(error.errorMessage) : undefined);
   }
 
   edit(mappingRecord: MappingRecord): void {
@@ -158,7 +158,7 @@ export class MappingSelectPageComponent implements OnInit {
           ).subscribe(() => {
             this.state.editMapping = true;
             this.state.step = this.state.fileUploadStep;
-          }, error => error ? this.toast.createErrorToast(error) : undefined);
+          }, error => error ? this.toast.createErrorToast(error.errorMessage) : undefined);
         } else {
           this.toast.createErrorToast('You do not have permission to create mappings');
         }
@@ -255,7 +255,7 @@ export class MappingSelectPageComponent implements OnInit {
               this.state.editMapping = true;
               this.state.step = this.state.fileUploadStep;
             }
-          }, error => error ? this.toast.createErrorToast(error) : undefined);
+          }, error => error ? this.toast.createErrorToast(error.errorMessage) : undefined);
         } else {
           this.toast.createErrorToast('You do not have permission to create mappings');
         }
@@ -269,7 +269,7 @@ export class MappingSelectPageComponent implements OnInit {
       .subscribe(() => {
         this.state.resetPagination();
         this.setResults();
-      }, error => this.toast.createErrorToast(error));
+      }, error => this.toast.createErrorToast(error.errorMessage));
   }
 
   setStateIfCompatible(mappingRecord: MappingRecord): Observable<string> {

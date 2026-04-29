@@ -38,6 +38,7 @@ import {
 } from '../../../../../public/test/ts/Shared';
 import { User } from '../../../shared/models/user.class';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { RestErrorDisplayComponent } from '../../../shared/components/restErrorDisplay/restErrorDisplay.component';
 import { UnmaskPasswordComponent } from '../../../shared/components/unmaskPassword/unmaskPassword.component';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { UserStateService } from '../../../shared/services/userState.service';
@@ -67,6 +68,7 @@ describe('Create User Overlay component', function() {
             declarations: [
                 CreateUserOverlayComponent,
                 MockComponent(ErrorDisplayComponent),
+                MockComponent(RestErrorDisplayComponent),
                 MockComponent(UnmaskPasswordComponent)
             ],
             providers: [
@@ -143,11 +145,11 @@ describe('Create User Overlay component', function() {
                 });
             });
             it('unless an error occurs', fakeAsync(function() {
-                userManagerStub.addUser.and.returnValue(throwError('Error Message'));
+                userManagerStub.addUser.and.returnValue(throwError({error: '', errorMessage: 'Error Message', errorDetails: []}));
                 component.add();
                 tick();
                 expect(userManagerStub.addUser).toHaveBeenCalledWith(newUser);
-                expect(component.errorMessage).toEqual('Error Message');
+                expect(component.error).toEqual({error: '', errorMessage: 'Error Message', errorDetails: []});
                 expect(matDialogRef.close).not.toHaveBeenCalled();
             }));
             it('successfully', fakeAsync(function() {
@@ -155,7 +157,7 @@ describe('Create User Overlay component', function() {
                 component.add();
                 tick();
                 expect(userManagerStub.addUser).toHaveBeenCalledWith(newUser);
-                expect(component.errorMessage).toEqual('');
+                expect(component.error).toBeFalsy();
                 expect(matDialogRef.close).toHaveBeenCalledWith();
             }));
         });
@@ -206,10 +208,10 @@ describe('Create User Overlay component', function() {
             expect(button.properties['disabled']).toBeFalsy();
         });
         it('depending on whether there is an error', function() {
-            expect(element.queryAll(By.css('error-display')).length).toEqual(0);
-            component.errorMessage = 'Error message';
+            expect(element.queryAll(By.css('rest-error-display')).length).toEqual(0);
+            component.error = {error: '', errorMessage: 'Error message', errorDetails: []};
             fixture.detectChanges();
-            expect(element.queryAll(By.css('error-display')).length).toEqual(1);
+            expect(element.queryAll(By.css('rest-error-display')).length).toEqual(1);
         });
         it('with buttons to cancel and submit', function() {
             const buttons = element.queryAll(By.css('.mat-dialog-actions button'));

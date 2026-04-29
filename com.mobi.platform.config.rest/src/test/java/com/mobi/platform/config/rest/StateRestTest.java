@@ -23,6 +23,8 @@ package com.mobi.platform.config.rest;
  * #L%
  */
 
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorResponse;
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorType;
 import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
@@ -204,7 +206,7 @@ public class StateRestTest extends MobiRestTestCXF {
 
         Response response = target().path("states")
                 .request().post(Entity.json(state.toString()));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Empty state model");
     }
 
     @Test
@@ -227,7 +229,7 @@ public class StateRestTest extends MobiRestTestCXF {
         when(stateManager.stateExistsForUser(any(Resource.class), anyString())).thenReturn(false);
 
         Response response = target().path("states/" + encode(stateId.stringValue())).request().get();
-        assertEquals(401, response.getStatus());
+        assertErrorResponse(response, 401, "IllegalAccessException", "Not allowed");
     }
 
     @Test
@@ -236,7 +238,7 @@ public class StateRestTest extends MobiRestTestCXF {
         when(stateManager.getState(any(Resource.class))).thenThrow(new IllegalArgumentException());
 
         Response response = target().path("states/" + encode(stateId.stringValue())).request().get();
-        assertEquals(404, response.getStatus());
+        assertErrorType(response, 404, "MobiNotFoundException");
     }
 
     @Test
@@ -245,7 +247,7 @@ public class StateRestTest extends MobiRestTestCXF {
         when(stateManager.getState(any(Resource.class))).thenThrow(new MobiException());
 
         Response response = target().path("states/" + encode(stateId.stringValue())).request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     @Test
@@ -268,7 +270,7 @@ public class StateRestTest extends MobiRestTestCXF {
 
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().put(Entity.json(state.toString()));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Empty state model");
     }
 
     @Test
@@ -280,7 +282,7 @@ public class StateRestTest extends MobiRestTestCXF {
 
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().put(Entity.json(modelToJsonld(state)));
-        assertEquals(404, response.getStatus());
+        assertErrorType(response, 404, "MobiNotFoundException");
     }
 
     @Test
@@ -292,7 +294,7 @@ public class StateRestTest extends MobiRestTestCXF {
 
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().put(Entity.json(modelToJsonld(state)));
-        assertEquals(401, response.getStatus());
+        assertErrorResponse(response, 401, "IllegalAccessException", "Not allowed");
     }
 
     @Test
@@ -304,7 +306,7 @@ public class StateRestTest extends MobiRestTestCXF {
 
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().put(Entity.json(modelToJsonld(state)));
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     @Test
@@ -322,7 +324,7 @@ public class StateRestTest extends MobiRestTestCXF {
 
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().delete();
-        assertEquals(401, response.getStatus());
+        assertErrorResponse(response, 401, "IllegalAccessException", "Not allowed");
     }
 
     @Test
@@ -332,7 +334,7 @@ public class StateRestTest extends MobiRestTestCXF {
 
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().delete();
-        assertEquals(404, response.getStatus());
+        assertErrorType(response, 404, "MobiNotFoundException");
     }
 
     @Test
@@ -342,7 +344,7 @@ public class StateRestTest extends MobiRestTestCXF {
 
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().delete();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     private String modelToJsonld(Model model) {

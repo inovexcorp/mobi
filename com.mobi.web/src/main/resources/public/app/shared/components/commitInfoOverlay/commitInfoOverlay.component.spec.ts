@@ -200,7 +200,7 @@ describe('Commit Info Overlay component', function() {
                             expect(component.entityNames).toEqual({'iri1': {label: 'label', names: []}});
                         });
                         it('rejects', async function() {
-                            ontologyManagerStub.getOntologyEntityNames.and.returnValue(throwError('Error Message'));
+                            ontologyManagerStub.getOntologyEntityNames.and.returnValue(throwError({error: '', errorMessage: 'Error Message', errorDetails: []}));
                             await component.retrieveMoreResults(100, 0);
 
                             expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('123', null, 100, 0);
@@ -253,7 +253,7 @@ describe('Commit Info Overlay component', function() {
                 fixture.detectChanges();
                 await fixture.whenStable();
 
-                catalogManagerStub.getDifference.and.returnValue(throwError('Error Message'));
+                catalogManagerStub.getDifference.and.returnValue(throwError({error: '', errorMessage: 'Error Message', errorDetails: []}));
                 await component.retrieveMoreResults(100, 0);
                 expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('123', null, 100, 0);
                 expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error Message');

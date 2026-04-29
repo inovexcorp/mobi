@@ -33,7 +33,8 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
-import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.RestUtils;
+import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import com.mobi.security.policy.api.exception.PolicySyntaxException;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
 import com.mobi.security.policy.api.ontologies.policy.Policy;
@@ -56,7 +57,6 @@ import com.mobi.security.policy.api.xacml.jaxb.RuleType;
 import com.mobi.security.policy.api.xacml.jaxb.TargetType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -144,29 +144,17 @@ public class RecordPermissionsRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Policy for the specified record could not be found",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving the record policy",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ActionId(Update.TYPE)
@@ -177,19 +165,21 @@ public class RecordPermissionsRest {
             @PathParam("recordId") String recordId) {
         try (RepositoryConnection conn = policyManager.getRepository().getConnection()) {
             Optional<String> recordPolicyIdOpt = getRelatedResourceId(recordId, conn);
-            // TODO: Should be Response.Status.NOT_FOUND (404) — missing resource is not a bad request
-            String recordPolicyId = recordPolicyIdOpt.orElseThrow(() -> ErrorUtils.sendError("Policy for record "
-                    + recordId + " does not exist in repository", Response.Status.BAD_REQUEST));
+            String recordPolicyId = recordPolicyIdOpt.orElseThrow(() ->
+                    RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Policy for record "
+                    + recordId + " does not exist in repository")));
 
             Optional<XACMLPolicy> policy = policyManager.getPolicy(vf.createIRI(recordPolicyId));
             if (policy.isEmpty()) {
-                // TODO: Should be Response.Status.NOT_FOUND (404) — missing resource is not a bad request
-                throw ErrorUtils.sendError("Policy could not be found", Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjBadRequest(
+                        new IllegalArgumentException("Policy could not be found"));
             }
 
             return Response.ok(recordPolicyToJson(policy.get())).build();
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, "Policy could not be retrieved", Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -226,28 +216,22 @@ public class RecordPermissionsRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Invalid policy JSON or policy for the record does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while updating the record policy",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -261,51 +245,51 @@ public class RecordPermissionsRest {
         try (RepositoryConnection conn = policyManager.getRepository().getConnection()) {
             // Record Policy
             Optional<String> recordPolicyIdOpt = getRelatedResourceId(recordId, conn);
-            // TODO: Should be Response.Status.NOT_FOUND (404) — missing resource is not a bad request
-            String recordPolicyId = recordPolicyIdOpt.orElseThrow(() -> ErrorUtils.sendError("Policy for record "
-                    + recordId + " does not exist in repository", Response.Status.BAD_REQUEST));
+            String recordPolicyId = recordPolicyIdOpt.orElseThrow(() ->
+                    RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Policy for record "
+                    + recordId + " does not exist in repository")));
             IRI recordPolicyIRI = vf.createIRI(recordPolicyId);
             Optional<XACMLPolicy> recordPolicy = policyManager.getPolicy(recordPolicyIRI);
             if (recordPolicy.isEmpty()) {
-                // TODO: Should be Response.Status.NOT_FOUND (404) — missing resource is not a bad request
-                throw ErrorUtils.sendError("Record policy to update could not be found", Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjBadRequest(
+                        new IllegalArgumentException("Record policy to update could not be found"));
             }
 
             XACMLPolicy updatedRecordPolicy = recordJsonToPolicy(policyJson, recordPolicy.get().getJaxbPolicy());
             if (!updatedRecordPolicy.getId().equals(recordPolicyIRI)) {
-                throw ErrorUtils.sendError("Policy Id does not match provided record policy",
-                        Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjBadRequest(
+                        new IllegalArgumentException("Policy Id does not match provided record policy"));
             }
 
             // Policy Policy
             Optional<String> policyPolicyIdOpt = getRelatedResourceId(recordPolicyId, conn);
             String policyPolicyId = policyPolicyIdOpt.orElseThrow(() ->
-                    ErrorUtils.sendError("Policy for record policy " + recordId
-                            + " does not exist in repository", Response.Status.BAD_REQUEST));
+                    RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Policy for record policy " + recordId
+                            + " does not exist in repository")));
             if (StringUtils.isEmpty(policyPolicyId)) {
-                throw ErrorUtils.sendError("Policy for policy " + recordPolicyId + "does not exist in repository",
-                        Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjBadRequest(
+                        new IllegalArgumentException("Policy for policy " + recordPolicyId + "does not exist in repository"));
             }
             IRI policyPolicyIRI = vf.createIRI(policyPolicyId);
             Optional<XACMLPolicy> policyPolicy = policyManager.getPolicy(policyPolicyIRI);
             if (policyPolicy.isEmpty()) {
-                throw ErrorUtils.sendError("Policy policy to update could not be found",
-                        Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjBadRequest(
+                        new IllegalArgumentException("Policy policy to update could not be found"));
             }
 
             XACMLPolicy updatedPolicyPolicy = updatePolicyPolicy(policyJson, policyPolicy.get().getJaxbPolicy());
             if (!updatedPolicyPolicy.getId().equals(vf.createIRI(policyPolicyId))) {
-                throw ErrorUtils.sendError("Policy policy Id does not match provided policy",
-                        Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjBadRequest(
+                        new IllegalArgumentException("Policy policy Id does not match provided policy"));
             }
 
             policyManager.updatePolicy(updatedRecordPolicy);
             policyManager.updatePolicy(updatedPolicyPolicy);
             return Response.ok().build();
         } catch (IllegalArgumentException | PolicySyntaxException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, "Policy could not be updated", Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 

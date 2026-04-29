@@ -23,12 +23,15 @@ package com.mobi.explorable.dataset.rest;
  * #L%
  */
 
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorResponse;
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorType;
 import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -305,7 +308,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/class-details").request()
                 .get();
-        assertEquals(response.getStatus(), 400);
+        assertErrorResponse(response, 404, "MobiNotFoundException", "The Dataset Record could not be found.");
     }
 
     @Test
@@ -315,7 +318,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/class-details").request()
                 .get();
-        assertEquals(response.getStatus(), 400);
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -325,7 +328,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/class-details").request()
                 .get();
-        assertEquals(response.getStatus(), 500);
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     @Test
@@ -358,7 +361,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
         when(datasetManager.getConnection(recordId)).thenThrow(new IllegalArgumentException());
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(CLASS_ID_STR) + "/instance-details").request().get();
-        assertEquals(response.getStatus(), 400);
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -366,7 +369,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
         when(datasetManager.getConnection(recordId)).thenThrow(new IllegalStateException());
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(CLASS_ID_STR) + "/instance-details").request().get();
-        assertEquals(response.getStatus(), 500);
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     @Test
@@ -438,21 +441,21 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     public void getInstanceDetailsWithNegativeOffsetTest() {
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(CLASS_ID_STR) + "/instance-details").queryParam("offset", -1).request().get();
-        assertEquals(response.getStatus(), 400);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Offset cannot be negative.");
     }
 
     @Test
     public void getInstanceDetailsWithNegativeLimitTest() {
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(CLASS_ID_STR) + "/instance-details").queryParam("limit", -1).request().get();
-        assertEquals(response.getStatus(), 400);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Limit cannot be negative");
     }
 
     @Test
     public void getInstanceDetailsWithOffsetThatIsTooLargeTest() {
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(CLASS_ID_STR) + "/instance-details").queryParam("offset", 14).request().get();
-        assertEquals(response.getStatus(), 400);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Offset exceeds total size");
     }
 
     @Test
@@ -474,7 +477,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(CLASS_ID_STR) + "/instance-details").queryParam("infer", true).request().get();
-        assertEquals(response.getStatus(), 400);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "The Dataset Record could not be found.");
     }
 
     @Test
@@ -531,7 +534,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(CLASS_ID_STR) + "/property-details").request().get();
-        assertEquals(response.getStatus(), 400);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "The Dataset Record could not be found.");
     }
 
     @Test
@@ -591,7 +594,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances").request()
                 .post(Entity.json(instance.toString()));
-        assertEquals(response.getStatus(), 500);
+        assertErrorResponse(response, 500, "MobiException", "The new instance's IRI is already taken.");
     }
 
     @Test
@@ -603,7 +606,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances").request()
                 .post(Entity.json(instance.toString()));
-        assertEquals(response.getStatus(), 400);
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -615,7 +618,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances").request()
                 .post(Entity.json(instance.toString()));
-        assertEquals(response.getStatus(), 500);
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     @Test
@@ -632,7 +635,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     public void getInstanceTestWhenNotFound() {
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(MISSING_ID)).request().get();
-        assertEquals(response.getStatus(), 400);
+        assertErrorResponse(response, 404, "MobiNotFoundException", "The requested instance could not be found.");
     }
 
     @Test
@@ -661,7 +664,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(INSTANCE_ID_STR)).request().get();
-        assertEquals(response.getStatus(), 400);
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -671,7 +674,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(INSTANCE_ID_STR)).request().get();
-        assertEquals(response.getStatus(), 500);
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     @Test
@@ -716,7 +719,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(MISSING_ID)).request().put(Entity.json(instance.toString()));
-        assertEquals(response.getStatus(), 400);
+        assertErrorResponse(response, 404, "MobiNotFoundException", "The requested instance could not be found.");
     }
 
     @Test
@@ -728,7 +731,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(INSTANCE_ID_STR)).request().put(Entity.json(instance.toString()));
-        assertEquals(response.getStatus(), 400);
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -740,7 +743,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(INSTANCE_ID_STR)).request().put(Entity.json(instance.toString()));
-        assertEquals(response.getStatus(), 500);
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     @Test
@@ -769,7 +772,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     public void deleteInstanceTestWhenNotFound() {
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(MISSING_ID)).request().delete();
-        assertEquals(response.getStatus(), 400);
+        assertErrorResponse(response, 404, "MobiNotFoundException", "The requested instance could not be found.");
     }
 
     @Test
@@ -779,7 +782,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(MISSING_ID)).request().delete();
-        assertEquals(response.getStatus(), 400);
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -789,6 +792,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(MISSING_ID)).request().delete();
-        assertEquals(response.getStatus(), 500);
+        assertErrorType(response, 500, "IllegalStateException");
     }
+
 }

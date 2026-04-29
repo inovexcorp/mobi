@@ -23,6 +23,8 @@ package com.mobi.security.policy.rest;
  * #L%
  */
 
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorResponse;
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorType;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -146,21 +148,21 @@ public class PolicyEnforcementRestTest extends MobiRestTestCXF {
     @Test
     public void evaluateEmptyRequestTest() {
         Response response = target().path("pep").request().post(Entity.json(mapper.createObjectNode().toString()));
-        assertEquals(response.getStatus(), 400);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Action ID is required");
     }
 
     @Test
     public void evaluateEmptyActionIdTest() {
         json.remove("actionId");
         Response response = target().path("pep").request().post(Entity.json(json.toString()));
-        assertEquals(response.getStatus(), 400);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Action ID is required");
     }
 
     @Test
     public void evaluateEmptyResourceIdTest() {
         json.remove("resourceId");
         Response response = target().path("pep").request().post(Entity.json(json.toString()));
-        assertEquals(response.getStatus(), 400);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Resource Id is required");
     }
 
     @Test
@@ -226,4 +228,5 @@ public class PolicyEnforcementRestTest extends MobiRestTestCXF {
         assertEquals(response.readEntity(String.class), mapper.readValue(multiResponse, ArrayNode.class).toString());
         assertEquals(response.getStatus(), 200);
     }
+
 }

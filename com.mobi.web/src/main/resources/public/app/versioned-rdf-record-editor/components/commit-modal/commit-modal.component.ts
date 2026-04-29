@@ -87,7 +87,7 @@ export class CommitModalComponent<TData extends VersionedRdfListItem> {
                     //         this._createCommit(branch['@id']);
                     //     }, error => this._onError(error));
                 }
-            }, error => this._toast.createErrorToast(error));
+            }, error => this._toast.createErrorToast(error.errorMessage));
     }
     createCommit(branchId: string): void {
         this._cm.createBranchCommit(branchId, this._state.listItem.versionedRdfRecord.recordId, this.catalogId,

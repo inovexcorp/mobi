@@ -261,7 +261,8 @@ describe('Datasets List component', function () {
         spyOn(component, 'setResults');
       });
       it('unless an error occurs', fakeAsync(function () {
-        datasetManagerStub.deleteDatasetRecord.and.callFake(() => throwError('Error Message'));
+        const errorObj = {error: 'Error', errorMessage: 'Error Message', errorDetails: []};
+        datasetManagerStub.deleteDatasetRecord.and.callFake(() => throwError(errorObj));
         component.delete(dataset);
         tick();
         expect(datasetManagerStub.deleteDatasetRecord).toHaveBeenCalledWith(recordId);
@@ -350,7 +351,8 @@ describe('Datasets List component', function () {
     }));
     describe('should clear a dataset', function () {
       it('unless an error occurs', fakeAsync(function () {
-        datasetManagerStub.clearDatasetRecord.and.callFake(() => throwError('Error Message'));
+        const errorObj = {error: 'Error', errorMessage: 'Error Message', errorDetails: []};
+        datasetManagerStub.clearDatasetRecord.and.callFake(() => throwError(errorObj));
         component.clear(dataset);
         tick();
         expect(datasetManagerStub.clearDatasetRecord).toHaveBeenCalledWith(recordId);

@@ -23,6 +23,8 @@ package com.mobi.security.policy.rest;
  * #L%
  */
 
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorResponse;
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorType;
 import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static org.junit.Assert.assertEquals;
@@ -172,8 +174,8 @@ public class PolicyRestTest extends MobiRestTestCXF {
         doThrow(new IllegalStateException()).when(policyManager).getPolicies(any(PolicyQueryParams.class));
 
         Response response = target().path("policies").request().get();
-        assertEquals(500, response.getStatus());
         verify(policyManager).getPolicies(any(PolicyQueryParams.class));
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     // POST policies
@@ -190,9 +192,9 @@ public class PolicyRestTest extends MobiRestTestCXF {
     @Test
     public void createPolicyMissingIdTest() {
         Response response = target().path("policies").request().post(Entity.json("{}"));
-        assertEquals(400, response.getStatus());
         verify(policyManager, times(0)).createPolicy(any(PolicyType.class));
         verify(policyManager, times(0)).addPolicy(any(XACMLPolicy.class));
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Policy must have a value");
     }
 
     @Test
@@ -201,9 +203,9 @@ public class PolicyRestTest extends MobiRestTestCXF {
         doThrow(new IllegalArgumentException()).when(policyManager).addPolicy(policy);
 
         Response response = target().path("policies").request().post(Entity.json("{\"PolicyId\": \"urn:test\"}"));
-        assertEquals(400, response.getStatus());
         verify(policyManager).createPolicy(any(PolicyType.class));
         verify(policyManager).addPolicy(any(XACMLPolicy.class));
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -212,9 +214,9 @@ public class PolicyRestTest extends MobiRestTestCXF {
         doThrow(new PolicySyntaxException()).when(policyManager).createPolicy(any(PolicyType.class));
 
         Response response = target().path("policies").request().post(Entity.json("{\"PolicyId\": \"urn:test\"}"));
-        assertEquals(400, response.getStatus());
         verify(policyManager).createPolicy(any(PolicyType.class));
         verify(policyManager, times(0)).addPolicy(any(XACMLPolicy.class));
+        assertErrorType(response, 400, "PolicySyntaxException");
     }
 
     @Test
@@ -223,9 +225,9 @@ public class PolicyRestTest extends MobiRestTestCXF {
         doThrow(new IllegalStateException()).when(policyManager).addPolicy(policy);
 
         Response response = target().path("policies").request().post(Entity.json(json));
-        assertEquals(500, response.getStatus());
         verify(policyManager).createPolicy(any(PolicyType.class));
         verify(policyManager).addPolicy(policy);
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     // GET policies/{policyId}
@@ -248,8 +250,8 @@ public class PolicyRestTest extends MobiRestTestCXF {
     @Test
     public void retrievePolicyThatDoesNotExistTest() {
         Response response = target().path("policies/" + encode("urn:missing")).request().get();
-        assertEquals(400, response.getStatus());
         verify(policyManager).getPolicy(vf.createIRI("urn:missing"));
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Policy could not be found");
     }
 
     @Test
@@ -258,8 +260,8 @@ public class PolicyRestTest extends MobiRestTestCXF {
         doThrow(new IllegalStateException()).when(policyManager).getPolicy(policyId);
 
         Response response = target().path("policies/" + encode(policyId.stringValue())).request().get();
-        assertEquals(500, response.getStatus());
         verify(policyManager).getPolicy(policyId);
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     // PUT policies/{policyId}
@@ -275,9 +277,9 @@ public class PolicyRestTest extends MobiRestTestCXF {
     @Test
     public void updatePolicyMissingIdTest() {
         Response response = target().path("policies/" + encode(policyId.stringValue())).request().put(Entity.json("{}"));
-        assertEquals(400, response.getStatus());
         verify(policyManager, times(0)).createPolicy(any(PolicyType.class));
         verify(policyManager, times(0)).updatePolicy(any(XACMLPolicy.class));
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Policy must have a value");
     }
 
     @Test
@@ -286,17 +288,17 @@ public class PolicyRestTest extends MobiRestTestCXF {
         doThrow(new PolicySyntaxException()).when(policyManager).createPolicy(any(PolicyType.class));
 
         Response response = target().path("policies/" + encode(policyId.stringValue())).request().put(Entity.json("{\"PolicyId\": \"urn:test\"}"));
-        assertEquals(400, response.getStatus());
         verify(policyManager).createPolicy(any(PolicyType.class));
         verify(policyManager, times(0)).updatePolicy(any(XACMLPolicy.class));
+        assertErrorType(response, 400, "PolicySyntaxException");
     }
 
     @Test
     public void updatePolicyIdDoesNotMatchTest() {
         Response response = target().path("policies/" + encode("urn:different")).request().put(Entity.json(json));
-        assertEquals(400, response.getStatus());
         verify(policyManager).createPolicy(any(PolicyType.class));
         verify(policyManager, times(0)).updatePolicy(any(XACMLPolicy.class));
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Policy Id does not match provided policy");
     }
 
     @Test
@@ -305,8 +307,9 @@ public class PolicyRestTest extends MobiRestTestCXF {
         doThrow(new IllegalStateException()).when(policyManager).updatePolicy(policy);
 
         Response response = target().path("policies/" + encode(policyId.stringValue())).request().put(Entity.json(json));
-        assertEquals(500, response.getStatus());
         verify(policyManager).createPolicy(any(PolicyType.class));
         verify(policyManager).updatePolicy(any(XACMLPolicy.class));
+        assertErrorType(response, 500, "IllegalStateException");
     }
+
 }

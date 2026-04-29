@@ -23,6 +23,9 @@ package com.mobi.security.policy.rest;
  * #L%
  */
 
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorContains;
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorResponse;
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorType;
 import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
@@ -156,7 +159,7 @@ public class RecordPermissionsRestTest extends MobiRestTestCXF {
     public void retrieveRecordPolicyDoesNotExistTest() {
         when(policyManager.getPolicy(any(Resource.class))).thenReturn(Optional.empty());
         Response response = target().path("record-permissions/" + encode(invalidIRI.stringValue())).request().get();
-        assertEquals(response.getStatus(), 400);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Policy for record " + invalidIRI.stringValue() + " does not exist in repository");
     }
 
     /* PUT /policies/record-permissions/{policyId} */
@@ -185,7 +188,7 @@ public class RecordPermissionsRestTest extends MobiRestTestCXF {
     public void updateRecordPolicyDoesNotExistTest() {
         when(policyManager.getPolicy(any(Resource.class))).thenReturn(Optional.empty());
         Response response = target().path("record-permissions/" + encode(invalidIRI.stringValue())).request().put(Entity.json(recordJson));
-        assertEquals(response.getStatus(), 400);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Policy for record " + invalidIRI.stringValue() + " does not exist in repository");
     }
 
     @Test
@@ -194,7 +197,7 @@ public class RecordPermissionsRestTest extends MobiRestTestCXF {
         ((ObjectNode) jsonObject.get("urn:read")).remove("everyone");
 
         Response response = target().path("record-permissions/" + encode(recordIRI.stringValue())).request().put(Entity.json(jsonObject.toString()));
-        assertEquals(response.getStatus(), 400);
+        assertErrorContains(response, 400, "IllegalArgumentException", "Invalid JSON representation of a Policy. Missing everyone");
     }
 
     @Test
@@ -203,7 +206,7 @@ public class RecordPermissionsRestTest extends MobiRestTestCXF {
         ((ObjectNode) jsonObject.get("urn:update")).remove("users");
 
         Response response = target().path("record-permissions/" + encode(recordIRI.stringValue())).request().put(Entity.json(jsonObject.toString()));
-        assertEquals(response.getStatus(), 400);
+        assertErrorContains(response, 400, "IllegalArgumentException", "Invalid JSON representation of a Policy. Users or groups not set properly");
     }
 
     @Test
@@ -212,6 +215,7 @@ public class RecordPermissionsRestTest extends MobiRestTestCXF {
         ((ObjectNode) jsonObject.get("urn:update")).remove("groups");
 
         Response response = target().path("record-permissions/" + encode(recordIRI.stringValue())).request().put(Entity.json(jsonObject.toString()));
-        assertEquals(response.getStatus(), 400);
+        assertErrorContains(response, 400, "IllegalArgumentException", "Invalid JSON representation of a Policy. Users or groups not set properly");
     }
+
 }

@@ -31,6 +31,7 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { getDctermsValue } from '../../../shared/utility';
 import { ONTOLOGYEDITOR } from '../../../prefixes';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { RESTError } from '../../../shared/models/RESTError.interface';
 import { stateServiceToken } from '../../../shared/injection-token';
 import { ToastService } from '../../../shared/services/toast.service';
 
@@ -89,7 +90,7 @@ export class OntologyEditorPageComponent implements OnInit, OnDestroy, DoCheck {
         openingObservable.subscribe(
           () => {},
           error => {
-            this._toast.createErrorToast(error);
+            this._toast.createErrorToast(error.errorMessage);
             this._router.navigate(['/ontology-editor']);
             this.state.listItem = undefined;
           });
@@ -120,9 +121,9 @@ export class OntologyEditorPageComponent implements OnInit, OnDestroy, DoCheck {
     return this._cm.getRecord(recordId, this._cm.localCatalog['@id']).pipe(
       switchMap(record => {
         if (!record || record.length === 0) {
-          throw new Error('Record not found');
+          return throwError({error: '', errorMessage: 'Record not found', errorDetails: []} as RESTError);
         } else if (!record[0]['@type'].includes(`${ONTOLOGYEDITOR}OntologyRecord`)) {
-          throw new Error('Could not open record as it is not an ontology.');
+          return throwError({error: '', errorMessage: 'Could not open record as it is not an ontology.', errorDetails: []} as RESTError);
         }
         const transformedRecord = {
           recordId: record[0]['@id'],

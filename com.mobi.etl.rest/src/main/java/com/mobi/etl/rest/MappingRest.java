@@ -47,13 +47,13 @@ import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
-import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.FileUpload;
+import com.mobi.rest.util.MobiNotFoundException;
 import com.mobi.rest.util.RestUtils;
+import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Encoding;
@@ -158,37 +158,33 @@ public class MappingRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided Mapping data or parameters are invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to perform this action",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while uploading the MappingRecord",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -213,7 +209,8 @@ public class MappingRest {
         String filename = file.getFilename();
 
         if ((inputStream == null && jsonld == null) || (inputStream != null && jsonld != null)) {
-            throw ErrorUtils.sendError("Must provide either a file or a JSON-LD string", Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(
+                    new IllegalArgumentException("Must provide either a file or a JSON-LD string"));
         }
         checkStringParam(title, "Title is required");
         User user = getActiveUser(servletRequest, engineManager);
@@ -246,9 +243,9 @@ public class MappingRest {
             record = recordManager.createRecord(user, config, MappingRecord.class, conn);
             return Response.status(201).entity(record.getResource().stringValue()).build();
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -297,47 +294,27 @@ public class MappingRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided Mapping data or parameters are invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to perform this action",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "404",
                     description = "Mapping with the provided ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving the mapping JSON-LD",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -347,13 +324,13 @@ public class MappingRest {
         try {
             logger.info("Getting mapping " + recordId);
             MappingWrapper mapping = manager.retrieveMapping(vf.createIRI(recordId)).orElseThrow(() ->
-                    ErrorUtils.sendError("Mapping not found", Response.Status.NOT_FOUND));
+                    RestUtils.getErrorObjNotFound(new MobiNotFoundException("Mapping not found")));
             String mappingJsonld = groupedModelToString(mapping.getModel(), getRDFFormat(JSON_LD));
             return Response.ok(mappingJsonld).build();
         } catch (IllegalArgumentException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(e);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -378,46 +355,41 @@ public class MappingRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided Mapping data or parameters are invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to perform this action",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "404",
                     description = "Mapping with the provided ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while downloading the mapping",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -430,7 +402,7 @@ public class MappingRest {
         try {
             logger.info("Downloading mapping " + recordId);
             MappingWrapper mapping = manager.retrieveMapping(vf.createIRI(recordId)).orElseThrow(() ->
-                    ErrorUtils.sendError("Mapping not found", Response.Status.NOT_FOUND));
+                    RestUtils.getErrorObjNotFound(new MobiNotFoundException("Mapping not found")));
             RDFFormat rdfFormat = getRDFFormat(format);
             String mappingJsonld = groupedModelToString(mapping.getModel(), rdfFormat);
             StreamingOutput stream = os -> {
@@ -445,9 +417,9 @@ public class MappingRest {
                     + rdfFormat.getDefaultFileExtension()).header("Content-Type", rdfFormat.getDefaultMIMEType())
                     .build();
         } catch (IllegalArgumentException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(e);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -472,37 +444,30 @@ public class MappingRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided Mapping data or parameters are invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to perform this action",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while deleting the mapping",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -517,9 +482,9 @@ public class MappingRest {
             recordManager.removeRecord(catalogId, vf.createIRI(recordId), getActiveUser(servletRequest, engineManager),
                     MappingRecord.class, conn);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         } catch (IllegalArgumentException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(e);
         }
         return Response.ok().build();
     }

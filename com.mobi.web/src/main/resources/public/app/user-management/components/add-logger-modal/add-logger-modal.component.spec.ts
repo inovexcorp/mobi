@@ -34,6 +34,7 @@ import { of, throwError } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { RestErrorDisplayComponent } from '../../../shared/components/restErrorDisplay/restErrorDisplay.component';
 import { LogLevelOption } from '../log-level-manager/log-level-manager.component';
 import { LogLevelSelectComponent } from '../log-level-select/log-level-select.component';
 import { LogsManagerService } from '../../../shared/services/logs-manager.service';
@@ -74,6 +75,7 @@ describe('AddLoggerModalComponent', () => {
       declarations: [
         AddLoggerModalComponent,
         MockComponent(ErrorDisplayComponent),
+        MockComponent(RestErrorDisplayComponent),
         MockComponent(LogLevelSelectComponent)
       ],
       providers: [
@@ -147,11 +149,11 @@ describe('AddLoggerModalComponent', () => {
       });
     });
     it('if an error occurred', () => {
-      expect(element.queryAll(By.css('error-display')).length).toEqual(0);
-      
+      expect(element.queryAll(By.css('rest-error-display')).length).toEqual(0);
+
       component.error = error;
       fixture.detectChanges();
-      expect(element.queryAll(By.css('error-display')).length).toEqual(1);
+      expect(element.queryAll(By.css('rest-error-display')).length).toEqual(1);
     });
     it('with buttons to cancel and submit', function () {
       const buttons = element.queryAll(By.css('.mat-dialog-actions button'));

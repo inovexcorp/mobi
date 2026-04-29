@@ -23,6 +23,7 @@ package com.mobi.workflows.rest;
  * #L%
  */
 
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorResponse;
 import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
@@ -481,12 +482,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         Response response = target().path("workflows").request().post(Entity.entity(fd.body(),
                 MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(response.getStatus(), 500);
-
-        ObjectNode responseObject = (ObjectNode) mapper.readTree(response.readEntity(String.class));
-        assertEquals(responseObject.get("error").textValue(), "MobiException");
-        assertEquals(responseObject.get("errorMessage").textValue(), "I'm an exception!");
-        assertNotEquals(responseObject.get("errorMessage").textValue(), null);
+        assertErrorResponse(response, 500, "MobiException", "I'm an exception!");
     }
 
     @Test
@@ -505,12 +501,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         Response response = target().path("workflows").request().post(Entity.entity(fd.body(),
                 MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(400, response.getStatus());
-
-        ObjectNode responseObject = (ObjectNode) mapper.readTree(response.readEntity(String.class));
-        assertEquals(responseObject.get("error").textValue(), "RDFParseException");
-        assertEquals(responseObject.get("errorMessage").textValue(), "I'm an exception!");
-        assertNotEquals(responseObject.get("errorMessage").textValue(), null);
+        assertErrorResponse(response, 400, "RDFParseException", "I'm an exception!");
     }
 
     @Test
@@ -528,12 +519,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
 
         Response response = target().path("workflows").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(400, response.getStatus());
-
-        ObjectNode responseObject = (ObjectNode) mapper.readTree(response.readEntity(String.class));
-        assertEquals(responseObject.get("error").textValue(), "IllegalArgumentException");
-        assertEquals(responseObject.get("errorMessage").textValue(), "I'm an exception!");
-        assertNotEquals(responseObject.get("errorMessage").textValue(), null);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "I'm an exception!");
     }
 
     @Test
@@ -548,6 +534,28 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         Response response = target().path("workflows").request().post(Entity.entity(fd.body(),
                 MediaType.MULTIPART_FORM_DATA));
         assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    public void uploadTriggerServiceErrorTest() throws IOException {
+        doThrow(new IllegalStateException("Trigger service creation failed"))
+                .when(workflowManager).createTriggerService(any(WorkflowRecord.class));
+
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("jsonld", IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/test-workflow.jsonld"))));
+        fd.field("title", "title");
+        fd.field("description", "description");
+        fd.field("markdown", "#markdown");
+        fd.field("keywords", "keyword1");
+        fd.field("keywords", "keyword2");
+
+        Response response = target().path("workflows").request().post(Entity.entity(fd.body(),
+                MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(202, response.getStatus());
+        ObjectNode responseObject = (ObjectNode) mapper.readTree(response.readEntity(String.class));
+        assertNotNull(responseObject.get("error"));
+        assertNotNull(responseObject.get("errorMessage"));
     }
 
     /* POST {workflowId}/executions */
@@ -568,7 +576,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
     }
 
     @Test
-    public void executeWorkflowNoRecord() throws JsonProcessingException {
+    public void executeWorkflowNoRecord() {
         when(recordManager.getRecord(any(Resource.class), any(Resource.class), eq(recordFactory),
                 any(RepositoryConnection.class))).thenThrow(new IllegalArgumentException("WorkflowRecord " + recordId + " could not be found"));
         FormDataMultiPart fd = new FormDataMultiPart();
@@ -576,16 +584,11 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         Response response = target().path("workflows/" + encode(recordId) + "/executions")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(400, response.getStatus());
-
-        ObjectNode responseObject = (ObjectNode) mapper.readTree(response.readEntity(String.class));
-        assertEquals(responseObject.get("error").textValue(), "IllegalArgumentException");
-        assertEquals(responseObject.get("errorMessage").textValue(), "WorkflowRecord " + recordId + " could not be found");
-        assertNotEquals(responseObject.get("errorMessage").textValue(), null);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "WorkflowRecord " + recordId + " could not be found");
     }
 
     @Test
-    public void executeWorkflowNoActiveStatus() throws JsonProcessingException {
+    public void executeWorkflowNoActiveStatus() {
         when(recordManager.getRecord(any(Resource.class), any(Resource.class), eq(recordFactory),
                 any(RepositoryConnection.class))).thenReturn(record);
 
@@ -596,16 +599,11 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         Response response = target().path("workflows/" + encode(recordId) + "/executions")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(response.getStatus(), 500);
-
-        ObjectNode responseObject = (ObjectNode) mapper.readTree(response.readEntity(String.class));
-        assertEquals(responseObject.get("error").textValue(), "IllegalStateException");
-        assertEquals(responseObject.get("errorMessage").textValue(), "Workflow Records must have active status.");
-        assertNotEquals(responseObject.get("errorMessage").textValue(), null);
+        assertErrorResponse(response, 500, "IllegalStateException", "Workflow Records must have active status.");
     }
 
     @Test
-    public void executeWorkflowNotActive() throws JsonProcessingException {
+    public void executeWorkflowNotActive() {
         when(recordManager.getRecord(any(Resource.class), any(Resource.class), eq(recordFactory),
                 any(RepositoryConnection.class))).thenReturn(record);
 
@@ -616,12 +614,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         Response response = target().path("workflows/" + encode(recordId) + "/executions")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(400, response.getStatus());
-
-        ObjectNode responseObject = (ObjectNode) mapper.readTree(response.readEntity(String.class));
-        assertEquals(responseObject.get("error").textValue(), "IllegalArgumentException");
-        assertEquals(responseObject.get("errorMessage").textValue(), "Workflow http://mobi.com/workflowRecord1 is not active");
-        assertNotEquals(responseObject.get("errorMessage").textValue(), null);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Workflow http://mobi.com/workflowRecord1 is not active");
     }
 
     /* GET {workflowRecordIri}/executions */
@@ -712,19 +705,14 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
     }
 
     @Test
-    public void getLatestExecutionInvalidRecord() throws JsonProcessingException {
+    public void getLatestExecutionInvalidRecord() {
         when(recordManager.getRecord(any(Resource.class), any(Resource.class), eq(recordFactory),
                 any(RepositoryConnection.class))).thenThrow(new IllegalArgumentException("WorkflowRecord " + recordId + " could not be found"));
 
         Response response = target().path("workflows/" + encode(recordId) + "/executions/latest")
                 .request().get();
 
-        assertEquals(400, response.getStatus());
-
-        ObjectNode responseObject = (ObjectNode) mapper.readTree(response.readEntity(String.class));
-        assertEquals(responseObject.get("error").textValue(), "IllegalArgumentException");
-        assertEquals(responseObject.get("errorMessage").textValue(), "WorkflowRecord " + recordId + " could not be found");
-        assertNotEquals(responseObject.get("errorMessage").textValue(), null);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "WorkflowRecord " + recordId + " could not be found");
         verify(workflowManager, times(0)).getExecutionActivity(activityIRI);
     }
 
@@ -752,12 +740,8 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         Response response = target().path("workflows/" + encode(recordId) + "/executions/" + encode(activityIRI))
                 .request().get();
 
-        assertEquals(400, response.getStatus());
         verify(workflowManager, times(1)).getExecutionActivity(activityIRI);
-        ObjectNode responseObject = (ObjectNode) mapper.readTree(response.readEntity(String.class));
-        assertEquals(responseObject.get("error").textValue(), "IllegalArgumentException");
-        assertEquals(responseObject.get("errorMessage").textValue(), "Execution Activity is not related to the specified Workflow");
-        assertNotEquals(responseObject.get("errorMessage").textValue(), null);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Execution Activity is not related to the specified Workflow");
     }
 
     @Test
@@ -767,12 +751,8 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         Response response = target().path("workflows/" + encode(recordId) + "/executions/" + encode(activityIRI))
                 .request().get();
 
-        assertEquals(404, response.getStatus());
         verify(workflowManager, times(1)).getExecutionActivity(activityIRI);
-        ObjectNode responseObject = (ObjectNode) mapper.readTree(response.readEntity(String.class));
-        assertEquals(responseObject.get("error").textValue(), "MobiNotFoundException");
-        assertEquals(responseObject.get("errorMessage").textValue(), "Execution Activity " + activityIRI + " not found");
-        assertNotEquals(responseObject.get("errorMessage").textValue(), null);
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Execution Activity " + activityIRI + " not found");
     }
 
     /* GET {workflowId}/executions/{activityId}/actions */
@@ -815,10 +795,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         assertEquals(400, response.getStatus());
         verify(workflowManager, times(1)).getExecutionActivity(activityIRI);
         verify(workflowManager, times(0)).getActionExecutions(any(Resource.class));
-        ObjectNode responseObject = (ObjectNode) mapper.readTree(response.readEntity(String.class));
-        assertEquals(responseObject.get("error").textValue(), "IllegalArgumentException");
-        assertEquals(responseObject.get("errorMessage").textValue(), "Execution Activity is not related to the specified Workflow");
-        assertNotEquals(responseObject.get("errorMessage").textValue(), null);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Execution Activity is not related to the specified Workflow");
     }
 
     @Test
@@ -829,13 +806,9 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         Response response = target().path("workflows/" + encode(recordId) + "/executions/" + encode(activityIRI) + "/actions")
                 .request().get();
 
-        assertEquals(400, response.getStatus());
         verify(workflowManager, times(1)).getExecutionActivity(activityIRI);
         verify(workflowManager, times(0)).getActionExecutions(any(Resource.class));
-        ObjectNode responseObject = (ObjectNode) mapper.readTree(response.readEntity(String.class));
-        assertEquals(responseObject.get("error").textValue(), "IllegalArgumentException");
-        assertEquals(responseObject.get("errorMessage").textValue(), "Execution Activity " + activityIRI + " not found");
-        assertNotEquals(responseObject.get("errorMessage").textValue(), null);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Execution Activity " + activityIRI + " not found");
     }
 
     /* GET {workflowId}/executions/{activityId}/logs */
@@ -864,13 +837,9 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         Response response = target().path("workflows/" + encode(recordId) + "/executions/"
                 + encode(activityIRI) + "/logs").request().get();
 
-        assertEquals(400, response.getStatus());
         verify(workflowManager, times(1)).getExecutionActivity(activityIRI);
         verify(workflowManager, times(1)).getLogFile(binaryFileId);
-        ObjectNode responseObject = (ObjectNode) mapper.readTree(response.readEntity(String.class));
-        assertEquals(responseObject.get("error").textValue(), "IllegalArgumentException");
-        assertEquals(responseObject.get("errorMessage").textValue(), "Log file " + binaryFileId + " does not exist on the system.");
-        assertNotEquals(responseObject.get("errorMessage").textValue(), null);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Log file " + binaryFileId + " does not exist on the system.");
     }
 
     @Test
@@ -882,13 +851,9 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         Response response = target().path("workflows/" + encode(recordId) + "/executions/"
                 + encode(activityIRI) + "/logs").request().get();
 
-        assertEquals(400, response.getStatus());
         verify(workflowManager, times(1)).getExecutionActivity(activityIRI);
         verify(workflowManager, times(0)).getLogFile(any(Resource.class));
-        ObjectNode responseObject = (ObjectNode) mapper.readTree(response.readEntity(String.class));
-        assertEquals(responseObject.get("error").textValue(), "IllegalArgumentException");
-        assertEquals(responseObject.get("errorMessage").textValue(), "Execution Activity is not related to the specified Workflow");
-        assertNotEquals(responseObject.get("errorMessage").textValue(), null);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Execution Activity is not related to the specified Workflow");
     }
 
     @Test
@@ -912,13 +877,9 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         Response response = target().path("workflows/" + encode(recordId) + "/executions/"
                 + encode(activityIRI) + "/logs").request().get();
 
-        assertEquals(400, response.getStatus());
         verify(workflowManager, times(1)).getExecutionActivity(activityIRI);
         verify(workflowManager, times(0)).getLogFile(binaryFileId);
-        ObjectNode responseObject = (ObjectNode) mapper.readTree(response.readEntity(String.class));
-        assertEquals(responseObject.get("error").textValue(), "IllegalArgumentException");
-        assertEquals(responseObject.get("errorMessage").textValue(), "Execution Activity " + activityIRI + " not found");
-        assertNotEquals(responseObject.get("errorMessage").textValue(), null);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Execution Activity " + activityIRI + " not found");
     }
 
     /* GET {workflowId}/executions/{activityId}/logs/{logId} */
@@ -963,13 +924,9 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         Response response = target().path("workflows/" + encode(recordId) + "/executions/"
                 + encode(activityIRI) + "/logs/" + encode(binaryFileId)).request().get();
 
-        assertEquals(400, response.getStatus());
         verify(workflowManager, times(1)).getExecutionActivity(activityIRI);
         verify(workflowManager, times(0)).getLogFile(any(Resource.class));
-        ObjectNode responseObject = (ObjectNode) mapper.readTree(response.readEntity(String.class));
-        assertEquals(responseObject.get("error").textValue(), "IllegalArgumentException");
-        assertEquals(responseObject.get("errorMessage").textValue(), "Log " + binaryFileId + " is not related to Activity " + activityIRI);
-        assertNotEquals(responseObject.get("errorMessage").textValue(), null);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Log " + binaryFileId + " is not related to Activity " + activityIRI);
     }
 
     @Test
@@ -983,11 +940,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         Response response = target().path("workflows/" + encode(recordId) + "/executions/"
                 + encode(activityIRI) + "/logs/" + encode(binaryFileId)).request().get();
 
-        assertEquals(400, response.getStatus());
-        ObjectNode responseObject = (ObjectNode) mapper.readTree(response.readEntity(String.class));
-        assertEquals(responseObject.get("error").textValue(), "IllegalArgumentException");
-        assertEquals(responseObject.get("errorMessage").textValue(), "Log file " + binaryFileId + " does not exist on the system.");
-        assertNotEquals(responseObject.get("errorMessage").textValue(), null);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Log file " + binaryFileId + " does not exist on the system.");
     }
 
     @Test
@@ -999,11 +952,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         Response response = target().path("workflows/" + encode(recordId) + "/executions/"
                 + encode(activityIRI) + "/logs/" + encode(binaryFileId)).request().get();
 
-        assertEquals(400, response.getStatus());
-        ObjectNode responseObject = (ObjectNode) mapper.readTree(response.readEntity(String.class));
-        assertEquals(responseObject.get("error").textValue(), "IllegalArgumentException");
-        assertEquals(responseObject.get("errorMessage").textValue(), "Execution Activity is not related to the specified Workflow");
-        assertNotEquals(responseObject.get("errorMessage").textValue(), null);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Execution Activity is not related to the specified Workflow");
     }
 
     @Test
@@ -1014,13 +963,9 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         Response response = target().path("workflows/" + encode(recordId) + "/executions/"
                 + encode(activityIRI) + "/logs/" + encode(binaryFileId)).request().get();
 
-        assertEquals(400, response.getStatus());
-        ObjectNode responseObject = (ObjectNode) mapper.readTree(response.readEntity(String.class));
-        assertEquals(responseObject.get("error").textValue(), "IllegalArgumentException");
-        assertEquals(responseObject.get("errorMessage").textValue(), "Execution Activity " + activityIRI + " not found");
-        assertNotEquals(responseObject.get("errorMessage").textValue(), null);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Execution Activity " + activityIRI + " not found");
     }
-    
+
     @Test
     public void testGetExecutingActivities() throws Exception {
         IRI runningActivityIRI = vf.createIRI("http://test.com/running-activity");
@@ -1052,11 +997,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         doThrow(new IllegalArgumentException("Error")).when(provService).getConnection();
         
         Response response = target().path("workflows/executing-activities").request().get();
-        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-        ObjectNode responseObject = getResponse(response);
-        assertEquals(responseObject.get("error").asText(), "IllegalArgumentException");
-        assertEquals(responseObject.get("errorMessage").asText(), "Error");
-        assertNotEquals(responseObject.get("errorDetails"), null);
+        assertErrorResponse(response, Response.Status.BAD_REQUEST.getStatusCode(), "IllegalArgumentException", "Error");
     }
 
     @Test
@@ -1064,11 +1005,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         doThrow(new IllegalStateException("Error")).when(provService).getConnection();
 
         Response response = target().path("workflows/executing-activities").request().get();
-        assertEquals(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
-        ObjectNode responseObject = getResponse(response);
-        assertEquals(responseObject.get("error").asText(), "IllegalStateException");
-        assertEquals(responseObject.get("errorMessage").asText(), "Error");
-        assertNotEquals(responseObject.get("errorDetails"), null);
+        assertErrorResponse(response, Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), "IllegalStateException", "Error");
     }
 
     @Test
@@ -1251,11 +1188,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
                 .request()
                 .put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-        ObjectNode responseObject = getResponse(response);
-        assertEquals(responseObject.get("error").asText(), "IllegalArgumentException");
-        assertEquals(responseObject.get("errorMessage").asText(), "TriG data is not supported for upload changes.");
-        assertNotEquals(responseObject.get("errorDetails"), null);
+        assertErrorResponse(response, Response.Status.BAD_REQUEST.getStatusCode(), "IllegalArgumentException", "TriG data is not supported for upload changes.");
     }
 
     @Test
@@ -1306,7 +1239,4 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         verify(engineManager, atLeastOnce()).retrieveUser(anyString());
     }
 
-    private ObjectNode getResponse(Response response) throws Exception {
-        return mapper.readValue(response.readEntity(String.class), ObjectNode.class);
-    }
 }

@@ -188,7 +188,7 @@ describe('Instance Creator component', function() {
                         expect(discoverStateStub.explore.classDetails).toEqual([]);
                     }));
                     it('rejected', fakeAsync(function() {
-                        exploreServiceStub.getClassDetails.and.returnValue(throwError('error'));
+                        exploreServiceStub.getClassDetails.and.returnValue(throwError({error: '', errorMessage: 'error', errorDetails: []}));
                         component.save();
                         fixture.detectChanges();
                         tick();
@@ -210,7 +210,7 @@ describe('Instance Creator component', function() {
                     }));
                 });
                 it('rejected', fakeAsync(function() {
-                    exploreServiceStub.getClassInstanceDetails.and.returnValue(throwError('error'));
+                    exploreServiceStub.getClassInstanceDetails.and.returnValue(throwError({error: '', errorMessage: 'error', errorDetails: []}));
                     component.save();
                     fixture.detectChanges();
                     tick();
@@ -227,7 +227,7 @@ describe('Instance Creator component', function() {
                 }));
             });
             it('rejected', fakeAsync(function() {
-                exploreServiceStub.createInstance.and.returnValue(throwError('error'));
+                exploreServiceStub.createInstance.and.returnValue(throwError({error: '', errorMessage: 'error', errorDetails: []}));
                 component.save();
                 fixture.detectChanges();
                 tick();

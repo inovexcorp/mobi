@@ -37,6 +37,7 @@ import { RunMappingDatasetOverlayComponent } from '../runMappingDatasetOverlay/r
 import { RunMappingDownloadOverlayComponent } from '../runMappingDownloadOverlay/runMappingDownloadOverlay.component';
 import { RunMappingOntologyOverlayComponent } from '../runMappingOntologyOverlay/runMappingOntologyOverlay.component';
 import { ToastService } from '../../../shared/services/toast.service';
+import { RESTError } from '../../../shared/models/RESTError.interface';
 
 /**
  * @class EditMappingTabComponent
@@ -54,7 +55,7 @@ import { ToastService } from '../../../shared/services/toast.service';
   styleUrls: ['./editMappingTab.component.scss']
 })
 export class EditMappingTabComponent implements OnInit, OnDestroy {
-  errorMessage = '';
+  error: RESTError;
   classMappings = [];
   ontologyTitle = '';
 
@@ -225,12 +226,12 @@ export class EditMappingTabComponent implements OnInit, OnDestroy {
     );
   }
 
-  private _onError(errorMessage) {
-    this.errorMessage = errorMessage;
+  private _onError(error: RESTError) {
+    this.error = error;
   }
 
   private _success() {
-    this.errorMessage = '';
+    this.error = undefined;
     this.state.step = this.state.selectMappingStep;
     this.state.initialize();
     this.state.resetEdit();

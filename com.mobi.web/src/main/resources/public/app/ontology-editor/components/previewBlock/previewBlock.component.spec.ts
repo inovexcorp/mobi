@@ -138,7 +138,7 @@ describe('Preview Block component', function() {
             });
             it('unless an error occurs', fakeAsync(function() {
                 component.activePage = { serialization: 'test' };
-                sparqlManagerStub.postQuery.and.returnValue(throwError('Error'));
+                sparqlManagerStub.postQuery.and.returnValue(throwError({error: '', errorMessage: 'Error', errorDetails: []}));
                 component.setPreview();
                 tick();
                 expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith('CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . } LIMIT 5000', ontologyStateStub.listItem.versionedRdfRecord.recordId, ONTOLOGY_STORE_TYPE, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, false, true, 'test');

@@ -106,7 +106,7 @@ describe('Catalog Manager service', function() {
       spyOn(service, 'getSortOptions').and.returnValue(throwError(null));
       service.initialize()
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual('Error in catalogManager initialization');
+          expect(response).toEqual({error: '', errorMessage: 'Error in catalogManager initialization', errorDetails: []});
           expect(service.recordTypes).toEqual({});
           expect(service.localCatalog).toBeUndefined();
           expect(service.distributedCatalog).toBeUndefined();
@@ -120,14 +120,14 @@ describe('Catalog Manager service', function() {
       spyOn(service, 'getSortOptions').and.returnValue(of([]));
       service.initialize()
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual('Error in catalogManager initialization');
+          expect(response).toEqual({error: '', errorMessage: 'Error in catalogManager initialization', errorDetails: []});
           expect(service.recordTypes).toEqual({});
           expect(service.localCatalog).toBeUndefined();
           expect(service.distributedCatalog).toBeUndefined();
           expect(service.sortOptions).toEqual([]);
         });
       const request = httpMock.expectOne({ url: service.prefix, method: 'GET' });
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     describe('successfully', function() {
       beforeEach(function() {
@@ -142,7 +142,7 @@ describe('Catalog Manager service', function() {
       it('unless a catalog cannot be found', function() {
         service.initialize()
           .subscribe(() => fail('Observable should have rejected'), response => {
-            expect(response).toContain('Could not find');
+            expect(response.errorMessage).toContain('Could not find');
           });
         const request = httpMock.expectOne({ url: service.prefix, method: 'GET' });
         request.flush([]);
@@ -197,10 +197,10 @@ describe('Catalog Manager service', function() {
     it('unless there is an error', function() {
       service.getResultsPage(this.url)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'GET' });
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.getResultsPage(this.url)
@@ -222,10 +222,10 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.getKeywords(catalogId, this.config)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     describe('successfully', function() {
       describe('when not tracked', function() {
@@ -304,10 +304,10 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.getRecords(catalogId, this.config)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     describe('successfully', function() {
       describe('when not tracked', function() {
@@ -390,10 +390,10 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.getRecord(recordId, catalogId)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'GET' });
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.getRecord(recordId, catalogId)
@@ -411,10 +411,10 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.getRecordStatistics(recordId, catalogId)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'GET' });
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.getRecordStatistics(recordId, catalogId)
@@ -438,11 +438,11 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.createRecord(catalogId, this.recordConfig)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTruthy();
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('with a description and keywords', function() {
       service.createRecord(catalogId, this.recordConfig)
@@ -480,11 +480,11 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.updateRecord(recordId, catalogId, [emptyObj])
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'PUT' });
       expect(request.request.body).toEqual([emptyObj]);
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.updateRecord(recordId, catalogId, [emptyObj])
@@ -503,10 +503,10 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.deleteRecord(recordId, catalogId)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'DELETE' });
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.deleteRecord(recordId, catalogId)
@@ -533,10 +533,10 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.getRecordDistributions(recordId, catalogId, this.config)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('with all config passed', function() {
       service.getRecordDistributions(recordId, catalogId, this.config)
@@ -570,10 +570,10 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.getRecordDistribution(distributionId, recordId, catalogId)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'GET' });
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.getRecordDistribution(distributionId, recordId, catalogId)
@@ -598,11 +598,11 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.createRecordDistribution(recordId, catalogId, this.distributionConfig)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTruthy();
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('with a description, format, access URL, and download URL', function() {
       service.createRecordDistribution(recordId, catalogId, this.distributionConfig)
@@ -644,11 +644,11 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.updateRecordDistribution(distributionId, recordId, catalogId, emptyObj)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'PUT' });
       expect(request.request.body).toEqual(emptyObj);
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.updateRecordDistribution(distributionId, recordId, catalogId, emptyObj)
@@ -667,10 +667,10 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.deleteRecordDistribution(distributionId, recordId, catalogId)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'DELETE' });
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.deleteRecordDistribution(distributionId, recordId, catalogId)
@@ -697,10 +697,10 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.getRecordVersions(recordId, catalogId, this.config)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('with all config passed', function() {
       service.getRecordVersions(recordId, catalogId, this.config)
@@ -734,10 +734,10 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.getRecordLatestVersion(recordId, catalogId)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'GET' });
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.getRecordLatestVersion(recordId, catalogId)
@@ -755,10 +755,10 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.getRecordVersion(versionId, recordId, catalogId)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'GET' });
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.getRecordVersion(versionId, recordId, catalogId)
@@ -780,11 +780,11 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.createRecordVersion(recordId, catalogId, this.versionConfig)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTruthy();
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('with a description', function() {
       service.createRecordVersion(recordId, catalogId, this.versionConfig)
@@ -864,11 +864,11 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.updateRecordVersion(versionId, recordId, catalogId, emptyObj)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'PUT' });
       expect(request.request.body).toEqual(emptyObj);
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.updateRecordVersion(versionId, recordId, catalogId, emptyObj)
@@ -887,10 +887,10 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.deleteRecordVersion(versionId, recordId, catalogId)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'DELETE' });
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.deleteRecordVersion(versionId, recordId, catalogId)
@@ -908,11 +908,11 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.getVersionCommit(versionId, recordId, catalogId, 'jsonld')
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
       expect(request.request.params.get('format')).toEqual('jsonld');
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('with a format', function() {
       service.getVersionCommit(versionId, recordId, catalogId, 'turtle')
@@ -949,10 +949,10 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.getVersionDistributions(versionId, recordId, catalogId, this.config)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('with all config passed', function() {
       service.getVersionDistributions(versionId, recordId, catalogId, this.config)
@@ -986,10 +986,10 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.getVersionDistribution(distributionId, versionId, recordId, catalogId)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'GET' });
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.getVersionDistribution(distributionId, versionId, recordId, catalogId)
@@ -1014,11 +1014,11 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.createVersionDistribution(versionId, recordId, catalogId, this.distributionConfig)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTruthy();
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('with a description, format, access URL, and download URL', function() {
       service.createVersionDistribution(versionId, recordId, catalogId, this.distributionConfig)
@@ -1060,11 +1060,11 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.updateVersionDistribution(distributionId, versionId, recordId, catalogId, emptyObj)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'PUT' });
       expect(request.request.body).toEqual(emptyObj);
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.updateVersionDistribution(distributionId, versionId, recordId, catalogId, emptyObj)
@@ -1083,10 +1083,10 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.deleteVersionDistribution(distributionId, versionId, recordId, catalogId)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'DELETE' });
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.deleteVersionDistribution(distributionId, versionId, recordId, catalogId)
@@ -1113,10 +1113,10 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.getRecordBranches(recordId, catalogId, this.config)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('with all config passed', function() {
       this.config.applyUserFilter = true;
@@ -1153,10 +1153,10 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.getRecordBranch('master', recordId, catalogId)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'GET' });
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.getRecordBranch('master', recordId, catalogId)
@@ -1174,10 +1174,10 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.getRecordBranch(branchId, recordId, catalogId)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'GET' });
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.getRecordBranch(branchId, recordId, catalogId)
@@ -1199,11 +1199,11 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.createRecordBranch(recordId, catalogId, this.branchConfig, commitId)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTruthy();
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('with a description', function() {
       service.createRecordBranch(recordId, catalogId, this.branchConfig, commitId)
@@ -1247,19 +1247,19 @@ describe('Catalog Manager service', function() {
       it('with the first create request', function() {
         service.createRecordUserBranch(recordId, catalogId, this.branchConfig, commitId, branchId)
           .subscribe(() => fail('Observable should have rejected'), response => {
-            expect(response).toEqual(error);
+            expect(response).toEqual(errorObj);
             expect((service as any)._getRecordBranch).not.toHaveBeenCalled();
             expect(service.updateRecordBranch).not.toHaveBeenCalled();
           });
         const request = httpMock.expectOne({ url: this.url, method: 'POST' });
         expect(request.request.body instanceof FormData).toBeTruthy();
-        request.flush('flush', { status: 400, statusText: error });
+        request.flush(errorObj, { status: 400, statusText: error });
       });
       it('with another call in the chain', function() {
-        (service as any)._getRecordBranch.and.returnValue(throwError(error));
+        (service as any)._getRecordBranch.and.returnValue(throwError(errorObj));
         service.createRecordUserBranch(recordId, catalogId, this.branchConfig, commitId, branchId)
           .subscribe(() => fail('Observable should have rejected'), response => {
-            expect(response).toEqual(error);
+            expect(response).toEqual(errorObj);
             expect((service as any)._getRecordBranch).toHaveBeenCalledWith(encodeURIComponent(branchId), recordId, catalogId);
             expect(service.updateRecordBranch).not.toHaveBeenCalled();
           });
@@ -1313,11 +1313,11 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.updateRecordBranch(branchId, recordId, catalogId, emptyObj)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'PUT' });
       expect(request.request.body).toEqual(emptyObj);
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.updateRecordBranch(branchId, recordId, catalogId, emptyObj)
@@ -1336,10 +1336,10 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.deleteRecordBranch(recordId, branchId, catalogId)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'DELETE' });
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.deleteRecordBranch(recordId, branchId, catalogId)
@@ -1357,10 +1357,10 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.getBranchCommits(branchId, recordId, catalogId)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'GET' });
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.getBranchCommits(branchId, recordId, catalogId)
@@ -1388,32 +1388,32 @@ describe('Catalog Manager service', function() {
       it('with no targetId or entityId set', function() {
         service.getCommitHistory(commitId)
           .subscribe(() => fail('Observable should have rejected'), response => {
-            expect(response).toEqual(error);
+            expect(response).toEqual(errorObj);
           });
         const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
         expect(request.request.params.get('targetId')).toBeNull();
         expect(request.request.params.get('entityId')).toBeNull();
-        request.flush('flush', { status: 400, statusText: error });
+        request.flush(errorObj, { status: 400, statusText: error });
       });
       it('with a targetId set', function() {
         service.getCommitHistory(commitId, commitId)
           .subscribe(() => fail('Observable should have rejected'), response => {
-            expect(response).toEqual(error);
+            expect(response).toEqual(errorObj);
           });
         const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
         expect(request.request.params.get('targetId').toString()).toEqual(commitId);
         expect(request.request.params.get('entityId')).toBeNull();
-        request.flush('flush', { status: 400, statusText: error });
+        request.flush(errorObj, { status: 400, statusText: error });
       });
       it('with a entityId set', function() {
         service.getCommitHistory(commitId, '', commitId)
           .subscribe(() => fail('Observable should have rejected'), response => {
-            expect(response).toEqual(error);
+            expect(response).toEqual(errorObj);
           });
         const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
         expect(request.request.params.get('targetId')).toBeNull();
         expect(request.request.params.get('entityId').toString()).toEqual(commitId);
-        request.flush('flush', { status: 400, statusText: error });
+        request.flush(errorObj, { status: 400, statusText: error });
       });
     });
     describe('successfully', function() {
@@ -1519,11 +1519,11 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.getBranchCommit('head', branchId, recordId, catalogId, 'jsonld')
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
       expect(request.request.params.get('format').toString()).toEqual('jsonld');
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('with a format', function() {
       service.getBranchCommit('head', branchId, recordId, catalogId, 'turtle')
@@ -1551,11 +1551,11 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.getCommit(commitId, 'jsonld')
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
       expect(request.request.params.get('format').toString()).toEqual('jsonld');
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('with a format', function() {
       service.getCommit(commitId, 'turtle')
@@ -1583,11 +1583,11 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.getBranchCommit(commitId, branchId, recordId, catalogId, 'jsonld')
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
       expect(request.request.params.get('format').toString()).toEqual('jsonld');
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('with a format', function() {
       service.getBranchCommit(commitId, branchId, recordId, catalogId, 'turtle')
@@ -1615,14 +1615,14 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.getDifference(commitId, commitId, null, null, 'jsonld')
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
       expect(request.request.params.get('limit')).toBeNull();
       expect(request.request.params.get('offset')).toBeNull();
       expect(request.request.params.get('format')).toEqual('jsonld');
       expect(request.request.params.get('targetId')).toEqual(commitId);
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('with a format', function() {
       service.getDifference(commitId, commitId, null, null, 'turtle')
@@ -1680,11 +1680,11 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.getDifferenceForSubject(entityId, commitId, 'jsonld')
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
       expect(request.request.params.get('format').toString()).toEqual('jsonld');
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('with a format', function() {
       service.getDifferenceForSubject(entityId, commitId, 'turtle')
@@ -1712,12 +1712,12 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.getBranchDifference(branchId, branchId, recordId, catalogId, 'jsonld')
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
       expect(request.request.params.get('targetId').toString()).toEqual(branchId);
       expect(request.request.params.get('format').toString()).toEqual('jsonld');
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('with a format', function() {
       service.getBranchDifference(branchId, branchId, recordId, catalogId, 'turtle')
@@ -1747,12 +1747,12 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.getBranchConflicts(branchId, branchId, recordId, catalogId, 'jsonld')
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
       expect(request.request.params.get('targetId').toString()).toEqual(branchId);
       expect(request.request.params.get('format').toString()).toEqual('jsonld');
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('with a format', function() {
       service.getBranchConflicts(branchId, branchId, recordId, catalogId, 'turtle')
@@ -1782,12 +1782,12 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.mergeBranches(branchId, branchId, recordId, catalogId, difference, [])
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'POST');
       expect(request.request.params.get('targetId')).toEqual(branchId);
       expect(request.request.body instanceof FormData).toBeTruthy();
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('with additions and deletions', function() {
       const fullDifference = Object.assign({}, difference);
@@ -1824,12 +1824,12 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.getResource(commitId, branchId, recordId, catalogId, true, 'jsonld')
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
       expect(request.request.params.get('format')).toEqual('jsonld');
       expect(request.request.params.get('applyInProgressCommit')).toEqual('true');
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('with a format', function() {
       service.getResource(commitId, branchId, recordId, catalogId, false, 'turtle')
@@ -1899,10 +1899,10 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.createInProgressCommit(recordId, catalogId)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'POST' });
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.createInProgressCommit(recordId, catalogId)
@@ -1923,7 +1923,7 @@ describe('Catalog Manager service', function() {
           expect(response.statusText).toEqual(error);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'GET' });
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.getInProgressCommit(recordId, catalogId)
@@ -1941,11 +1941,11 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.updateInProgressCommit(recordId, catalogId, difference)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'PUT' });
       expect(request.request.body instanceof FormData).toBeTruthy();
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.updateInProgressCommit(recordId, catalogId, difference)
@@ -1964,10 +1964,10 @@ describe('Catalog Manager service', function() {
     it('unless an error occurs', function() {
       service.deleteInProgressCommit(recordId, catalogId)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'DELETE' });
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(errorObj, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.deleteInProgressCommit(recordId, catalogId)

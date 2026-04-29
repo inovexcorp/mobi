@@ -43,6 +43,7 @@ import { EntityNames } from '../models/entityNames.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { MergeRequest } from '../models/mergeRequest.interface';
 import { MergeRequestConfig } from '../models/mergeRequestConfig.interface';
+import { RESTError } from '../models/RESTError.interface';
 import { CatalogManagerService } from './catalogManager.service';
 import { MergeRequestManagerService } from './mergeRequestManager.service';
 import { OntologyManagerService } from './ontologyManager.service';
@@ -304,7 +305,7 @@ export class MergeRequestsStateService {
         });
       }, error => {
         this.requests = [];
-        this._toast.createErrorToast(error);
+        this._toast.createErrorToast(error.errorMessage);
       });
   }
   /**
@@ -487,7 +488,7 @@ export class MergeRequestsStateService {
   processDifferenceResponse(recordId: string, sourceBranchId: string, commitId: string,
     diffResponse: HttpResponse<CommitDifference>, type: string): Observable<null> {
     if (!diffResponse) {
-      return throwError('Difference is not set. Cannot get ontology entity names.');
+      return throwError({error: '', errorMessage: 'Difference is not set. Cannot get ontology entity names.', errorDetails: []} as RESTError);
     }
     const difference = diffResponse.body;
     const diffIris = union(_map(difference.additions as JSONLDObject[], '@id'), 
@@ -617,7 +618,7 @@ export class MergeRequestsStateService {
           sourceBranch['@id'], sourceHead, response, 
           this.selected ? this.selected.recordType : this._cm.getType(this.selectedRecord))
       ))
-      .subscribe(() => {}, error => this._toast.createErrorToast(error));
+      .subscribe(() => {}, error => this._toast.createErrorToast(error.errorMessage));
   }
 
   private _getDate(jsonld: JSONLDObject) {

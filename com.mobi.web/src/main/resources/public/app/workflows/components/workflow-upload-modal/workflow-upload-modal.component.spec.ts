@@ -39,6 +39,7 @@ import { WorkflowRecordConfig } from '../../models/workflowRecordConfig.interfac
 import { XACMLDecision } from '../../../shared/models/XACMLDecision.interface';
 import { KeywordSelectComponent } from '../../../shared/components/keywordSelect/keywordSelect.component';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { RestErrorDisplayComponent } from '../../../shared/components/restErrorDisplay/restErrorDisplay.component';
 import { WorkflowUploadModalComponent } from './workflow-upload-modal.component';
 
 describe('WorkflowUploadModalComponent', () => {
@@ -77,7 +78,8 @@ describe('WorkflowUploadModalComponent', () => {
       declarations: [
         WorkflowUploadModalComponent,
         MockComponent(KeywordSelectComponent),
-        MockComponent(ErrorDisplayComponent)
+        MockComponent(ErrorDisplayComponent),
+        MockComponent(RestErrorDisplayComponent)
       ],
       providers: [
         MockProvider(WorkflowsManagerService),
@@ -128,11 +130,11 @@ describe('WorkflowUploadModalComponent', () => {
       expect(['Cancel', 'Submit']).toContain(buttons[1].nativeElement.textContent.trim());
     });
     it('depending on whether an error occurred', function () {
-      expect(element.queryAll(By.css('error-display')).length).toEqual(0);
+      expect(element.queryAll(By.css('rest-error-display')).length).toEqual(0);
 
       component.error = error;
       fixture.detectChanges();
-      expect(element.queryAll(By.css('error-display')).length).toEqual(1);
+      expect(element.queryAll(By.css('rest-error-display')).length).toEqual(1);
     });
   });
   describe('controller methods', function() {
@@ -168,9 +170,29 @@ describe('WorkflowUploadModalComponent', () => {
         expect(matDialogRef.close).not.toHaveBeenCalled();
         expect(component.error).toEqual(error);
       }));
+      it('should clear error on successful submit', fakeAsync(function () {
+        component.error = error;
+        workflowManagerStub.createWorkflowRecord.and.returnValue(of(''));
+        workflowManagerStub.checkMasterBranchPermissions.and.returnValue(of(true));
+        workflowManagerStub.checkMultiWorkflowDeletePermissions.and.returnValue(of(fakePermissionPermit));
+        component.submit();
+        tick();
+        expect(workflowManagerStub.createWorkflowRecord).toHaveBeenCalledWith(newWorkflowRecord);
+        expect(matDialogRef.close).toHaveBeenCalled();
+      }));
+      it('should clear error on successful submit', fakeAsync(function () {
+        component.error = error;
+        workflowManagerStub.createWorkflowRecord.and.returnValue(of({recordId: 'recordId', branchId: 'branchId', WorkflowId: 'workflowId'} as any));
+        workflowManagerStub.checkMasterBranchPermissions.and.returnValue(of(true));
+        workflowManagerStub.checkMultiWorkflowDeletePermissions.and.returnValue(of(fakePermissionPermit));
+        component.submit();
+        tick();
+        expect(workflowManagerStub.createWorkflowRecord).toHaveBeenCalledWith(newWorkflowRecord);
+        expect(matDialogRef.close).toHaveBeenCalled();
+      }));
       describe('successfully', function () {
         it('with a description', fakeAsync(function () {
-          workflowManagerStub.createWorkflowRecord.and.returnValue(of(''));
+          workflowManagerStub.createWorkflowRecord.and.returnValue(of({recordId: 'recordId', branchId: 'branchId', WorkflowId: 'workflowId'} as any));
           workflowManagerStub.checkMasterBranchPermissions.and.returnValue(of(true));
           workflowManagerStub.checkMultiWorkflowDeletePermissions.and.returnValue(of(fakePermissionPermit));
           component.uploadWorkflowForm.controls.description.setValue('description');
@@ -181,7 +203,7 @@ describe('WorkflowUploadModalComponent', () => {
           expect(matDialogRef.close).toHaveBeenCalled();
         }));
         it('without description', fakeAsync(function () {
-          workflowManagerStub.createWorkflowRecord.and.returnValue(of(''));
+          workflowManagerStub.createWorkflowRecord.and.returnValue(of({recordId: 'recordId', branchId: 'branchId', WorkflowId: 'workflowId'} as any));
           workflowManagerStub.checkMasterBranchPermissions.and.returnValue(of(true));
           workflowManagerStub.checkMultiWorkflowDeletePermissions.and.returnValue(of(fakePermissionPermit));
           component.uploadWorkflowForm.controls.description.setValue('');
@@ -191,7 +213,7 @@ describe('WorkflowUploadModalComponent', () => {
           expect(matDialogRef.close).toHaveBeenCalled();
         }));
         it('with keywords', fakeAsync(function () {
-          workflowManagerStub.createWorkflowRecord.and.returnValue(of(''));
+          workflowManagerStub.createWorkflowRecord.and.returnValue(of({recordId: 'recordId', branchId: 'branchId', WorkflowId: 'workflowId'} as any));
           workflowManagerStub.checkMasterBranchPermissions.and.returnValue(of(true));
           workflowManagerStub.checkMultiWorkflowDeletePermissions.and.returnValue(of(fakePermissionPermit));
           component.uploadWorkflowForm.controls.keywords.setValue(['Seans', 'keywords']);

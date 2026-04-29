@@ -215,7 +215,7 @@ describe('Users Page component', function() {
                 component.selectedAdminUser = true;
             });
             it('unless an error occurs', async function() {
-                userManagerStub.deleteUser.and.returnValue(throwError('Error message'));
+                userManagerStub.deleteUser.and.returnValue(throwError({error: '', errorMessage: 'Error message', errorDetails: []}));
                 await component.deleteUser();
                 await fixture.whenStable();
                 expect(userManagerStub.deleteUser).toHaveBeenCalledWith(user.username);
@@ -266,7 +266,7 @@ describe('Users Page component', function() {
                     expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 });
                 it('unless an error occurs',  async function() {
-                    userManagerStub.addUserRoles.and.returnValue(throwError('Error message'));
+                    userManagerStub.addUserRoles.and.returnValue(throwError({error: '', errorMessage: 'Error message', errorDetails: []}));
                     await component.changeAdmin(this.event);
                     await fixture.whenStable();
                     expect(userManagerStub.addUserRoles).toHaveBeenCalledWith(user.username, ['admin']);
@@ -289,7 +289,7 @@ describe('Users Page component', function() {
                     expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 });
                 it('unless an error occurs', async function() {
-                    userManagerStub.deleteUserRole.and.returnValue(throwError('Error message'));
+                    userManagerStub.deleteUserRole.and.returnValue(throwError({error: '', errorMessage: 'Error message', errorDetails: []}));
                     await component.changeAdmin(this.event);
                     fixture.detectChanges();
                     await fixture.whenStable();

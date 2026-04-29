@@ -31,6 +31,7 @@ import {
     cleanStylesFromDOM
 } from '../../../../../public/test/ts/Shared';
 import { ActivityTitleComponent } from '../../../shared/components/activityTitle/activityTitle.component';
+import { RestErrorDisplayComponent } from '../../../shared/components/restErrorDisplay/restErrorDisplay.component';
 import { ProvManagerService } from '../../../shared/services/provManager.service';
 import { ToastService } from '../../services/toast.service';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
@@ -60,7 +61,8 @@ describe('ActivityListComponent', function() {
         TestBed.configureTestingModule({
         declarations: [
             ActivityListComponent,
-            MockComponent(ActivityTitleComponent)
+            MockComponent(ActivityTitleComponent),
+            MockComponent(RestErrorDisplayComponent)
         ],
         providers: [
             MockProvider(ProvManagerService),
@@ -95,7 +97,8 @@ describe('ActivityListComponent', function() {
 
     describe('should initialize with the correct data', function() {
         it('unless an error occurs', fakeAsync(function() {
-            provManagerStub.getActivities.and.returnValue(throwError('Error message'));
+            const restError = {error: 'Error', errorMessage: 'Error message', errorDetails: []};
+            provManagerStub.getActivities.and.returnValue(throwError(restError));
             component.ngOnInit();
             tick();
             expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.activityList);
@@ -105,6 +108,7 @@ describe('ActivityListComponent', function() {
             expect(component.entities).toEqual([]);
             expect(component.totalSize).toEqual(0);
             expect(component.limit).toEqual(10);
+            expect(component.error).toEqual(restError);
             expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error message');
         }));
         it('successfully', fakeAsync(function() {
@@ -131,10 +135,20 @@ describe('ActivityListComponent', function() {
                 expect(component.totalSize).toEqual(totalSize);
             }));
             it('unless an error occurs', fakeAsync(function() {
-                provManagerStub.getActivities.and.returnValue(throwError('Error message'));
+                const restError = {error: 'Error', errorMessage: 'Error message', errorDetails: []};
+                provManagerStub.getActivities.and.returnValue(throwError(restError));
                 component.setPage();
                 tick();
                 expect(provManagerStub.getActivities).toHaveBeenCalledWith({pageIndex: 0, limit: component.limit, entity: recordIri, agent: userIri});
+                expect(component.error).toEqual(restError);
+            }));
+            it('should clear error on successful fetch', fakeAsync(function() {
+                component.error = {error: 'Error', errorMessage: 'Previous error', errorDetails: []};
+                spyOn(component, 'getTimeStamp').and.returnValue('Today');
+                component.setPage();
+                tick();
+                expect(provManagerStub.getActivities).toHaveBeenCalledWith({pageIndex: 0, limit: component.limit, entity: recordIri, agent: userIri});
+                expect(component.error).toBeUndefined();
             }));
         });
         it('should load more activities', function() {

@@ -28,9 +28,10 @@ import { has } from 'lodash';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
-import { createHttpParams, getPropertyValue, handleError, handleErrorObject } from '../utility';
+import { createHttpParams, getPropertyValue, handleErrorObject } from '../utility';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { ONTOLOGYEDITOR, SETTING, SH, SHAPESGRAPHEDITOR } from '../../prefixes';
+import { RESTError } from '../models/RESTError.interface';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { REST_PREFIX } from '../../constants';
 import { SettingConstants } from '../models/settingConstants.class';
@@ -85,23 +86,23 @@ export class SettingManagerService {
    */
   getDefaultNamespace(type: string): Observable<string> {
     if (!this.defaultNamespaceMap[type]) {
-      return throwError(`No setting found for record type ${type}`);
+      return throwError({error: '', errorMessage: `No setting found for record type ${type}`, errorDetails: []} as RESTError);
     }
     return this.getApplicationSettingByType(this.defaultNamespaceMap[type].setting).pipe(
       switchMap(response => {
         const applicationSetting = response;
         if (applicationSetting.length > 1) {
           this._toast.createErrorToast('Issue retrieving value for default namespace. Please contact support.');
-          return throwError('Too many values present for application setting');
+          return throwError({error: '', errorMessage: 'Too many values present for application setting', errorDetails: []} as RESTError);
         } else if (applicationSetting.length === 1) {
           const defaultNamespace = applicationSetting[0];
           if (has(defaultNamespace, SettingConstants.HAS_DATA_VALUE)) {
             return of(getPropertyValue(defaultNamespace, SettingConstants.HAS_DATA_VALUE));
           }
-          return throwError('');
+          return throwError({error: '', errorMessage: '', errorDetails: []} as RESTError);
         } else {
           this._toast.createErrorToast('Issue retrieving value for default namespace. Please contact support.');
-          return throwError('');
+          return throwError({error: '', errorMessage: '', errorDetails: []} as RESTError);
         }
       }),
       catchError(() => this.getDefaultNamespaceFromSetting(type))
@@ -121,25 +122,25 @@ export class SettingManagerService {
    */
   getDefaultNamespaceFromSetting(type: string): Observable<string> {
     if (!this.defaultNamespaceMap[type]) {
-      return throwError(`No setting found for record type ${type}`);
+      return throwError({error: '', errorMessage: `No setting found for record type ${type}`, errorDetails: []} as RESTError);
     }
     return this.getApplicationSettingDefinitions(this.namespaceGroup).pipe(
       switchMap(response => {
         const newArray = response.filter(el => el['@id'] === this.defaultNamespaceMap[type].propertyShape);
         if (newArray.length !== 1) {
           this._toast.createErrorToast(`Number of matching property shapes must be one, not ${newArray.length}`);
-          return throwError('');
+          return throwError({error: '', errorMessage: '', errorDetails: []} as RESTError);
         }
         const defaultNamespacePropertyShape = newArray[0];
         if (has(defaultNamespacePropertyShape, `${SH}defaultValue`)) {
           return of(getPropertyValue(defaultNamespacePropertyShape, `${SH}defaultValue`));
         } else {
           this._toast.createErrorToast('No default value found for default namespace');
-          return throwError('');
+          return throwError({error: '', errorMessage: '', errorDetails: []} as RESTError);
         }
       }), catchError(() => {
         this._toast.createErrorToast('Could not retrieve setting definitions');
-        return throwError('');
+        return throwError({error: '', errorMessage: '', errorDetails: []} as RESTError);
       })
     );
   }
@@ -183,7 +184,7 @@ export class SettingManagerService {
     const params = {type};
     const request = this._http.get<{ [key: string]: JSONLDObject[] }>(this.prefix,
       {params: createHttpParams(params)});
-    return this._spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
+    return this._spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleErrorObject));
   }
 
   /**
@@ -225,7 +226,7 @@ export class SettingManagerService {
     const params = {type};
     const request = this._http.get<JSONLDObject[]>(`${this.prefix}/types/${encodeURIComponent(settingSubType)}`,
       {params: createHttpParams(params)});
-    return this._spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
+    return this._spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleErrorObject));
   }
 
   /**
@@ -343,7 +344,7 @@ export class SettingManagerService {
   getSettingGroups(type: string, isTracked = false): Observable<JSONLDObject[]> {
     const params = {type};
     const request = this._http.get<JSONLDObject[]>(`${this.prefix}/groups`, {params: createHttpParams(params)});
-    return this._spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
+    return this._spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleErrorObject));
   }
 
   /**
@@ -406,7 +407,7 @@ export class SettingManagerService {
     const params = {type};
     const url = `${this.prefix}/groups/${encodeURIComponent(settingGroup)}/definitions`;
     const request = this._http.get<JSONLDObject[]>(url, {params: createHttpParams(params)});
-    return this._spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
+    return this._spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleErrorObject));
   }
 
   /**
@@ -426,16 +427,16 @@ export class SettingManagerService {
       switchMap(preferences => {
         if (preferences && preferences.length > 1) {
           this._toast.createErrorToast(errorMsg);
-          return throwError('Number of matching preferences must be one, not ' + preferences.length);
+          return throwError({error: '', errorMessage: 'Number of matching preferences must be one, not ' + preferences.length, errorDetails: []} as RESTError);
         } else if (preferences && preferences.length === 1) {
           const annotationPreference = preferences[0];
           if (has(annotationPreference, SettingConstants.HAS_DATA_VALUE)) {
             return of(getPropertyValue(annotationPreference, SettingConstants.HAS_DATA_VALUE));
           }
-          return throwError('');
+          return throwError({error: '', errorMessage: '', errorDetails: []} as RESTError);
         } else {
           this._toast.createErrorToast(errorMsg);
-          return throwError('');
+          return throwError({error: '', errorMessage: '', errorDetails: []} as RESTError);
         }
       }),
       catchError(() => this._getPreferenceFromDefinition(preferenceGroupIRI, annotationIRI))
@@ -450,12 +451,12 @@ export class SettingManagerService {
           return of(defaultValue);
         } else {
           this._toast.createErrorToast('Issue retrieving default value for preference');
-          return throwError('No default value');
+          return throwError({error: '', errorMessage: 'No default value', errorDetails: []} as RESTError);
         }
       }),
       catchError(() => {
         this._toast.createErrorToast('Issue retrieving definition for preference');
-        return throwError('No preference definition found');
+        return throwError({error: '', errorMessage: 'No preference definition found', errorDetails: []} as RESTError);
       })
     );
   }

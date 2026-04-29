@@ -80,7 +80,7 @@ export class EditRequestOverlayComponent implements OnInit {
                 }, 
                 error: (error) => {
                     requestErrorFlag = true;
-                    this.toast.createErrorToast(error);
+                    this.toast.createErrorToast(error.errorMessage);
                     this.branches = [];
                 },
                 complete: () => {
@@ -108,7 +108,7 @@ export class EditRequestOverlayComponent implements OnInit {
                 }, 
                 error: (error) => {
                     requestErrorFlag = true;
-                    this.errorMessage = error;
+                    this.errorMessage = error.errorMessage;
                 },
                 complete: () => {
                     if (!isDialogClosed && !requestErrorFlag) {
@@ -125,7 +125,7 @@ export class EditRequestOverlayComponent implements OnInit {
         this.state.selected = this.state.getRequestObj(jsonld);
         this.state.selected.recordTitle = recordTitle;
         this.state.setRequestDetails(this.state.selected)
-            .subscribe(() => { }, error => this.toast.createErrorToast(error));
+            .subscribe(() => { }, error => this.toast.createErrorToast(error.errorMessage));
         this.state.selected.sourceBranch = Object.prototype.hasOwnProperty.call(this.state.selected, 'sourceBranch')
             ? this.state.selected.sourceBranch : emptyObject;
         this.dialogRef.close({ closed: true });

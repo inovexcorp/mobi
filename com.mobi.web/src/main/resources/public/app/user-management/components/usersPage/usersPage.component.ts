@@ -112,7 +112,7 @@ export class UsersPageComponent implements OnInit {
     }
     changeAdmin(event: MatSlideToggleChange): void {
         const request = event.checked ? this.um.addUserRoles(this.state.selectedUser.username, ['admin']) : this.um.deleteUserRole(this.state.selectedUser.username, 'admin');
-        request.subscribe( ()=> noop, this.toast.createErrorToast);
+        request.subscribe( ()=> noop, error => this.toast.createErrorToast(error.errorMessage));
     }
     setUserGroups(): void {
         this.groups = filter(this.um.groups, group => includes(group.members, this.state.selectedUser?.username));

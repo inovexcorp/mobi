@@ -29,7 +29,7 @@ import { Observable, of, throwError } from 'rxjs';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { REST_PREFIX } from '../../constants';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
-import { createHttpParams, handleError, handleErrorObject } from '../utility';
+import { createHttpParams, handleErrorObject } from '../utility';
 import { XACMLRequest } from '../models/XACMLRequest.interface';
 import { PolicyEnforcementService } from './policyEnforcement.service';
 import { POLICY } from '../../prefixes';
@@ -106,7 +106,7 @@ export class DelimitedManagerService {
     const fd = new FormData();
     fd.append('delimitedFile', file);
     return this.spinnerSvc.track(this.http.post(this.prefix, fd, { responseType: 'text' }))
-      .pipe(catchError(handleError));
+      .pipe(catchError(handleErrorObject));
   }
   /**
    * Makes a call to GET /mobirest/delimited-files/{fileName} to retrieve the passed in number of rows of an uploaded
@@ -130,12 +130,12 @@ export class DelimitedManagerService {
       .pipe(
         catchError(error => {
           this.dataRows = undefined;
-          return handleError(error);
+          return handleErrorObject(error);
         }),
         switchMap((response: string[][]) => {
           if (response.length === 0) {
             this.dataRows = undefined;
-            return throwError('No rows were found');
+            return throwError({error: '', errorMessage: 'No rows were found', errorDetails: []});
           } else {
             this.containsHeaders = !response[0].every(item => item === '');
             this.dataRows = response;
@@ -170,7 +170,7 @@ export class DelimitedManagerService {
     return this.spinnerSvc.track(this.http.post(`${this.prefix}/${encodeURIComponent(this.fileName)}/map-preview`,
       fd, { headers, params: createHttpParams(params), responseType: 'text' }))
       .pipe(
-        catchError(handleError),
+        catchError(handleErrorObject),
         map((data: string) => (format === 'jsonld') ? JSON.parse(data) : data)
       );
   }
@@ -225,7 +225,7 @@ export class DelimitedManagerService {
       separator: this.separator
     };
     return this.spinnerSvc.track(this.http.post(`${this.prefix}/${encodeURIComponent(this.fileName)}/map`, null, { params: createHttpParams(params) }))
-      .pipe(catchError(handleError), map(() => { }));
+      .pipe(catchError(handleErrorObject), map(() => { }));
   }
   /**
    * Calls the POST /mobirest/delimited-files/{fileName}/map-to-ontology to commit the data of an uploaded delimited

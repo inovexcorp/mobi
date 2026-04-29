@@ -305,7 +305,7 @@ describe('WorkflowRecordComponent', () => {
         expect(toastStub.createErrorToast).not.toHaveBeenCalled();
       }));
       it('unless an error occurs', fakeAsync(() => {
-        catalogManagerStub.getRecordBranches.and.returnValue(throwError('error'));
+        catalogManagerStub.getRecordBranches.and.returnValue(throwError({error: '', errorMessage: 'error', errorDetails: []}));
         component.setRecordBranches();
         tick();
         expect(catalogManagerStub.getRecordBranches).toHaveBeenCalledWith(workflow_mocks[0].iri, catalogId, {
@@ -335,7 +335,7 @@ describe('WorkflowRecordComponent', () => {
         expect(toastStub.createErrorToast).not.toHaveBeenCalled();
       }));
       it('unless an error occurs', fakeAsync(() => {
-        workflowsManagerStub.executeWorkflow.and.returnValue(throwError('error'));
+        workflowsManagerStub.executeWorkflow.and.returnValue(throwError({error: '', errorMessage: 'error', errorDetails: []}));
         component.runWorkflow();
         tick();
         expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, jasmine.objectContaining({ data: { content: jasmine.stringContaining(workflow_mocks[0].title)}}));
@@ -474,10 +474,10 @@ describe('WorkflowRecordComponent', () => {
         const response = new CommitDifference();
         response.commit = { '@id': 'commitId' } as JSONLDObject;
         catalogManagerStub.getBranchCommit.and.returnValue(of(response));
-        catalogManagerStub.getResource.and.returnValue(throwError('Error'));
-      
+        catalogManagerStub.getResource.and.returnValue(throwError({error: '', errorMessage: 'Error', errorDetails: []}));
+
         component.uploadChangesModal();
-      
+
         expect(toastStub.createErrorToast).toHaveBeenCalledWith('Issue fetching latest workflow RDF: Error');
       });
     });

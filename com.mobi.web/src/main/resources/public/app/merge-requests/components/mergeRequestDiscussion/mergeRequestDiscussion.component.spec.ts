@@ -129,7 +129,7 @@ describe('Merge Request Discussion component', function() {
                     expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 }));
                 it('unless getComments rejects', fakeAsync(function() {
-                    mergeRequestManagerStub.getComments.and.returnValue(throwError('Error message'));
+                    mergeRequestManagerStub.getComments.and.returnValue(throwError({error: '', errorMessage: 'Error message', errorDetails: []}));
                     component.saveComment();
                     tick();
                     expect(mergeRequestManagerStub.createComment).toHaveBeenCalledWith(request.jsonld['@id'], newComment);
@@ -140,7 +140,7 @@ describe('Merge Request Discussion component', function() {
                 }));
             });
             it('unless createComment rejects', fakeAsync(function() {
-                mergeRequestManagerStub.createComment.and.returnValue(throwError('Error message'));
+                mergeRequestManagerStub.createComment.and.returnValue(throwError({error: '', errorMessage: 'Error message', errorDetails: []}));
                 component.saveComment();
                 tick();
                 expect(mergeRequestManagerStub.createComment).toHaveBeenCalledWith(request.jsonld['@id'], newComment);
@@ -171,7 +171,7 @@ describe('Merge Request Discussion component', function() {
                     expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 }));
                 it('unless getComments rejects', fakeAsync(function() {
-                    mergeRequestManagerStub.getComments.and.returnValue(throwError('Error message'));
+                    mergeRequestManagerStub.getComments.and.returnValue(throwError({error: '', errorMessage: 'Error message', errorDetails: []}));
                     component.deleteComment('id');
                     tick();
                     expect(mergeRequestManagerStub.deleteComment).toHaveBeenCalledWith(request.jsonld['@id'], 'id');
@@ -181,7 +181,7 @@ describe('Merge Request Discussion component', function() {
                 }));
             });
             it('unless deleteComment rejects', fakeAsync(function() {
-                mergeRequestManagerStub.deleteComment.and.returnValue(throwError('Error message'));
+                mergeRequestManagerStub.deleteComment.and.returnValue(throwError({error: '', errorMessage: 'Error message', errorDetails: []}));
                 component.deleteComment('id');
                 tick();
                 expect(mergeRequestManagerStub.deleteComment).toHaveBeenCalledWith(request.jsonld['@id'], 'id');
@@ -212,7 +212,7 @@ describe('Merge Request Discussion component', function() {
                     expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 }));
                 it('unless getComments rejects', fakeAsync(function() {
-                    mergeRequestManagerStub.getComments.and.returnValue(throwError('Error message'));
+                    mergeRequestManagerStub.getComments.and.returnValue(throwError({error: '', errorMessage: 'Error message', errorDetails: []}));
                     component.editComment(commentObject);
                     tick();
                     expect(mergeRequestManagerStub.updateComment).toHaveBeenCalledWith('https://www.example.com', 'https://www.example.com/comment#1', '');
@@ -223,7 +223,7 @@ describe('Merge Request Discussion component', function() {
                 }));
             });
             it('unless updateComment rejects', fakeAsync(function() {
-                mergeRequestManagerStub.updateComment.and.returnValue(throwError('Error message'));
+                mergeRequestManagerStub.updateComment.and.returnValue(throwError({error: '', errorMessage: 'Error message', errorDetails: []}));
                 component.editComment(commentObject);
                 tick();
                 expect(mergeRequestManagerStub.updateComment).toHaveBeenCalledWith('https://www.example.com', 'https://www.example.com/comment#1', '');

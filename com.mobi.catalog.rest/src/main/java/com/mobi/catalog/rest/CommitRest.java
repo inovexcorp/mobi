@@ -42,11 +42,12 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
+import com.mobi.rest.util.RestUtils;
+import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -132,29 +133,17 @@ public class CommitRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to retrieve the Commit",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "404",
                     description = "Commit with the provided ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response getCommit(
@@ -172,6 +161,8 @@ public class CommitRest {
             } else {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
         } finally {
             logger.trace("getCommit took {}ms", System.currentTimeMillis() - start);
         }
@@ -211,38 +202,22 @@ public class CommitRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided parameters are invalid for retrieving Commit history",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to retrieve Commit history",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving the Commit history",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response getCommitHistory(
@@ -290,9 +265,9 @@ public class CommitRest {
 
             return createPaginatedResponse(uriInfo, commitChain, commits.size(), limit, offset);
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
 
         } finally {
             logger.trace("getCommitHistory took {}ms", System.currentTimeMillis() - start);
@@ -322,38 +297,22 @@ public class CommitRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Commit with the provided ID could not be found",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to retrieve the compiled resource",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving the compiled resource",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response getCompiledResource(
@@ -376,9 +335,9 @@ public class CommitRest {
             return Response.ok(modelToSkolemizedString(model, RDFFormat.JSONLD, bNodeService))
                     .build();
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         } finally {
             logger.trace("getCompiledResource took {}ms", System.currentTimeMillis() - start);
         }
@@ -425,38 +384,22 @@ public class CommitRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided parameters are invalid for retrieving the difference",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to retrieve the difference",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving the difference",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response getDifference(
@@ -512,9 +455,9 @@ public class CommitRest {
                 }
             }
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         } finally {
             logger.trace("getDifference took {}ms", System.currentTimeMillis() - start);
         }
@@ -542,47 +485,22 @@ public class CommitRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided parameters are invalid for retrieving the subject difference",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to retrieve the subject difference",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Commit with the provided ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving the subject difference",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response getDifferenceForSubject(
@@ -601,13 +519,12 @@ public class CommitRest {
                         optCommit.get().getResource(), conn);
                 return createCommitResponse(optCommit.get(), difference, rdfFormat, bNodeService);
             } else {
-                throw ErrorUtils.sendError("Commit " + sourceId + " could not be found",
-                        Response.Status.NOT_FOUND);
+                throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Commit " + sourceId + " could not be found"));
             }
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         } finally {
             logger.trace("getDifference took {}ms", System.currentTimeMillis() - start);
         }

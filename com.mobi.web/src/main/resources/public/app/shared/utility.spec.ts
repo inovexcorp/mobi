@@ -57,7 +57,6 @@ import {
   getSkolemizedIRI,
   getStatus,
   getSubstringMatch,
-  handleError,
   handleErrorObject,
   hasPropertyId,
   hasPropertyValue,
@@ -526,36 +525,32 @@ describe('Utility method', () => {
     expect(getErrorDataObject(new HttpErrorResponse({error: '{"error": "error", "errorMessage": "errorMessage", "errorDetails": ["Line 1", "Line 2"]}'})))
       .toEqual({error: 'error', errorMessage: 'errorMessage', errorDetails: ['Line 1', 'Line 2']});
   });
-  describe('should create a failed observable with an error message', () => {
-    it('unless the response was canceled', fakeAsync(() => {
-      handleError(new HttpErrorResponse({status: 0}))
-        .subscribe(() => {
-          fail('Observable should have rejected.');
-        }, error => {
-          expect(error).toBe('');
-        });
-      tick();
-    }));
-    it('successfully with status text', fakeAsync(() => {
-      const resp = new HttpErrorResponse({status: 400, statusText: 'Test'});
-      handleError(resp)
-        .subscribe(() => {
-          fail('Observable should have rejected.');
-        }, error => {
-          expect(error).toBe('Test');
-        });
-      tick();
-    }));
-    it('successfully without status text', fakeAsync(() => {
-      const resp = new HttpErrorResponse({status: 400});
-      handleError(resp)
-        .subscribe(() => {
-          fail('Observable should have rejected.');
-        }, error => {
-          expect(error).toBe('Something went wrong. Please try again later.');
-        });
-      tick();
-    }));
+  it('should handle malformed JSON error body gracefully', () => {
+    expect(() => getErrorDataObject(new HttpErrorResponse({error: '{invalid json}'}))).toThrow();
+  });
+  it('should handle null error body', () => {
+    expect(getErrorDataObject(new HttpErrorResponse({error: null})))
+      .toEqual({error: '', errorMessage: 'Something went wrong. Please try again later.', errorDetails: []});
+  });
+  it('should handle missing errorMessage in error body', () => {
+    expect(getErrorDataObject(new HttpErrorResponse({error: {error: 'SomeError', errorDetails: []}})))
+      .toEqual({error: 'SomeError', errorMessage: 'Something went wrong. Please try again later.', errorDetails: []});
+  });
+  it('should handle status 500 errors in getErrorDataObject', () => {
+    expect(getErrorDataObject(new HttpErrorResponse({status: 500, statusText: 'Internal Server Error', error: {errorMessage: 'Server failure'}})))
+      .toEqual({error: '', errorMessage: 'Server failure', errorDetails: []});
+  });
+  it('should use custom defaultMessage parameter', () => {
+    expect(getErrorDataObject(new HttpErrorResponse({error: {}}), 'Custom default'))
+      .toEqual({error: '', errorMessage: 'Custom default', errorDetails: []});
+    expect(getErrorDataObject(new HttpErrorResponse({}), 'Another default'))
+      .toEqual({error: '', errorMessage: 'Another default', errorDetails: []});
+  });
+  it('should handle statusText "Unknown Error" by using default message', () => {
+    // HttpErrorResponse defaults statusText to 'Unknown Error' when not provided with a non-zero status
+    const resp = new HttpErrorResponse({status: 400, statusText: 'Unknown Error'});
+    expect(getErrorDataObject(resp))
+      .toEqual({error: '', errorMessage: 'Something went wrong. Please try again later.', errorDetails: []});
   });
   describe('should create a failed observable with an error object', () => {
     it('unless the response was canceled', fakeAsync(() => {
@@ -587,6 +582,24 @@ describe('Utility method', () => {
             error: '',
             errorMessage: 'Something went wrong. Please try again later.',
             errorDetails: []
+          });
+        });
+      tick();
+    }));
+    it('successfully with status 500 error', fakeAsync(() => {
+      const resp = new HttpErrorResponse({
+        status: 500,
+        statusText: 'Internal Server Error',
+        error: {error: 'InternalError', errorMessage: 'Server failure', errorDetails: ['stack trace line']}
+      });
+      handleErrorObject(resp)
+        .subscribe(() => {
+          fail('Observable should have rejected.');
+        }, error => {
+          expect(error).toEqual({
+            error: 'InternalError',
+            errorMessage: 'Server failure',
+            errorDetails: ['stack trace line']
           });
         });
       tick();

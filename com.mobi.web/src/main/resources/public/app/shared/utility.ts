@@ -970,21 +970,6 @@ export function getErrorDataObject(error: HttpErrorResponse,
 }
 
 /**
- * Converts a HttpErrorResponse into an error Observable with the status text from the response.
- * 
- * @param {HttpErrorResponse} error An error response returned from an HTTP call
- * @returns {Observable<never>} An Observable that errors with the status text from the HTTP Response
- */
-export function handleError(error: HttpErrorResponse): Observable<never> {
-  if (error.status === 0) {
-    return throwError('');
-  } else {
-    return throwError(error.statusText && error.statusText !== 'Unknown Error' ? error.statusText 
-      : 'Something went wrong. Please try again later.');
-  }
-}
-
-/**
  * Converts a HttpErrorResponse into an error Observable with a RESTError instance derived from the response.
  * 
  * @param {HttpErrorResponse} error An error response returned from an HTTP call

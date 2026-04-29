@@ -38,6 +38,7 @@ import { cloneDeep } from 'lodash';
 
 import { MockVersionedRdfState, cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { RestErrorDisplayComponent } from '../../../shared/components/restErrorDisplay/restErrorDisplay.component';
 import { RdfUpload } from '../../../shared/models/rdfUpload.interface';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
 import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
@@ -96,6 +97,7 @@ describe('New Record Modal component', function() {
                 MockComponent(AdvancedLanguageSelectComponent),
                 MockComponent(KeywordSelectComponent),
                 MockComponent(ErrorDisplayComponent),
+                MockComponent(RestErrorDisplayComponent),
             ],
             providers: [
                 MockProvider(ToastService),
@@ -166,6 +168,14 @@ describe('New Record Modal component', function() {
               expect(matDialogRef.close).not.toHaveBeenCalled();
               expect(component.error).toEqual(error);
           }));
+          it('should clear error on successful creation', fakeAsync(function() {
+              component.error = { error: '', errorMessage: 'Previous error', errorDetails: [] };
+              component.create();
+              tick();
+              expect(stateStub.createAndOpen).toHaveBeenCalledWith(rdfUpload);
+              expect(matDialogRef.close).toHaveBeenCalledWith('recordId');
+              expect(component.error).toBeFalsy();
+          }));
           describe('successfully', function() {
               it('with a description', fakeAsync(function() {
                   const newExpectedOntology = cloneDeep(expectedOntology);
@@ -202,16 +212,15 @@ describe('New Record Modal component', function() {
             });
         });
         it('when there is an error', async function() {
-            let errorDisplay = element.queryAll(By.css('error-display'));
+            let errorDisplay = element.queryAll(By.css('rest-error-display'));
             expect(errorDisplay.length).toEqual(0);
 
             component.error = { errorMessage: 'error', error: '', errorDetails: [] };
             fixture.detectChanges();
             await fixture.whenStable();
-            errorDisplay = element.queryAll(By.css('error-display'));
+            errorDisplay = element.queryAll(By.css('rest-error-display'));
 
             expect(errorDisplay.length).toBe(1);
-            expect(errorDisplay[0].nativeElement.innerText).toEqual('error');
             expect(matDialogRef.close).not.toHaveBeenCalled();
         });
         it('with buttons to cancel and submit', function() {

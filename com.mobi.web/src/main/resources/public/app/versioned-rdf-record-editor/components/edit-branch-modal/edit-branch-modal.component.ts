@@ -29,6 +29,7 @@ import { DCTERMS } from '../../../prefixes';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { getDctermsValue, updateDctermsValue } from '../../../shared/utility';
+import { RESTError } from '../../../shared/models/RESTError.interface';
 
 /**
  * @class ontology-editor.EditBranchModalComponent
@@ -45,7 +46,7 @@ import { getDctermsValue, updateDctermsValue } from '../../../shared/utility';
   templateUrl: './edit-branch-modal.component.html'
 })
 export class EditBranchModalComponent implements OnInit {
-  errorMessage = '';
+  error: RESTError;
 
   editBranchForm: UntypedFormGroup = this._fb.group({
     title: ['', [Validators.required, Validators.maxLength(150)]],
@@ -71,8 +72,8 @@ export class EditBranchModalComponent implements OnInit {
     this._cm.updateRecordBranch(this.data.branch['@id'], this.data.recordId, catalogId, this.data.branch)
       .subscribe(() => {
         this._dialogRef.close(true);
-      }, errorMessage => {
-        this.errorMessage = errorMessage;
+      }, (error: RESTError) => {
+        this.error = error;
       });
   }
 }

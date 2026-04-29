@@ -23,7 +23,7 @@
 <h1 mat-dialog-title>Upload Workflow Changes</h1>
 <div mat-dialog-content class="pb-1">
     <ng-container *ngIf="error">
-      <error-display>{{error.errorMessage}}</error-display>
+      <rest-error-display [error]="error"></rest-error-display>
       <app-shacl-validation-report *ngIf="error?.error === 'InvalidWorkflowException'" [errorObject]="error"></app-shacl-validation-report>
     </ng-container>
     <file-input [displayText]="'Select a file'" [(files)]="file"

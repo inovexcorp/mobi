@@ -54,13 +54,14 @@ import com.mobi.rdf.orm.Thing;
 import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
-import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
+import com.mobi.rest.util.MobiNotFoundException;
+import com.mobi.rest.util.RestUtils;
 import com.mobi.rest.util.jaxb.Links;
+import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import com.mobi.rest.util.swagger.JsonLdObject;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -237,29 +238,17 @@ public class ExplorableDatasetRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided Dataset data or parameters are invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving class details",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordIRI")
@@ -271,7 +260,7 @@ public class ExplorableDatasetRest {
         Resource datasetRecordRsr = factory.createIRI(recordIRI);
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             DatasetRecord record = datasetManager.getDatasetRecord(datasetRecordRsr).orElseThrow(() ->
-                    ErrorUtils.sendError(RECORD_NOT_FOUND, Response.Status.BAD_REQUEST));
+                    RestUtils.getErrorObjNotFound(new MobiNotFoundException(RECORD_NOT_FOUND)));
             List<ClassDetails> classes = new ArrayList<>();
             Consumer<TupleQueryResult> tupleQueryResultConsumer = results ->
                     getClassDetailsFromQueryResults(results, datasetRecordRsr, classes);
@@ -279,8 +268,10 @@ public class ExplorableDatasetRest {
             List<ClassDetails> finalClasses = addOntologyDetailsToClasses(classes, record.getOntology(),
                     record.getModel(), conn);
             return Response.ok(finalClasses).build();
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -312,20 +303,12 @@ public class ExplorableDatasetRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving instance details",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordIRI")
@@ -360,8 +343,10 @@ public class ExplorableDatasetRest {
             }
             Comparator<InstanceDetails> comparator = Comparator.comparing(InstanceDetails::getTitle);
             return createPagedResponse(uriInfo, instances, comparator, asc, limit, offset);
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -388,29 +373,17 @@ public class ExplorableDatasetRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided Dataset data or parameters are invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving class properties",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordIRI")
@@ -424,10 +397,12 @@ public class ExplorableDatasetRest {
         Resource recordId = factory.createIRI(recordIRI);
         try {
             DatasetRecord record = datasetManager.getDatasetRecord(recordId).orElseThrow(() ->
-                    ErrorUtils.sendError(RECORD_NOT_FOUND, Response.Status.BAD_REQUEST));
+                    RestUtils.getErrorObjBadRequest(new IllegalArgumentException(RECORD_NOT_FOUND)));
             return Response.ok(getClassProperties(record, classIRI)).build();
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -453,28 +428,25 @@ public class ExplorableDatasetRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided Dataset data or parameters are invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while creating the instance",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -492,19 +464,18 @@ public class ExplorableDatasetRest {
             Resource instanceId = instanceModel.stream()
                     .filter(statement -> !(statement.getSubject() instanceof BNode))
                     .findAny().orElseThrow(() ->
-                            ErrorUtils.sendError("The new instance's IRI could not be found on any statement in the"
-                                            + " JSON-LD.", Response.Status.INTERNAL_SERVER_ERROR)).getSubject();
+                            RestUtils.getErrorObjInternalServerError(new MobiException("The new instance's IRI could not be found on any statement in the"
+                                            + " JSON-LD."))).getSubject();
             if (conn.contains(instanceId, null, null)) {
-                throw ErrorUtils.sendError("The new instance's IRI is already taken.",
-                        Response.Status.INTERNAL_SERVER_ERROR);
+                throw RestUtils.getErrorObjInternalServerError(new MobiException("The new instance's IRI is already taken."));
             }
             conn.add(instanceModel);
             conn.close();
             return Response.status(201).entity(instanceId.stringValue()).build();
         } catch (IllegalArgumentException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(e);
         } catch (IllegalStateException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -530,29 +501,17 @@ public class ExplorableDatasetRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided Dataset data or parameters are invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving the instance",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordIRI")
@@ -566,14 +525,14 @@ public class ExplorableDatasetRest {
         try (DatasetConnection conn = datasetManager.getConnection(factory.createIRI(recordIRI))) {
             Model instanceModel = getLimitedInstance(instanceIRI, conn);
             if (instanceModel.size() == 0) {
-                throw ErrorUtils.sendError(INSTANCE_NOT_FOUND, Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjNotFound(new MobiNotFoundException(INSTANCE_NOT_FOUND));
             }
             String json = modelToSkolemizedJsonld(instanceModel, bNodeService);
             return Response.ok(getArrayNodeFromJson(json)).build();
         } catch (IllegalArgumentException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(e);
         } catch (IllegalStateException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -600,28 +559,22 @@ public class ExplorableDatasetRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided Dataset data or parameters are invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while updating the instance",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -640,7 +593,7 @@ public class ExplorableDatasetRest {
             Resource instanceId = factory.createIRI(instanceIRI);
             RepositoryResult<Statement> statements = conn.getStatements(instanceId, null, null);
             if (!statements.hasNext()) {
-                throw ErrorUtils.sendError(INSTANCE_NOT_FOUND, Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjNotFound(new MobiNotFoundException(INSTANCE_NOT_FOUND));
             }
             conn.begin();
             RepositoryResult<Statement> reifiedDeclarations = conn.getStatements(null, RDF.SUBJECT, instanceId);
@@ -656,9 +609,9 @@ public class ExplorableDatasetRest {
             conn.commit();
             return Response.ok().build();
         } catch (IllegalArgumentException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(e);
         } catch (IllegalStateException | MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -683,28 +636,22 @@ public class ExplorableDatasetRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided Dataset data or parameters are invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while deleting the instance",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -720,8 +667,7 @@ public class ExplorableDatasetRest {
         try (DatasetConnection conn = datasetManager.getConnection(factory.createIRI(recordIRI))) {
             Model instanceModel = getInstanceModel(instanceIRI, conn);
             if (instanceModel.size() == 0) {
-                throw ErrorUtils.sendError(INSTANCE_NOT_FOUND,
-                        Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjNotFound(new MobiNotFoundException(INSTANCE_NOT_FOUND));
             }
             conn.begin();
             conn.remove(instanceModel);
@@ -729,9 +675,9 @@ public class ExplorableDatasetRest {
             conn.commit();
             return Response.ok().build();
         } catch (IllegalArgumentException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(e);
         } catch (IllegalStateException | MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -745,7 +691,7 @@ public class ExplorableDatasetRest {
      */
     private String getInferredClasses(Resource recordId, IRI classIRI) {
         DatasetRecord record = datasetManager.getDatasetRecord(recordId).orElseThrow(() ->
-                ErrorUtils.sendError(RECORD_NOT_FOUND, Response.Status.BAD_REQUEST));
+                RestUtils.getErrorObjBadRequest(new IllegalArgumentException(RECORD_NOT_FOUND)));
         Model recordModel = record.getModel();
         StringBuilder builder = new StringBuilder();
         builder.append(" <").append(classIRI.stringValue()).append("> ");
@@ -854,7 +800,7 @@ public class ExplorableDatasetRest {
     private void validatePaginationParams(int limit, int offset, int total) {
         LinksUtils.validateParams(limit, offset);
         if (offset > total) {
-            throw ErrorUtils.sendError("Offset exceeds total size", Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Offset exceeds total size"));
         }
     }
 
@@ -937,9 +883,9 @@ public class ExplorableDatasetRest {
             }
             tupleQueryResultConsumer.accept(tq.evaluate());
         } catch (IllegalArgumentException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(e);
         } catch (IllegalStateException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 

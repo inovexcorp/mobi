@@ -81,7 +81,7 @@ export class SHACLFormFieldComponent implements OnInit {
         this.fieldFormControl.setValue(new Option('', ''));
         this.ngOnInit();
       }
-    });
+    }, error => console.error('Field name error:', error));
   }
 
   ngOnInit(): void {
@@ -116,7 +116,7 @@ export class SHACLFormFieldComponent implements OnInit {
       this.options = entities;
       this.focusSubject.next(this.fieldFormControl.value);
       this.ref.markForCheck();
-    });
+    }, error => console.error('Autocomplete options error:', error.errorMessage));
   }
 
   get fieldFormControl(): FormControl {

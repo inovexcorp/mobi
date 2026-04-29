@@ -66,7 +66,7 @@ export class PermissionsPageComponent implements OnInit {
             .subscribe(() => {
                 changedPolicies.forEach(item => item.changed = false);
                 this.toast.createSuccessToast('Permissions updated');
-            }, error => this.toast.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error.errorMessage));
     }
     hasChanges(): boolean {
         return some(this.policies, 'changed');
@@ -89,7 +89,7 @@ export class PermissionsPageComponent implements OnInit {
                     .filter('title')
                     .forEach(item => this.setInfo(item))
                     .value());
-            }, error => this.toast.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error.errorMessage));
     }
     private setInfo(item: Policy): void {
         const rules = get(item.policy, 'Rule[0].Target.AnyOf[0].AllOf', []);

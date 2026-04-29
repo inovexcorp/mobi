@@ -23,6 +23,7 @@ package com.mobi.etl.rest;
  * #L%
  */
 
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorResponse;
 import static com.mobi.etl.api.delimited.ExcelUtils.getCellText;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
@@ -284,7 +285,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
     @Test
     public void nonExistentRowsTest() {
         Response response = target().path("delimited-files/error").request().get();
-        assertEquals(404, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Document not found");
     }
 
     @Test
@@ -324,10 +325,10 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         String mapping = "";
         Response response = target().path("delimited-files/test.csv/map").queryParam("mappingIRI", mapping)
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Must provide the IRI of a mapping record");
 
         response = target().path("delimited-files/test.csv/map").request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Must provide the IRI of a mapping record");
     }
 
     @Test
@@ -336,7 +337,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         copyResourceToTemp("test.csv", fileName);
         Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingIRI", ERROR_IRI)
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Must provide the IRI of a mapping record");
     }
 
     @Test
@@ -345,7 +346,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         copyResourceToTemp("test.csv", fileName);
         Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingIRI", "error")
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Must provide the IRI of a mapping record");
     }
 
     @Test
@@ -417,7 +418,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
     public void mapNonexistentDelimitedTest() {
         Response response = target().path("delimited-files/error/map").queryParam("mappingIRI", MAPPING_RECORD_IRI)
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Must provide the IRI of a mapping record");
     }
 
     @Test
@@ -441,10 +442,10 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         fd.field("jsonld", mapping);
         Response response = target().path("delimited-files/test.csv/map-preview").request().post(Entity.entity(fd.body(),
                 MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Must provide a JSON-LD string");
 
         response = target().path("delimited-files/test.csv/map-preview").request().post(Entity.entity(FormDataMultiPart.emptyBody(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Must provide a JSON-LD string");
     }
 
     @Test
@@ -508,36 +509,36 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         fd.field("jsonld", "[]");
         Response response = target().path("delimited-files/error/map-preview").request().post(Entity.entity(fd.body(),
                 MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Document not found");
     }
 
     @Test
     public void mapIntoDatasetWithoutMappingTest() {
         Response response = target().path("delimited-files/test.csv/map").queryParam("mappingRecordIRI", "")
                 .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Must provide the IRI of a mapping record");
 
         response = target().path("delimited-files/test.csv/map").queryParam("datasetRecordIRI", DATASET_RECORD_IRI)
                 .request().post(Entity.json(""));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Must provide the IRI of a mapping record");
     }
 
     @Test
     public void mapIntoDatasetWithoutDatasetTest() {
         Response response = target().path("delimited-files/test.csv/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("datasetRecordIRI", "").request().post(Entity.json(""));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Must provide the IRI of a dataset record");
 
         response = target().path("delimited-files/test.csv/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .request().post(Entity.json(""));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Must provide the IRI of a dataset record");
     }
 
     @Test
     public void mapIntoNonexistentDatasetTest() {
         Response response = target().path("delimited-files/test.csv/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("datasetRecordIRI", ERROR_IRI).request().post(Entity.json(""));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Document not found");
     }
 
     @Test
@@ -548,7 +549,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
         Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", ERROR_IRI)
                 .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Mapping http://error.org could not be retrieved");
     }
 
     @Test
@@ -559,7 +560,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
         Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", "error")
                 .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Mapping error does not exist");
     }
 
     @Test
@@ -571,7 +572,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
         Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Dataset does not exist");
     }
 
     @Test
@@ -606,29 +607,29 @@ public class DelimitedRestTest extends MobiRestTestCXF {
     public void mapIntoOntologyRecordWithoutMappingTest() {
         Response response = target().path("delimited-files/test.csv/map-to-ontology").queryParam("mappingRecordIRI", "")
                 .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).request().post(Entity.json(""));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Must provide the IRI of a mapping record");
 
         response = target().path("delimited-files/test.csv/map-to-ontology").queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI)
                .request().post(Entity.json(""));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Must provide the IRI of a mapping record");
     }
 
     @Test
     public void mapIntoOntologyRecordWithoutOntologyTest() {
         Response response = target().path("delimited-files/test.csv/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("ontologyRecordIRI", "").request().post(Entity.json(""));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Must provide the IRI of an ontology record");
 
         response = target().path("delimited-files/test.csv/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .request().post(Entity.json(""));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Must provide the IRI of an ontology record");
     }
 
     @Test
     public void mapIntoNonexistentOntologyRecordTest() {
         Response response = target().path("delimited-files/test.csv/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("ontologyRecordIRI", ERROR_IRI).request().post(Entity.json(""));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Must provide the IRI of an ontology branch");
     }
 
     @Test
@@ -639,7 +640,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
         Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", ERROR_IRI)
                 .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).request().post(Entity.json(""));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Must provide the IRI of an ontology branch");
     }
 
     @Test
@@ -650,7 +651,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
         Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", "error")
                 .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).request().post(Entity.json(""));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Must provide the IRI of an ontology branch");
     }
 
     @Test
@@ -662,7 +663,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
         Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).request().post(Entity.json(""));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Must provide the IRI of an ontology branch");
     }
 
     @Test
@@ -823,4 +824,5 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         Files.copy(Objects.requireNonNull(getClass().getResourceAsStream("/" + resourceName)),
                 Paths.get(DelimitedRest.TEMP_DIR + "/" + newName), StandardCopyOption.REPLACE_EXISTING);
     }
+
 }

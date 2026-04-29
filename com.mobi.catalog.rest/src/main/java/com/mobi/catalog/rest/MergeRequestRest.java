@@ -60,7 +60,6 @@ import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.Value;
 import com.mobi.rest.security.annotations.ValueType;
-import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.MobiNotFoundException;
 import com.mobi.rest.util.RestUtils;
@@ -73,7 +72,6 @@ import com.mobi.security.policy.api.ontologies.policy.Update;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.Explode;
-import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -200,36 +198,22 @@ public class MergeRequestRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided MergeRequest data or parameters are invalid",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = ErrorObjectSchema.class)
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to retrieve MergeRequests",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving MergeRequests",
-                    content = @Content(
-                        mediaType = MediaType.APPLICATION_JSON,
-                        schema = @Schema(implementation = ErrorObjectSchema.class)
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response getMergeRequests(
@@ -326,37 +310,33 @@ public class MergeRequestRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided MergeRequest data is invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to create a MergeRequest",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while creating the MergeRequest",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -401,23 +381,22 @@ public class MergeRequestRest {
             assignees.forEach(username -> {
                 Optional<User> assignee = engineManager.retrieveUser(username);
                 if (assignee.isEmpty()) {
-                    // TODO: Should be Response.Status.NOT_FOUND (404) — missing resource is not a bad request
-                    throw ErrorUtils.sendError("User " + username + " does not exist", Response.Status.BAD_REQUEST);
+                    throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("User " + username + " does not exist"));
                 }
                 builder.addAssignee(assignee.get());
             });
         }
         if (targetBranchId.equals(sourceBranchId)) {
-            throw ErrorUtils.sendError("Cannot merge the same branch into itself.", Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Cannot merge the same branch into itself."));
         }
         try {
             MergeRequest request = manager.createMergeRequest(builder.build(), configProvider.getLocalCatalogIRI());
             manager.addMergeRequest(request);
             return Response.status(201).entity(request.getResource().stringValue()).build();
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -442,7 +421,6 @@ public class MergeRequestRest {
                     responseCode = "200",
                     description = "JSON containing the User count details",
                     content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
                             array = @ArraySchema(uniqueItems = true,
                                     schema = @Schema(example = "{\"user\": \"http://test.com/some-uri\","
                                             + "\"name\": \"Joe\", \"count\": 5}")
@@ -452,36 +430,22 @@ public class MergeRequestRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided request parameters are invalid",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = ErrorObjectSchema.class)
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to perform this action",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving MergeRequest creators",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = ErrorObjectSchema.class)
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response getCreators(@Parameter(hidden = true) @Context HttpServletRequest servletRequest,
@@ -537,7 +501,6 @@ public class MergeRequestRest {
                     responseCode = "200",
                     description = "JSON containing the User count details",
                     content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
                             array = @ArraySchema(uniqueItems = true,
                                     schema = @Schema(example = "{\"user\": \"http://test.com/some-uri\","
                                             + "\"name\": \"Joe\", \"count\": 5}")
@@ -547,19 +510,12 @@ public class MergeRequestRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided request parameters are invalid",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = ErrorObjectSchema.class)
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
@@ -568,10 +524,7 @@ public class MergeRequestRest {
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving MergeRequest assignees",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = ErrorObjectSchema.class)
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response getAssignees(@Parameter(hidden = true) @Context HttpServletRequest servletRequest,
@@ -627,7 +580,6 @@ public class MergeRequestRest {
                     responseCode = "200",
                     description = "JSON containing the Record count details",
                     content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
                             array = @ArraySchema(
                                     uniqueItems = true,
                                     schema = @Schema(
@@ -639,36 +591,22 @@ public class MergeRequestRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided request parameters are invalid",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = ErrorObjectSchema.class)
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to perform this action",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving MergeRequest records",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = ErrorObjectSchema.class)
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response getRecords(@Parameter(hidden = true) @Context HttpServletRequest servletRequest,
@@ -724,52 +662,37 @@ public class MergeRequestRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to perform this action",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "404",
                     description = "Requested resource does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving the MergeRequest",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response getMergeRequest(
             @Parameter(description = "String representing the MergeRequest", required = true)
             @PathParam("requestId") String requestId) {
-        Resource requestIdResource = createIRI(requestId, vf);
         try {
+            Resource requestIdResource = createIRI(requestId, vf);
             MergeRequest request = manager.getMergeRequest(requestIdResource).orElseThrow(() ->
-                    ErrorUtils.sendError(MERGE_REQUEST + requestId + COULD_NOT_BE_FOUND,
-                            Response.Status.NOT_FOUND));
+                    RestUtils.getErrorObjNotFound(new MobiNotFoundException(MERGE_REQUEST + requestId + COULD_NOT_BE_FOUND)));
             String json = groupedModelToString(request.getModel(), getRDFFormat("jsonld"));
             return Response.ok(getObjectFromJsonld(json)).build();
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -797,28 +720,22 @@ public class MergeRequestRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to perform this action",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while updating the MergeRequest",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -829,16 +746,18 @@ public class MergeRequestRest {
             @Parameter(description = "String representing the JSON-LD representation of the updated MergeRequest",
                     required = true)
             String newMergeRequest) {
-        Resource requestIdResource = createIRI(requestId, vf);
-        User activeUser = getActiveUser(servletRequest, engineManager);
         try {
+            Resource requestIdResource = createIRI(requestId, vf);
+            User activeUser = getActiveUser(servletRequest, engineManager);
             if (checkMergeRequestManagePermissions(requestIdResource, activeUser)) {
                 return Response.status(Response.Status.UNAUTHORIZED).build();
             }
             manager.updateMergeRequest(requestIdResource, jsonToMergeRequest(requestIdResource, newMergeRequest));
             return Response.ok().build();
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -873,19 +792,17 @@ public class MergeRequestRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to perform this action",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
@@ -974,19 +891,14 @@ public class MergeRequestRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to perform this action",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
@@ -1058,37 +970,30 @@ public class MergeRequestRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to perform this action",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "404",
                     description = "Requested resource does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while deleting the MergeRequest",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -1105,10 +1010,9 @@ public class MergeRequestRest {
             manager.deleteMergeRequest(requestIdResource);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, MERGE_REQUEST + requestId + COULD_NOT_BE_FOUND,
-                    Response.Status.NOT_FOUND);
+            throw RestUtils.getErrorObjNotFound(new MobiNotFoundException(MERGE_REQUEST + requestId + COULD_NOT_BE_FOUND));
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -1122,8 +1026,7 @@ public class MergeRequestRest {
      */
     protected boolean checkMergeRequestManagePermissions(Resource requestId, User activeUser) {
         MergeRequest mergeRequest = manager.getMergeRequest(requestId).orElseThrow(() ->
-                ErrorUtils.sendError(MERGE_REQUEST + requestId + COULD_NOT_BE_FOUND,
-                        Response.Status.NOT_FOUND));
+                RestUtils.getErrorObjNotFound(new MobiNotFoundException(MERGE_REQUEST + requestId + COULD_NOT_BE_FOUND)));
         boolean accessDenied = true;
 
         Optional<org.eclipse.rdf4j.model.Value> creator = mergeRequest.getProperty(DCTERMS.CREATOR);
@@ -1171,38 +1074,22 @@ public class MergeRequestRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided request parameters are invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to perform this action",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving Comments",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response getComments(
@@ -1222,9 +1109,9 @@ public class MergeRequestRest {
                     });
             return Response.ok(result).build();
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -1251,47 +1138,27 @@ public class MergeRequestRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided request parameters are invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to perform this action",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "404",
                     description = "Comment with the provided ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving the Comment",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response getComment(
@@ -1301,17 +1168,15 @@ public class MergeRequestRest {
             @PathParam("commentId") String commentId) {
         try {
             manager.getMergeRequest(createIRI(requestId, vf)).orElseThrow(() ->
-                    ErrorUtils.sendError(MERGE_REQUEST + requestId + COULD_NOT_BE_FOUND,
-                            Response.Status.NOT_FOUND));
+                    RestUtils.getErrorObjBadRequest(new IllegalArgumentException(MERGE_REQUEST + requestId + COULD_NOT_BE_FOUND)));
             Comment comment = manager.getComment(createIRI(commentId, vf)).orElseThrow(() ->
-                    ErrorUtils.sendError(COMMENT + commentId + COULD_NOT_BE_FOUND,
-                            Response.Status.NOT_FOUND));
+                    RestUtils.getErrorObjNotFound(new MobiNotFoundException(COMMENT + commentId + COULD_NOT_BE_FOUND)));
             String json = groupedModelToString(comment.getModel(), getRDFFormat("jsonld"));
             return Response.ok(getObjectFromJsonld(json)).build();
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -1344,37 +1209,33 @@ public class MergeRequestRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided request parameters are invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to perform this action",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while creating the Comment",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -1400,9 +1261,9 @@ public class MergeRequestRest {
             }
             return Response.status(201).entity(comment.getResource().stringValue()).build();
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -1433,46 +1294,38 @@ public class MergeRequestRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided request parameters are invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to perform this action",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "404",
                     description = "Comment with the provided ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while updating the Comment",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -1485,13 +1338,11 @@ public class MergeRequestRest {
             @Parameter(description = "String representing the new description of the updated Comment", required = true)
             String newCommentStr) {
         manager.getMergeRequest(createIRI(requestId, vf)).orElseThrow(() ->
-                ErrorUtils.sendError(MERGE_REQUEST + requestId + COULD_NOT_BE_FOUND,
-                        Response.Status.NOT_FOUND));
+                RestUtils.getErrorObjBadRequest(new IllegalArgumentException(MERGE_REQUEST + requestId + COULD_NOT_BE_FOUND)));
 
         Resource commentIdResource = createIRI(commentId, vf);
         Comment comment = manager.getComment(commentIdResource).orElseThrow(() ->
-                ErrorUtils.sendError(COMMENT + commentId + COULD_NOT_BE_FOUND,
-                        Response.Status.BAD_REQUEST));
+                RestUtils.getErrorObjNotFound(new MobiNotFoundException(COMMENT + commentId + COULD_NOT_BE_FOUND)));
         checkStringParam(newCommentStr, "Comment string is required");
 
         User activeUser = getActiveUser(servletRequest, engineManager);
@@ -1505,9 +1356,9 @@ public class MergeRequestRest {
             manager.updateComment(commentIdResource, comment);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -1535,47 +1386,27 @@ public class MergeRequestRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided request parameters are invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to perform this action",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "404",
                     description = "Requested resource does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while deleting the Comment",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response deleteComment(
@@ -1587,37 +1418,34 @@ public class MergeRequestRest {
         try {
             Resource commentIRI = createIRI(commentId, vf);
             manager.getMergeRequest(createIRI(requestId, vf)).orElseThrow(() ->
-                    ErrorUtils.sendError(COMMENT + requestId + COULD_NOT_BE_FOUND,
-                            Response.Status.NOT_FOUND));
+                    RestUtils.getErrorObjBadRequest(new IllegalArgumentException(MERGE_REQUEST + requestId + COULD_NOT_BE_FOUND)));
             Comment comment = manager.getComment(commentIRI).orElseThrow(() ->
-                    ErrorUtils.sendError(COMMENT + commentId + COULD_NOT_BE_FOUND,
-                            Response.Status.NOT_FOUND));
+                    RestUtils.getErrorObjNotFound(new MobiNotFoundException(COMMENT + commentId + COULD_NOT_BE_FOUND)));
             Optional<org.eclipse.rdf4j.model.Value> commentUser = comment.getProperty(DCTERMS.CREATOR);
             User user = getActiveUser(servletRequest, engineManager);
             if (commentUser.isPresent() && commentUser.get().stringValue().equals(user.getResource().stringValue())) {
                 manager.deleteComment(commentIRI);
             } else {
-                throw ErrorUtils.sendError("User not permitted to delete comment " + commentId,
-                        Response.Status.UNAUTHORIZED);
+                throw RestUtils.getErrorObjUnauthorized(new IllegalAccessException("User not permitted to delete comment " + commentId));
             }
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
     private MergeRequest jsonToMergeRequest(Resource requestId, String jsonMergeRequest) {
         Model mergeReqModel = jsonldToModel(jsonMergeRequest);
         MergeRequest mergeRequest = mergeRequestFactory.getExisting(requestId, mergeReqModel).orElseThrow(() ->
-                ErrorUtils.sendError("MergeRequest IDs must match", Response.Status.BAD_REQUEST));
+                RestUtils.getErrorObjBadRequest(new IllegalArgumentException("MergeRequest IDs must match")));
 
         Optional<Resource> sourceBranch = mergeRequest.getSourceBranch_resource();
         Optional<Resource> targetBranch = mergeRequest.getTargetBranch_resource();
 
         if (sourceBranch.equals(targetBranch)) {
-            throw ErrorUtils.sendError("Cannot merge the same branch into itself.", Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Cannot merge the same branch into itself."));
         }
 
         return mergeRequest;
@@ -1626,7 +1454,7 @@ public class MergeRequestRest {
     private Comment jsonToComment(Resource commentId, String jsonComment) {
         Model commentModel = jsonldToModel(jsonComment);
         return commentFactory.getExisting(commentId, commentModel).orElseThrow(() ->
-                ErrorUtils.sendError("Comment IDs must match", Response.Status.BAD_REQUEST));
+                RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Comment IDs must match")));
     }
 
     private ArrayNode serializeUserCount(PaginatedSearchResults<UserCount> userCounts) {

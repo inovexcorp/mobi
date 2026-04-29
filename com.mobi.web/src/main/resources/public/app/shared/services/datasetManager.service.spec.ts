@@ -90,10 +90,10 @@ describe('Dataset Manager service', function() {
     it('unless an error occurs', function() {
       service.getDatasetRecords(this.config)
         .subscribe(() => fail('Observable should have errored'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual({error: '', errorMessage: error, errorDetails: []});
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(null, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.getDatasetRecords(this.config)
@@ -118,10 +118,10 @@ describe('Dataset Manager service', function() {
     it('unless an error occurs', function() {
       service.getDatasetRecord(recordId)
         .subscribe(() => fail('Observable should have errored'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual({error: '', errorMessage: error, errorDetails: []});
         });
       const request = httpMock.expectOne({ url: this.url, method: 'GET' });
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(null, { status: 400, statusText: error });
     });
     it('when resolved', function() {
       service.getDatasetRecord(recordId)
@@ -147,11 +147,11 @@ describe('Dataset Manager service', function() {
     it('unless an error occurs', function() {
       service.createDatasetRecord(this.recordConfig)
         .subscribe(() => fail('Observable should have errored'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual({error: '', errorMessage: error, errorDetails: []});
         });
       const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTrue();
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(null, { status: 400, statusText: error });
     });
     describe('when no error occurs', function() {
       beforeEach(function() {
@@ -203,11 +203,11 @@ describe('Dataset Manager service', function() {
     it('unless an error occurs', function() {
       service.deleteDatasetRecord(recordId)
         .subscribe(() => fail('Observable should have errored'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual({error: '', errorMessage: error, errorDetails: []});
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'DELETE');
       expect(request.request.params.get('force')).toEqual('false');
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(null, { status: 400, statusText: error });
     });
     it('with force delete', function() {
       service.deleteDatasetRecord(recordId, true)
@@ -235,11 +235,11 @@ describe('Dataset Manager service', function() {
     it('unless an error occurs', function() {
       service.clearDatasetRecord(recordId)
         .subscribe(() => fail('Observable should have errored'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual({error: '', errorMessage: error, errorDetails: []});
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'DELETE');
       expect(request.request.params.get('force')).toEqual('false');
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(null, { status: 400, statusText: error });
     });
     it('with force delete', function() {
       service.clearDatasetRecord(recordId, true)
@@ -331,10 +331,11 @@ describe('Dataset Manager service', function() {
       expect(service.datasetRecords).toEqual([datasetRecord]);
     }));
     it('rejected', fakeAsync(function() {
-      spyOn(service, 'getDatasetRecords').and.returnValue(throwError(error));
+      const errorObj = {error: '', errorMessage: error, errorDetails: []};
+      spyOn(service, 'getDatasetRecords').and.returnValue(throwError(errorObj));
       service.initialize()
         .subscribe(() => fail('Observable should have errored'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObj);
         });
       tick();
       const config = {

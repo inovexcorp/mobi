@@ -231,7 +231,7 @@ describe('Class Cards component', function() {
             }));
             it('when user has read access and getClassInstances is rejected', fakeAsync(function() {
                 policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
-                exploreServiceStub.getClassInstanceDetails.and.returnValue(throwError('error'));
+                exploreServiceStub.getClassInstanceDetails.and.returnValue(throwError({error: '', errorMessage: 'error', errorDetails: []}));
                 const classDetails = {
                     classIRI: 'class',
                     classTitle: 'new class',
@@ -249,7 +249,7 @@ describe('Class Cards component', function() {
             }));
             it('when user does not have read access', fakeAsync(function() {
                 policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
-                exploreServiceStub.getClassInstanceDetails.and.returnValue(throwError('error'));
+                exploreServiceStub.getClassInstanceDetails.and.returnValue(throwError({error: '', errorMessage: 'error', errorDetails: []}));
                 const classDetails = {
                     classIRI: 'class',
                     classTitle: 'new class',

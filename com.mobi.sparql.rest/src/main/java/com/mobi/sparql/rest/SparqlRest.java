@@ -247,10 +247,9 @@ public class SparqlRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
@@ -289,13 +288,17 @@ public class SparqlRest {
             @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit,
             @Parameter(hidden = true)
             @HeaderParam("accept") String acceptString) {
-        if (queryString == null) {
-            throw getErrorObjBadRequest(new IllegalArgumentException("Parameter 'query' must be set."));
+        try {
+            if (queryString == null) {
+                throw getErrorObjBadRequest(new IllegalArgumentException("Parameter 'query' must be set."));
+            }
+            VersionedRDFRecordParams rdfRecordParams = new VersionedRDFRecordParams(branchIdStr, commitIdStr,
+                    includeImports, applyInProgressCommit, getActiveUser(servletRequest, engineManager));
+            return handleQuery(queryString, vf.createIRI(resourceId), storeType, acceptString, null,
+                    rdfRecordParams);
+        } catch (IllegalArgumentException ex) {
+            throw getErrorObjBadRequest(ex);
         }
-        VersionedRDFRecordParams rdfRecordParams = new VersionedRDFRecordParams(branchIdStr, commitIdStr,
-                includeImports, applyInProgressCommit, getActiveUser(servletRequest, engineManager));
-        return handleQuery(queryString, vf.createIRI(resourceId), storeType, acceptString, null,
-                rdfRecordParams);
     }
 
     /**
@@ -331,10 +334,9 @@ public class SparqlRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -350,13 +352,17 @@ public class SparqlRest {
             @QueryParam("fileType") String fileType,
             @HeaderParam("accept") String acceptString,
             @DefaultValue("results") @QueryParam("fileName") String fileName) {
-        if (queryString == null) {
-            throw getErrorObjBadRequest(new IllegalArgumentException("Parameter 'query' must be set."));
+        try {
+            if (queryString == null) {
+                throw getErrorObjBadRequest(new IllegalArgumentException("Parameter 'query' must be set."));
+            }
+            VersionedRDFRecordParams rdfRecordParams = new VersionedRDFRecordParams(branchIdStr, commitIdStr,
+                    includeImports, applyInProgressCommit, getActiveUser(servletRequest, engineManager));
+            return handleQuery(queryString, vf.createIRI(resourceId), storeType,
+                    convertFileExtensionToMimeType(fileType), fileName, rdfRecordParams);
+        } catch (IllegalArgumentException ex) {
+            throw getErrorObjBadRequest(ex);
         }
-        VersionedRDFRecordParams rdfRecordParams = new VersionedRDFRecordParams(branchIdStr, commitIdStr,
-                includeImports, applyInProgressCommit, getActiveUser(servletRequest, engineManager));
-        return handleQuery(queryString, vf.createIRI(resourceId), storeType,
-                convertFileExtensionToMimeType(fileType), fileName, rdfRecordParams);
     }
 
     /**
@@ -391,10 +397,9 @@ public class SparqlRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -408,14 +413,18 @@ public class SparqlRest {
             @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit,
             @HeaderParam("accept") String acceptString,
             String queryString) {
-        if (queryString == null) {
-            throw getErrorObjBadRequest(new IllegalArgumentException("SPARQL query must be provided in request body."));
-        }
+        try {
+            if (queryString == null) {
+                throw getErrorObjBadRequest(new IllegalArgumentException("SPARQL query must be provided in request body."));
+            }
 
-        VersionedRDFRecordParams rdfRecordParams = new VersionedRDFRecordParams(branchIdStr, commitIdStr,
-                includeImports, applyInProgressCommit, getActiveUser(servletRequest, engineManager));
-        return handleQuery(queryString, vf.createIRI(resourceId), storeType, acceptString, null,
-                rdfRecordParams);
+            VersionedRDFRecordParams rdfRecordParams = new VersionedRDFRecordParams(branchIdStr, commitIdStr,
+                    includeImports, applyInProgressCommit, getActiveUser(servletRequest, engineManager));
+            return handleQuery(queryString, vf.createIRI(resourceId), storeType, acceptString, null,
+                    rdfRecordParams);
+        } catch (IllegalArgumentException ex) {
+            throw getErrorObjBadRequest(ex);
+        }
     }
 
     /**
@@ -453,10 +462,9 @@ public class SparqlRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -472,13 +480,17 @@ public class SparqlRest {
             @HeaderParam("accept") String acceptString,
             @DefaultValue("results") @QueryParam("fileName") String fileName,
             String queryString) {
-        if (queryString == null) {
-            throw getErrorObjBadRequest(new IllegalArgumentException("Body must contain a query."));
+        try {
+            if (queryString == null) {
+                throw getErrorObjBadRequest(new IllegalArgumentException("Body must contain a query."));
+            }
+            VersionedRDFRecordParams rdfRecordParams = new VersionedRDFRecordParams(branchIdStr, commitIdStr,
+                    includeImports, applyInProgressCommit, getActiveUser(servletRequest, engineManager));
+            return handleQuery(queryString, vf.createIRI(resourceId), storeType,
+                    convertFileExtensionToMimeType(fileType), fileName, rdfRecordParams);
+        } catch (IllegalArgumentException ex) {
+            throw getErrorObjBadRequest(ex);
         }
-        VersionedRDFRecordParams rdfRecordParams = new VersionedRDFRecordParams(branchIdStr, commitIdStr,
-                includeImports, applyInProgressCommit, getActiveUser(servletRequest, engineManager));
-        return handleQuery(queryString, vf.createIRI(resourceId), storeType,
-                convertFileExtensionToMimeType(fileType), fileName, rdfRecordParams);
     }
 
     /**
@@ -566,10 +578,9 @@ public class SparqlRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
@@ -608,13 +619,17 @@ public class SparqlRest {
             @DefaultValue("false") @FormParam("applyInProgressCommit") boolean applyInProgressCommit,
             @Parameter(hidden = true)
             @HeaderParam("accept") String acceptString) {
-        if (queryString == null) {
-            throw getErrorObjBadRequest(new IllegalArgumentException("Form parameter 'query' must be set."));
+        try {
+            if (queryString == null) {
+                throw getErrorObjBadRequest(new IllegalArgumentException("Form parameter 'query' must be set."));
+            }
+            VersionedRDFRecordParams rdfRecordParams = new VersionedRDFRecordParams(branchIdStr, commitIdStr,
+                    includeImports, applyInProgressCommit, getActiveUser(servletRequest, engineManager));
+            return handleQuery(queryString, vf.createIRI(resourceId), storeType, acceptString, null,
+                    rdfRecordParams);
+        } catch (IllegalArgumentException ex) {
+            throw getErrorObjBadRequest(ex);
         }
-        VersionedRDFRecordParams rdfRecordParams = new VersionedRDFRecordParams(branchIdStr, commitIdStr,
-                includeImports, applyInProgressCommit, getActiveUser(servletRequest, engineManager));
-        return handleQuery(queryString, vf.createIRI(resourceId), storeType, acceptString, null,
-                rdfRecordParams);
     }
 
     /**
@@ -652,10 +667,9 @@ public class SparqlRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -671,13 +685,17 @@ public class SparqlRest {
             @QueryParam("fileType") String fileType,
             @HeaderParam("accept") String acceptString,
             @DefaultValue("results") @QueryParam("fileName") String fileName) {
-        if (queryString == null) {
-            throw getErrorObjBadRequest(new IllegalArgumentException("Form parameter 'query' must be set."));
+        try {
+            if (queryString == null) {
+                throw getErrorObjBadRequest(new IllegalArgumentException("Form parameter 'query' must be set."));
+            }
+            VersionedRDFRecordParams rdfRecordParams = new VersionedRDFRecordParams(branchIdStr, commitIdStr,
+                    includeImports, applyInProgressCommit, getActiveUser(servletRequest, engineManager));
+            return handleQuery(queryString, vf.createIRI(resourceId), storeType,
+                    convertFileExtensionToMimeType(fileType), fileName, rdfRecordParams);
+        } catch (IllegalArgumentException ex) {
+            throw getErrorObjBadRequest(ex);
         }
-        VersionedRDFRecordParams rdfRecordParams = new VersionedRDFRecordParams(branchIdStr, commitIdStr,
-                includeImports, applyInProgressCommit, getActiveUser(servletRequest, engineManager));
-        return handleQuery(queryString, vf.createIRI(resourceId), storeType,
-                convertFileExtensionToMimeType(fileType), fileName, rdfRecordParams);
     }
 
     /**
@@ -723,10 +741,9 @@ public class SparqlRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
@@ -765,13 +782,17 @@ public class SparqlRest {
             @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit,
             @Parameter(hidden = true)
             @HeaderParam("accept") String acceptString) {
-        if (queryString == null) {
-            throw getErrorObjBadRequest(new IllegalArgumentException("Parameter 'query' must be set."));
+        try {
+            if (queryString == null) {
+                throw getErrorObjBadRequest(new IllegalArgumentException("Parameter 'query' must be set."));
+            }
+            VersionedRDFRecordParams rdfRecordParams = new VersionedRDFRecordParams(branchIdStr, commitIdStr,
+                    includeImports, applyInProgressCommit, getActiveUser(servletRequest, engineManager));
+            return handleQueryEagerly(queryString, vf.createIRI(resourceId), storeType,
+                    acceptString, this.limitResults, rdfRecordParams);
+        } catch (IllegalArgumentException ex) {
+            throw getErrorObjBadRequest(ex);
         }
-        VersionedRDFRecordParams rdfRecordParams = new VersionedRDFRecordParams(branchIdStr, commitIdStr,
-                includeImports, applyInProgressCommit, getActiveUser(servletRequest, engineManager));
-        return handleQueryEagerly(queryString, vf.createIRI(resourceId), storeType,
-                acceptString, this.limitResults, rdfRecordParams);
     }
 
     /**
@@ -806,10 +827,9 @@ public class SparqlRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -823,13 +843,17 @@ public class SparqlRest {
             @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit,
             @HeaderParam("accept") String acceptString,
             String queryString) {
-        if (queryString == null) {
-            throw getErrorObjBadRequest(new IllegalArgumentException("Body must contain a query."));
+        try {
+            if (queryString == null) {
+                throw getErrorObjBadRequest(new IllegalArgumentException("Body must contain a query."));
+            }
+            VersionedRDFRecordParams rdfRecordParams = new VersionedRDFRecordParams(branchIdStr, commitIdStr,
+                    includeImports, applyInProgressCommit, getActiveUser(servletRequest, engineManager));
+            return handleQueryEagerly(queryString, vf.createIRI(resourceId), storeType,
+                    acceptString, this.limitResults, rdfRecordParams);
+        } catch (IllegalArgumentException ex) {
+            throw getErrorObjBadRequest(ex);
         }
-        VersionedRDFRecordParams rdfRecordParams = new VersionedRDFRecordParams(branchIdStr, commitIdStr,
-                includeImports, applyInProgressCommit, getActiveUser(servletRequest, engineManager));
-        return handleQueryEagerly(queryString, vf.createIRI(resourceId), storeType,
-                acceptString, this.limitResults, rdfRecordParams);
     }
 
     /**
@@ -917,10 +941,9 @@ public class SparqlRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
@@ -950,13 +973,17 @@ public class SparqlRest {
             @DefaultValue("false") @FormParam("includeImports") boolean includeImports,
             @DefaultValue("false") @FormParam("applyInProgressCommit") boolean applyInProgressCommit,
             @Parameter(hidden = true) @HeaderParam("accept") String acceptString) {
-        if (queryString == null) {
-            throw getErrorObjBadRequest(new IllegalArgumentException("Form parameter 'query' must be set."));
+        try {
+            if (queryString == null) {
+                throw getErrorObjBadRequest(new IllegalArgumentException("Form parameter 'query' must be set."));
+            }
+            VersionedRDFRecordParams rdfRecordParams = new VersionedRDFRecordParams(branchIdStr, commitIdStr,
+                    includeImports, applyInProgressCommit, getActiveUser(servletRequest, engineManager));
+            return handleQueryEagerly(queryString, vf.createIRI(resourceId), storeType, acceptString,
+                    this.limitResults, rdfRecordParams);
+        } catch (IllegalArgumentException ex) {
+            throw getErrorObjBadRequest(ex);
         }
-        VersionedRDFRecordParams rdfRecordParams = new VersionedRDFRecordParams(branchIdStr, commitIdStr,
-                includeImports, applyInProgressCommit, getActiveUser(servletRequest, engineManager));
-        return handleQueryEagerly(queryString, vf.createIRI(resourceId), storeType, acceptString,
-                this.limitResults, rdfRecordParams);
     }
 
     /**

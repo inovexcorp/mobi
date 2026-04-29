@@ -354,7 +354,7 @@ describe('Instance Form component', function() {
                     });
                 });
                 it('rejected', function () {
-                    exploreServiceStub.getClassInstanceDetails.and.returnValue(throwError('error'));
+                    exploreServiceStub.getClassInstanceDetails.and.returnValue(throwError({error: '', errorMessage: 'error', errorDetails: []}));
                     component.getOptions('propertyId');
                     fixture.detectChanges();
                     expect(exploreServiceStub.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateStub.explore.recordId, 'string', {

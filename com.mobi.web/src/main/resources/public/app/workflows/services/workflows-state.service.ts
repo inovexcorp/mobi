@@ -118,7 +118,7 @@ export class WorkflowsStateService {
           return of(false);
         }
       })
-    ).subscribe();
+    ).subscribe({ error: error => console.error('Workflow event error:', error) });
   }
   _handleEventWithPayload(eventType: string): Observable<boolean> {
     if (eventType === 'LOGOUT') {

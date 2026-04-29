@@ -23,6 +23,7 @@ package com.mobi.jaas.rest;
  * #L%
  */
 
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorResponse;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService;
@@ -210,7 +211,7 @@ public class GroupRestTest extends MobiRestTestCXF {
         fd.field("roles", "admin");
         Response response = target().path("groups")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Group title is required");
     }
 
     @Test
@@ -221,7 +222,7 @@ public class GroupRestTest extends MobiRestTestCXF {
         fd.field("description", "This is a description");
         Response response = target().path("groups")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Group testGroup already exists");
     }
 
     @Test
@@ -238,7 +239,7 @@ public class GroupRestTest extends MobiRestTestCXF {
     @Test
     public void getGroupThatDoesNotExistTest() {
         Response response = target().path("groups/error").request().get();
-        assertEquals(404, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Group error not found");
     }
 
     @Test
@@ -261,7 +262,7 @@ public class GroupRestTest extends MobiRestTestCXF {
         Response response = target().path("groups/group2")
                 .request().put(Entity.entity(groupedModelToString(group.getModel(), getRDFFormat("jsonld")),
                         MediaType.APPLICATION_JSON_TYPE));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Provided group title and the group title in the data must match");
     }
 
     @Test
@@ -272,8 +273,8 @@ public class GroupRestTest extends MobiRestTestCXF {
         Response response = target().path("groups/testGroup")
                 .request().put(Entity.entity(groupedModelToString(user.getModel(), getRDFFormat("jsonld")),
                         MediaType.APPLICATION_JSON_TYPE));
-        assertEquals(400, response.getStatus());
         verify(engineManager, atLeastOnce()).retrieveGroup(ENGINE_NAME, "testGroup");
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Group testGroup not found");
     }
 
     @Test
@@ -286,7 +287,7 @@ public class GroupRestTest extends MobiRestTestCXF {
     @Test
     public void deleteGroupThatDoesNotExistTest() {
         Response response = target().path("groups/error").request().delete();
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Group error not found");
     }
 
     @Test
@@ -304,7 +305,7 @@ public class GroupRestTest extends MobiRestTestCXF {
     @Test
     public void getGroupRolesThatDoNotExistTest() {
         Response response = target().path("groups/error/roles").request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Group error not found");
     }
 
     @Test
@@ -340,7 +341,7 @@ public class GroupRestTest extends MobiRestTestCXF {
 
         Response response = target().path("groups/error/roles").queryParam("roles", roles)
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Group error not found");
     }
 
     @Test
@@ -351,14 +352,14 @@ public class GroupRestTest extends MobiRestTestCXF {
 
         Response response = target().path("groups/testGroup/roles").queryParam("roles", roles)
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Role testRole not found");
     }
 
     @Test
     public void addGroupRolesWithoutRolesTest() {
         Response response = target().path("groups/testGroup/roles")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Both group title and roles must be provided");
     }
 
     @Test
@@ -378,7 +379,7 @@ public class GroupRestTest extends MobiRestTestCXF {
     public void removeRoleFromGroupThatDoesNotExistTest() {
         Response response = target().path("groups/error/roles").queryParam("role", "testRole")
                 .request().delete();
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Group error not found");
     }
 
     @Test
@@ -388,7 +389,7 @@ public class GroupRestTest extends MobiRestTestCXF {
 
         Response response = target().path("groups/testGroup/roles").queryParam("role", "error")
                 .request().delete();
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Role error not found");
     }
 
     @Test
@@ -409,13 +410,13 @@ public class GroupRestTest extends MobiRestTestCXF {
         when(engineManager.getUsername(any(Resource.class))).thenReturn(Optional.empty());
 
         Response response = target().path("groups/testGroup/users").request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorResponse(response, 500, "MobiException", "Unable to get User: http://mobi.com/users/testUser");
     }
 
     @Test
     public void getGroupUsersGroupDoesNotExistTest() {
         Response response = target().path("groups/error/users").request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Group error not found");
     }
 
     @Test
@@ -448,7 +449,7 @@ public class GroupRestTest extends MobiRestTestCXF {
     @Test
     public void addGroupUserToGroupThatDoesNotExistTest() {
         Response response = target().path("groups/error/users").request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Group error not found");
     }
 
     @Test
@@ -458,7 +459,7 @@ public class GroupRestTest extends MobiRestTestCXF {
 
         Response response = target().path("groups/testGroup/users").queryParam("users", usernames)
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 500, "MobiException", "User error not found");
     }
 
     @Test
@@ -479,13 +480,14 @@ public class GroupRestTest extends MobiRestTestCXF {
     public void removeGroupUserFromGroupThatDoesNotExistTest() {
         Response response = target().path("groups/error/users").queryParam("user", "tester")
                 .request().delete();
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Group error not found");
     }
 
     @Test
     public void removeGroupUserTHatDoesNotExistTest() {
         Response response = target().path("groups/testGroup/users").queryParam("user", "error")
                 .request().delete();
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 500, "MobiException", "User error not found");
     }
+
 }

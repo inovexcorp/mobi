@@ -29,6 +29,7 @@ import { Observable } from 'rxjs';
 import { cleanStylesFromDOM, } from '../../../test/ts/Shared';
 import { DATASET_STORE_TYPE, ONTOLOGY_STORE_TYPE, REPOSITORY_STORE_TYPE } from '../../constants';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { RESTError } from '../models/RESTError.interface';
 import { REPOS, XSD } from '../../prefixes';
 import { SparqlManagerService } from './sparqlManager.service';
 import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
@@ -39,6 +40,7 @@ describe('SPARQL Manager service', function() {
     let httpMock: HttpTestingController;
 
     const error = 'error message';
+    const errorObj: RESTError = {error: '', errorMessage: error, errorDetails: []};
     const query = 'SELECT * WHERE { ?s ?p ?o }';
     const datasetRecordIRI = 'datasetRecordIRI';
     const ontologyRecordIRI = 'ontologyRecordIRI';
@@ -93,10 +95,10 @@ describe('SPARQL Manager service', function() {
         it('unless an error occurs', fakeAsync(function() {
             service.query(query, systemRepoIRI)
                 .subscribe(() => fail('Observable should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne(req => req.url.startsWith(systemRepoURL) && req.method === 'GET');
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush({error: '', errorMessage: error, errorDetails: []}, { status: 400, statusText: error });
         }));
         describe('successfully', function() {
             describe('when tracked elsewhere', function() {
@@ -197,10 +199,10 @@ describe('SPARQL Manager service', function() {
         it('unless an error occurs', fakeAsync(function() {
             service.postQuery(query, datasetRecordIRI, DATASET_STORE_TYPE)
                 .subscribe(() => fail('Observable should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne(req => req.url.startsWith(datasetURL) && req.method === 'POST');
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush({error: '', errorMessage: error, errorDetails: []}, { status: 400, statusText: error });
         }));
         describe('successfully', function() {
             describe('when tracked elsewhere', function() {

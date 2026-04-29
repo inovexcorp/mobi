@@ -170,7 +170,7 @@ public class WebhookRestTest extends MobiRestTestCXF {
         Response response = target().path("webhooks").request()
                 .post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(401, response.getStatus());
+        assertEquals(500, response.getStatus());
     }
 
     @Test

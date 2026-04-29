@@ -164,7 +164,7 @@ describe('Editor Top Bar component', () => {
             expect(toastStub.createErrorToast).not.toHaveBeenCalled();
           }));
           it('unless an error occurs', fakeAsync(() => {
-            stateStub.changeVersion.and.returnValue(throwError('Error'));
+            stateStub.changeVersion.and.returnValue(throwError({error: '', errorMessage: 'Error', errorDetails: []}));
             component.update();
             tick();
             expect(catalogManagerStub.getBranchCommit).toHaveBeenCalledWith('head', 'branch1', 'record1', catalogId);
@@ -175,7 +175,7 @@ describe('Editor Top Bar component', () => {
         });
       });
       it('unless an error occurs', fakeAsync(() => {
-        catalogManagerStub.getBranchCommit.and.returnValue(throwError('Error'));
+        catalogManagerStub.getBranchCommit.and.returnValue(throwError({error: '', errorMessage: 'Error', errorDetails: []}));
         component.update();
         tick();
         expect(catalogManagerStub.getBranchCommit).toHaveBeenCalledWith('head', 'branch1', 'record1', catalogId);

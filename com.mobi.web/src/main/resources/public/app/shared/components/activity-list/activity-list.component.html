@@ -21,6 +21,7 @@
   #L%
   -->
 <div class="activity-list h-100 vertical-scroll py-2" #activityList>
+    <rest-error-display *ngIf="error" [error]="error"></rest-error-display>
     <div class="activity pb-3" *ngFor="let activity of activities; trackBy: trackByFn">
         <activity-title [activity]="activity.jsonld" [entities]="entities"></activity-title>
         <div class="timestamp text-muted">{{activity.timestamp}}</div>

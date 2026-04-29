@@ -112,7 +112,7 @@ export class MergeRequestListComponent implements OnInit, OnDestroy {
           this.loadRequests();
           this._initializeSelectedFilters();
           this.reloadFiltersSubject.next();
-        }, error => this.toast.createErrorToast(error));
+        }, error => this.toast.createErrorToast(error.errorMessage));
       }
     });
   }

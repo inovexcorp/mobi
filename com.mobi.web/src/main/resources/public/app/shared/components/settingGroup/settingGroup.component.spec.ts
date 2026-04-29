@@ -32,6 +32,7 @@ import {
     cleanStylesFromDOM,
 } from '../../../../../public/test/ts/Shared';
 import { ErrorDisplayComponent } from '../errorDisplay/errorDisplay.component';
+import { RestErrorDisplayComponent } from '../restErrorDisplay/restErrorDisplay.component';
 import { SimpleSetting } from '../../models/simpleSetting.class';
 import { OWL, RDFS, SETTING, SH, SHACL_FORM, XSD } from '../../../prefixes';
 import { ToastService } from '../../services/toast.service';
@@ -69,7 +70,8 @@ describe('Setting Group component', function() {
             declarations: [
               SettingGroupComponent,
               MockComponent(SHACLFormComponent),
-              MockComponent(ErrorDisplayComponent)
+              MockComponent(ErrorDisplayComponent),
+              MockComponent(RestErrorDisplayComponent)
             ],
             providers: [
                 MockProvider(SettingManagerService),
@@ -252,7 +254,7 @@ describe('Setting Group component', function() {
                 expect(settingManagerStub.createSetting).not.toHaveBeenCalled();
                 expect(component.settingSaveable[this.setting.type]).toBeTrue();
                 expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
-                expect(component.errorMessage).toEqual(error);
+                expect(component.error).toEqual(errorObj);
             }));
             it('successfully', fakeAsync(function() {
                 settingManagerStub.updateSetting.and.returnValue(of(null));
@@ -262,7 +264,7 @@ describe('Setting Group component', function() {
                 expect(settingManagerStub.createSetting).not.toHaveBeenCalled();
                 expect(component.settingSaveable[this.setting.type]).toBeFalse();
                 expect(toastStub.createSuccessToast).toHaveBeenCalledWith('Successfully updated the setting');
-                expect(component.errorMessage).toEqual('');
+                expect(component.error).toBeUndefined();
             }));
         });
         describe('should create a setting', function() {
@@ -287,7 +289,7 @@ describe('Setting Group component', function() {
                   expect(val[`${SETTING}forUser`]).toBeUndefined();
                 });
                 expect(this.setting.exists()).toBeFalse();
-                expect(component.errorMessage).toEqual(error);
+                expect(component.error).toEqual(errorObj);
             }));
             it('successfully', fakeAsync(function() {
                 expect(this.setting.exists()).toBeFalse();
@@ -302,7 +304,7 @@ describe('Setting Group component', function() {
                   expect(val[`${SETTING}forUser`]).toEqual([{ '@id': userId }]);
                 });
                 expect(this.setting.exists()).toBeTrue();
-                expect(component.errorMessage).toEqual('');
+                expect(component.error).toBeUndefined();
             }));
         });
         it('should determine whether a NodeShape is a top level node shape', function() {
@@ -333,18 +335,18 @@ describe('Setting Group component', function() {
             component.retrieveSettings();
             tick();
             fixture.detectChanges();
-            expect(element.queryAll(By.css('error-display')).length).toEqual(0);
+            expect(element.queryAll(By.css('rest-error-display')).length).toEqual(0);
             expect(element.queryAll(By.css('div')).length).toEqual(2);
             expect(element.queryAll(By.css('app-shacl-form')).length).toEqual(2);
             expect(element.queryAll(By.css('h4')).length).toEqual(2);
             expect(element.queryAll(By.css('button')).length).toEqual(2);
         }));
         it('when settings are can not be retrieved', fakeAsync(function() {
-            settingManagerStub.getSettings.and.returnValue(throwError('Error message'));
+            settingManagerStub.getSettings.and.returnValue(throwError(errorObj));
             component.retrieveSettings();
             tick();
             fixture.detectChanges();
-            expect(element.queryAll(By.css('error-display')).length).toEqual(1);
+            expect(element.queryAll(By.css('rest-error-display')).length).toEqual(1);
             expect(element.queryAll(By.css('div')).length).toEqual(0);
         }));
     });

@@ -1194,7 +1194,7 @@ describe('Mapper State service', () => {
       mappingStub.getSourceOntologyInfo.and.returnValue(ontInfo);
       ontologyManagerStub.getImportedIris.and.returnValue(of([importedIRIs]));
       service.setIriMap().subscribe(() => fail('Observable should have failed'), result => {
-        expect(result).toEqual('SourceOntologyInfo recordId, branchId, and commitId are empty');
+        expect(result).toEqual({error: '', errorMessage: 'SourceOntologyInfo recordId, branchId, and commitId are empty', errorDetails: []});
       });
       expect(mappingStub.getSourceOntologyInfo).toHaveBeenCalledWith();
       expect(ontologyManagerStub.getIris).not.toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId);

@@ -45,6 +45,7 @@ describe('Mapping Manager service', function () {
   let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
 
   const error = 'Error Message';
+  const errorObject = { error: '', errorMessage: 'Error Message', errorDetails: [] };
   const recordId = 'http://mobi.com/records/test';
   let mappingStub: jasmine.SpyObj<Mapping>;
   const emptyObj: JSONLDObject = { '@id': 'test' };
@@ -107,11 +108,11 @@ describe('Mapping Manager service', function () {
     it('unless an error occurs', function () {
       service.upload(this.recordConfig, [])
         .subscribe(() => fail('Observable should have errored'), response => {
-          expect(response).toBe(error);
+          expect(response).toEqual(errorObject);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTrue();
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush({ errorMessage: error }, { status: 400, statusText: error });
     });
     it('successfully', function () {
       service.upload(this.recordConfig, [])
@@ -134,10 +135,10 @@ describe('Mapping Manager service', function () {
     it('unless an error occurs', function () {
       service.getMapping(recordId)
         .subscribe(() => fail('Observable should have errored'), response => {
-          expect(response).toBe(error);
+          expect(response).toEqual(errorObject);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'GET' });
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush({ errorMessage: error }, { status: 400, statusText: error });
     });
     it('successfully', function () {
       service.getMapping(recordId)
@@ -204,10 +205,10 @@ describe('Mapping Manager service', function () {
     it('unless an error occurs', function () {
       service.deleteMapping(recordId)
         .subscribe(() => fail('Observable should have errored'), response => {
-          expect(response).toBe(error);
+          expect(response).toEqual(errorObject);
         });
       const request = httpMock.expectOne({ url: this.url, method: 'DELETE' });
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush({ errorMessage: error }, { status: 400, statusText: error });
     });
     it('successfully', function () {
       service.deleteMapping(recordId)

@@ -29,6 +29,7 @@ import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { RESTError } from '../../../shared/models/RESTError.interface';
 
 /**
  * @class mapper.RunMappingDownloadOverlayComponent
@@ -44,7 +45,7 @@ import { ToastService } from '../../../shared/services/toast.service';
     templateUrl: './runMappingDownloadOverlay.component.html'
 })
 export class RunMappingDownloadOverlayComponent implements OnInit {
-    errorMessage = '';
+    error: RESTError;
     runMappingDownloadForm = this.fb.group({
         fileName: ['', Validators.required],
         serialization: ['turtle', Validators.required]
@@ -66,15 +67,15 @@ export class RunMappingDownloadOverlayComponent implements OnInit {
         }
     }
 
-    private _onError(errorMessage: string): void {
-        this.errorMessage = errorMessage;
+    private _onError(error: RESTError): void {
+        this.error = error;
     }
     private _runMapping(id: string): void {
         this.dm.mapAndDownload(id, this.runMappingDownloadForm.controls.serialization.value, this.runMappingDownloadForm.controls.fileName.value);
         this._reset();
     }
     private _reset(): void {
-        this.errorMessage = '';
+        this.error = undefined;
         this.state.step = this.state.selectMappingStep;
         this.state.initialize();
         this.state.resetEdit();

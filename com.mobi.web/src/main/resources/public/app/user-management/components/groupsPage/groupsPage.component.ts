@@ -75,7 +75,7 @@ export class GroupsPageComponent implements OnInit {
     }
     changeAdmin(event: MatSlideToggleChange): void {
         const request = event.checked ? this.um.addGroupRoles(this.state.selectedGroup.title, ['admin']) : this.um.deleteGroupRole(this.state.selectedGroup.title, 'admin');
-        request.subscribe(() => {}, error => this.toast.createErrorToast(error));
+        request.subscribe(() => {}, error => this.toast.createErrorToast(error.errorMessage));
     }
     confirmDeleteGroup(): void {
         this.dialog.open(ConfirmModalComponent, {
@@ -99,12 +99,12 @@ export class GroupsPageComponent implements OnInit {
             .subscribe(() => {
                 this.state.selectedGroup = undefined;
                 this.setAdmin();
-            }, error => this.toast.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error.errorMessage));
     }
     addMember(member: User): void {
         this.um.addUserGroup(member.username, this.state.selectedGroup.title).subscribe(() => {
             this.toast.createSuccessToast('Successfully added member');
-        }, error => this.toast.createErrorToast(error));
+        }, error => this.toast.createErrorToast(error.errorMessage));
     }
     confirmRemoveMember(member: string): void {
         this.dialog.open(ConfirmModalComponent, {
@@ -120,7 +120,7 @@ export class GroupsPageComponent implements OnInit {
     removeMember(member: string): void {
         this.um.deleteUserGroup(member, this.state.selectedGroup.title).subscribe(() => {
             this.toast.createSuccessToast('Successfully removed member');
-        }, error => this.toast.createErrorToast(error));
+        }, error => this.toast.createErrorToast(error.errorMessage));
     }
     private setGroups(): void {
         this.filteredGroups = this.um.filterGroups(this.um.groups, this.state.groupSearchString);

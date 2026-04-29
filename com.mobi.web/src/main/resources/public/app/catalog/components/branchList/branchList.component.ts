@@ -106,7 +106,7 @@ export class BranchListComponent {
             }));
           this.totalSize = Number(response.headers.get('x-total-count')) ||
             0 - (response.body.length - this.branches.length);
-        }, error => this.toast.createErrorToast(error));
+        }, error => this.toast.createErrorToast(error.errorMessage));
     }
   }
 

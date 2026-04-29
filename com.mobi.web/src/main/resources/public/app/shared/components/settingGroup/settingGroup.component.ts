@@ -55,7 +55,7 @@ export class SettingGroupComponent implements OnChanges {
     @Input() settingType: {iri: string, userText: string};
     @Input() group: string;
 
-    errorMessage = '';
+    error: RESTError;
     settings: { [key: string]: Setting } = {};
     settingSaveable: { [key: string]: boolean } = {};
     settingIRIs: string[] = [];
@@ -70,7 +70,7 @@ export class SettingGroupComponent implements OnChanges {
     retrieveSettings(): void {
         this.sm.getSettings(this.settingType.iri)
             .subscribe(response => {
-                this.errorMessage = '';
+                this.error = undefined;
                 const settingResponse = response;
                 this.sm.getSettingDefinitions(this.group, this.settingType.iri)
                     .subscribe(response => {
@@ -91,26 +91,32 @@ export class SettingGroupComponent implements OnChanges {
                         });
                         this.settingIRIs = Object.keys(this.settings);
                         this.ref.markForCheck();
-                    }, error => this.errorMessage = error);
-            }, error => this.errorMessage = error);
+                    }, (error: RESTError) => {
+                        this.error = error;
+                        this.ref.markForCheck();
+                    });
+            }, (error: RESTError) => {
+                this.error = error;
+                this.ref.markForCheck();
+            });
     }
 
     updateSetting(setting: Setting): void {
         if (setting.exists()) {
             this.sm.updateSetting(this.settingType.iri, setting.topLevelSettingNodeshapeInstanceId, setting.type, setting.values)
                 .subscribe(() => {
-                    this.errorMessage = '';
+                    this.error = undefined;
                     this.settingSaveable[setting.type] = false;
                     this.ref.markForCheck();
                     this.toast.createSuccessToast('Successfully updated the setting');
-                }, error => {
-                    this.errorMessage = error.errorMessage;
+                }, (error: RESTError) => {
+                    this.error = error;
                     this.ref.markForCheck();
                 });
         } else {
             this.sm.createSetting(this.settingType.iri, setting.type, setting.values)
                 .subscribe(() => {
-                    this.errorMessage = '';
+                    this.error = undefined;
                     this.settingSaveable[setting.type] = false;
                     setting.values.filter(obj => obj['@type'].includes(setting.type)).forEach(val => {
                         if (!getPropertyId(val, `${SETTING}forUser`)) {
@@ -121,7 +127,7 @@ export class SettingGroupComponent implements OnChanges {
                     this.ref.markForCheck();
                     this.toast.createSuccessToast('Successfully created the setting');
                 }, (error: RESTError) => {
-                    this.errorMessage = error.errorMessage;
+                    this.error = error;
                     this.ref.markForCheck();
                 });
         }

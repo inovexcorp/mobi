@@ -31,6 +31,7 @@ import { Group } from '../../../shared/models/group.interface';
 import { User } from '../../../shared/models/user.class';
 import { ToastService } from '../../../shared/services/toast.service';
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
+import { RESTError } from '../../../shared/models/RESTError.interface';
 
 /**
  * @class user-management.CreateGroupOverlayComponent
@@ -45,7 +46,7 @@ import { LoginManagerService } from '../../../shared/services/loginManager.servi
 })
 export class CreateGroupOverlayComponent implements OnInit {
     members: string[] = [];
-    errorMessage = '';
+    error: RESTError;
     createGroupForm = this.fb.group({
         title: ['', [ Validators.required, uniqueValue(this.getTitles())]],
         description: [''],
@@ -80,13 +81,13 @@ export class CreateGroupOverlayComponent implements OnInit {
         this.um.addGroup(newGroup).subscribe({
             next: () => {
                 this.toast.createSuccessToast('Group successfully created');
-                this.errorMessage = '';
+                this.error = undefined;
                 this.dialogRef.close();
                 isDialogClosed = true;
-            }, 
-            error: (error) => {
+            },
+            error: (error: RESTError) => {
                 requestErrorFlag = true;
-                this.errorMessage = error;
+                this.error = error;
             },
             complete: () => {
                 if (!isDialogClosed && !requestErrorFlag) {

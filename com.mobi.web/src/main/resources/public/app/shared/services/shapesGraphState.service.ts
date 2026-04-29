@@ -69,6 +69,7 @@ import { RdfDownload } from '../models/rdfDownload.interface';
 import { RdfUpdate } from '../models/rdfUpdate.interface';
 import { RdfUpload } from '../models/rdfUpload.interface';
 import { RecordSelectFiltered } from '../../versioned-rdf-record-editor/models/record-select-filtered.interface';
+import { RESTError } from '../models/RESTError.interface';
 import { SettingManagerService } from './settingManager.service';
 import { SHAPES_STORE_TYPE } from '../../constants';
 import { ShapesGraphImports } from '../models/shapesGraphImports.interface';
@@ -347,7 +348,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
     if (rdfUpload.jsonld || rdfUpload.file) {
       return this.sgm.createShapesGraphRecord(rdfUpload, true);
     } else {
-      return throwError('Creation requires a file or JSON-LD');
+      return throwError({error: '', errorMessage: 'Creation requires a file or JSON-LD', errorDetails: []} as RESTError);
     }
   }
   /**
@@ -356,7 +357,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
    */
   createAndOpen(rdfUpload: RdfUpload): Observable<VersionedRdfUploadResponse> {
     if (!rdfUpload.jsonld && !rdfUpload.file) {
-      return throwError('Creation requires a file or JSON-LD');
+      return throwError({error: '', errorMessage: 'Creation requires a file or JSON-LD', errorDetails: []} as RESTError);
     }
     let listItem: ShapesGraphListItem;
     return this.sgm.createShapesGraphRecord(rdfUpload).pipe(
@@ -681,10 +682,10 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
   onIriEdit(iriBegin: string, iriThen: string, iriEnd: string): Observable<void> {
     const recordId = this.listItem.versionedRdfRecord.recordId;
     if (!recordId) {
-      return throwError('Cannot edit IRI without a valid record ID.');
+      return throwError({error: '', errorMessage: 'Cannot edit IRI without a valid record ID.', errorDetails: []} as RESTError);
     }
     if (!iriBegin || !iriThen || !iriEnd) {
-      return throwError('IRI cannot be incomplete. All parts are required.');
+      return throwError({error: '', errorMessage: 'IRI cannot be incomplete. All parts are required.', errorDetails: []} as RESTError);
     }
     const newIRI = iriBegin + iriThen + iriEnd;
     const oldEntity = cloneDeep(this.listItem.selected);
@@ -717,7 +718,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
         this.updateRefs.update(statements, oldEntity['@id'], newIRI, this._updateRefsExclude);
         statements.forEach(statement => this.addToAdditions(this.listItem.versionedRdfRecord.recordId, statement));
       } else {
-        throwError('Associated entities were not updated due to an internal error.');
+        throwError({error: '', errorMessage: 'Associated entities were not updated due to an internal error.', errorDetails: []} as RESTError);
       }
     }));
   }
@@ -753,7 +754,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
    */
   setSelected(entityIRI: string, listItem: ShapesGraphListItem = this.listItem, element?: ElementRef): Observable<null> {
     if (!listItem) {
-      return throwError('Cannot set selected entity: The ShapesGraphListItem was not provided.');
+      return throwError({error: '', errorMessage: 'Cannot set selected entity: The ShapesGraphListItem was not provided.', errorDetails: []} as RESTError);
     }
     listItem.selected = undefined;
     if (!entityIRI || !listItem) {
@@ -1418,7 +1419,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
             const statements = JSON.parse(response) as JSONLDObject[];
             statements.forEach(statement => this.addToDeletions(this.listItem.versionedRdfRecord.recordId, statement));
           } else {
-            return throwError('Associated usages were not updated due to an internal error.');
+            return throwError({error: '', errorMessage: 'Associated usages were not updated due to an internal error.', errorDetails: []} as RESTError);
           }
           return of(null);
         })));
@@ -1475,7 +1476,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
           const statements = JSON.parse(response) as JSONLDObject[];
           statements.forEach(statement => this.addToDeletions(this.listItem.versionedRdfRecord.recordId, statement));
         } else {
-          return throwError('Associated usages were not updated due to an internal error.');
+          return throwError({error: '', errorMessage: 'Associated usages were not updated due to an internal error.', errorDetails: []} as RESTError);
         }
         // Save current changes
         return this.saveCurrentChanges();
@@ -1527,7 +1528,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
           const results = response as SPARQLSelectResults;
           return results.results.bindings[0].unsupportedNum.value;
         } else {
-          return throwError('Could not retrieve number of unsupported predicates.');
+          return throwError({error: '', errorMessage: 'Could not retrieve number of unsupported predicates.', errorDetails: []} as RESTError);
         }
       }));
   }

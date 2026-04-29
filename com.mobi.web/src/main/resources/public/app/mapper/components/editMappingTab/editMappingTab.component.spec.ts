@@ -37,6 +37,7 @@ import {
 } from '../../../../../public/test/ts/Shared';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { RestErrorDisplayComponent } from '../../../shared/components/restErrorDisplay/restErrorDisplay.component';
 import { Difference } from '../../../shared/models/difference.class';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { Mapping } from '../../../shared/models/mapping.class';
@@ -66,7 +67,7 @@ describe('Edit Mapping Tab component', function() {
     let toastStub: jasmine.SpyObj<ToastService>;
     let classMapping: JSONLDObject = undefined;
     const badMapping = { '@id': 'bad', [`${DCTERMS}title`]: [{ '@value': 'Bad Mapping' }] };
-    const error = 'Error Message';
+    const error = {error: '', errorMessage: 'Error Message', errorDetails: []};
     let mappingStub: jasmine.SpyObj<Mapping>;
 
     beforeEach(async () => {
@@ -81,6 +82,7 @@ describe('Edit Mapping Tab component', function() {
             declarations: [
                 EditMappingTabComponent,
                 MockComponent(ErrorDisplayComponent),
+                MockComponent(RestErrorDisplayComponent),
                 MockComponent(ClassMappingDetailsComponent),
                 MockComponent(ClassMappingSelectComponent),
                 MockComponent(PreviewDataGridComponent),
@@ -255,7 +257,7 @@ describe('Edit Mapping Tab component', function() {
                 mapperStateStub.isMappingChanged.and.returnValue(false);
                 component.save();
                 expect(mapperStateStub.saveMapping).not.toHaveBeenCalled();
-                expect(component.errorMessage).toEqual('');
+                expect(component.error).toBeFalsy();
                 expect(mapperStateStub.step).toEqual(mapperStateStub.selectMappingStep);
                 expect(mapperStateStub.initialize).toHaveBeenCalledWith();
                 expect(mapperStateStub.resetEdit).toHaveBeenCalledWith();
@@ -270,7 +272,7 @@ describe('Edit Mapping Tab component', function() {
                     component.save();
                     tick();
                     expect(mapperStateStub.saveMapping).toHaveBeenCalledWith();
-                    expect(component.errorMessage).toEqual(error);
+                    expect(component.error).toEqual(error);
                     expect(mapperStateStub.step).toEqual(mapperStateStub.editMappingStep);
                     expect(mapperStateStub.initialize).not.toHaveBeenCalled();
                     expect(mapperStateStub.resetEdit).not.toHaveBeenCalled();
@@ -281,7 +283,7 @@ describe('Edit Mapping Tab component', function() {
                     component.save();
                     tick();
                     expect(mapperStateStub.saveMapping).toHaveBeenCalledWith();
-                    expect(component.errorMessage).toEqual('');
+                    expect(component.error).toBeFalsy();
                     expect(mapperStateStub.step).toEqual(mapperStateStub.selectMappingStep);
                     expect(mapperStateStub.initialize).toHaveBeenCalledWith();
                     expect(mapperStateStub.resetEdit).toHaveBeenCalledWith();
@@ -295,7 +297,7 @@ describe('Edit Mapping Tab component', function() {
                 component.cancel();
                 expect(matDialog.open).not.toHaveBeenCalled();
                 expect(mapperStateStub.step).toEqual(mapperStateStub.selectMappingStep);
-                expect(component.errorMessage).toEqual('');
+                expect(component.error).toBeFalsy();
                 expect(mapperStateStub.initialize).toHaveBeenCalledWith();
                 expect(mapperStateStub.resetEdit).toHaveBeenCalledWith();
                 expect(delimitedManagerStub.reset).toHaveBeenCalledWith();
@@ -308,7 +310,7 @@ describe('Edit Mapping Tab component', function() {
                     data: { content: jasmine.stringContaining('Are you sure') }
                 });
                 expect(mapperStateStub.step).toEqual(mapperStateStub.selectMappingStep);
-                expect(component.errorMessage).toEqual('');
+                expect(component.error).toBeFalsy();
                 expect(mapperStateStub.initialize).toHaveBeenCalledWith();
                 expect(mapperStateStub.resetEdit).toHaveBeenCalledWith();
                 expect(delimitedManagerStub.reset).toHaveBeenCalledWith();
@@ -340,10 +342,10 @@ describe('Edit Mapping Tab component', function() {
             });
         });
         it('depending on whether there is an error', function() {
-            expect(element.queryAll(By.css('error-display')).length).toEqual(0);
-            component.errorMessage = 'Error message';
+            expect(element.queryAll(By.css('rest-error-display')).length).toEqual(0);
+            component.error = {error: '', errorMessage: 'Error message', errorDetails: []};
             fixture.detectChanges();
-            expect(element.queryAll(By.css('error-display')).length).toEqual(1);
+            expect(element.queryAll(By.css('rest-error-display')).length).toEqual(1);
         });
         it('depending on whether an ontology is selected', function() {
             fixture.detectChanges();

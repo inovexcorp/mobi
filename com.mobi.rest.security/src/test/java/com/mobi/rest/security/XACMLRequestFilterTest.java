@@ -25,7 +25,11 @@ package com.mobi.rest.security;
 
 import static com.mobi.web.security.util.AuthenticationProps.ANON_USER;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -182,7 +186,10 @@ public class XACMLRequestFilterTest extends OrmEnabledTestCase {
             fail("Expected MobiWebException to have been thrown");
         } catch (MobiWebException e) {
             assertEquals("You do not have permission to perform this action", e.getMessage());
-            assertEquals(401, e.getResponse().getStatus());
+            assertEquals(403, e.getResponse().getStatus());
+            ObjectNode body = new ObjectMapper().readValue(e.getResponse().getEntity().toString(), ObjectNode.class);
+            assertEquals("You do not have permission to perform this action", body.get("errorMessage").asText());
+            assertNotNull(body.get("errorDetails"));
         }
     }
 
@@ -198,6 +205,9 @@ public class XACMLRequestFilterTest extends OrmEnabledTestCase {
         } catch (MobiWebException e) {
             assertEquals("Request indeterminate", e.getMessage());
             assertEquals(500, e.getResponse().getStatus());
+            ObjectNode body = new ObjectMapper().readValue(e.getResponse().getEntity().toString(), ObjectNode.class);
+            assertEquals("Request indeterminate", body.get("errorMessage").asText());
+            assertNotNull(body.get("errorDetails"));
         }
     }
 

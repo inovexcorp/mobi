@@ -177,22 +177,22 @@ export class EditorBranchSelectComponent<TData extends VersionedRdfListItem> imp
         })
       ).subscribe(() => {
         this._resetControl();
-      }, error => { 
-        this._toast.createErrorToast(error);
+      }, error => {
+        this._toast.createErrorToast(error.errorMessage);
       });
     } else if (event?.option?.value?.tagIri && event?.option?.value?.commitIri) {
       this._cm.getCommit(event.option.value.commitIri).pipe(
         switchMap(headCommit => {
-          return this.state.changeVersion(this.state.listItem.versionedRdfRecord.recordId, 
-            undefined, 
-            headCommit['@id'], 
-            event.option.value.tagIri, 
+          return this.state.changeVersion(this.state.listItem.versionedRdfRecord.recordId,
+            undefined,
+            headCommit['@id'],
+            event.option.value.tagIri,
             event.option.value.title, true, false, false);
         })
       ).subscribe(() =>  {
         this._resetControl();
-      }, error => { 
-        this._toast.createErrorToast(error);
+      }, error => {
+        this._toast.createErrorToast(error.errorMessage);
       });
     }
   }
@@ -285,7 +285,7 @@ export class EditorBranchSelectComponent<TData extends VersionedRdfListItem> imp
         return this.tags.length || this.branches.length ? this._checkVersionDeleted() : of(null);
       }),
       catchError(error => {
-        this._toast.createErrorToast(error);
+        this._toast.createErrorToast(error.errorMessage);
         return of(null);
       }),
       finalize(() => {
@@ -401,7 +401,7 @@ export class EditorBranchSelectComponent<TData extends VersionedRdfListItem> imp
           }
         });
       }, 
-      error => this._toast.createErrorToast(error)
+      error => this._toast.createErrorToast(error.errorMessage)
     );
   }
   private _deleteTag(tagId: string): void {
@@ -416,7 +416,7 @@ export class EditorBranchSelectComponent<TData extends VersionedRdfListItem> imp
             this._resetToMaster().subscribe();
           }
         });
-      }, error => this._toast.createErrorToast(error));
+      }, error => this._toast.createErrorToast(error.errorMessage));
   }
   protected _setFilteredOptions(): void {
     this.filteredOptions = this.branchSearchControl.valueChanges

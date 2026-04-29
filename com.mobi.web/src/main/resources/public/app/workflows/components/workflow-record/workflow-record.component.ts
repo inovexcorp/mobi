@@ -148,7 +148,7 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
         }, error => {
           this.branches = [];
           this.branch = undefined;
-          this._toast.createErrorToast(error);
+          this._toast.createErrorToast(error.errorMessage);
         });
   }
   /**
@@ -296,7 +296,7 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
         this.workflowRdf = response as JSONLDObject[];
       }
     }, error => {
-      this._toast.createErrorToast(`Issue fetching latest workflow RDF: ${error}`);
+      this._toast.createErrorToast(`Issue fetching latest workflow RDF: ${error.errorMessage}`);
     });
   }
   /**

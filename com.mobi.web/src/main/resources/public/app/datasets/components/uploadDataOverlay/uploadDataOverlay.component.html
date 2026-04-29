@@ -22,14 +22,7 @@
   -->
 <h1 mat-dialog-title>Upload Data to {{datasetTitle}}</h1>
 <div mat-dialog-content class="pb-2">
-  <error-display *ngIf="error && error.errorMessage && error.errorDetails">
-    {{error.errorMessage}}
-    <ul>
-      <li class="text-danger m-0" *ngFor="let detailError of error.errorDetails">
-        {{ detailError }}
-      </li>
-    </ul>
-  </error-display>
+  <rest-error-display *ngIf="error" [error]="error"></rest-error-display>
   <file-input [displayText]="'RDF File'" [(files)]="fileObj"
     [accept]="['.ttl','.xml','.jsonld','.rdf','.trig','.json','.n3','.nq','.nt']" required></file-input>
   <div *ngIf="uploadPhase === 'uploading'" class="importing-indicator pt-2">

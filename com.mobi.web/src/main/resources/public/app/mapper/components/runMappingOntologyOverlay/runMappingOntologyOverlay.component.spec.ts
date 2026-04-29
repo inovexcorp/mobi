@@ -42,6 +42,7 @@ import {
 import { CATALOG, DCTERMS, ONTOLOGYEDITOR } from '../../../prefixes';
 import { BranchSelectComponent } from '../../../shared/components/branchSelect/branchSelect.component';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { RestErrorDisplayComponent } from '../../../shared/components/restErrorDisplay/restErrorDisplay.component';
 import { Difference } from '../../../shared/models/difference.class';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
@@ -63,7 +64,7 @@ describe('Run Mapping Ontology Overlay component', function() {
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let toastStub: jasmine.SpyObj<ToastService>;
 
-    const error = 'Error message';
+    const error = {error: '', errorMessage: 'Error message', errorDetails: []};
     const catalogId = 'catalogId';
     const recordId = 'recordId';
     const branchId = 'branchId';
@@ -106,6 +107,7 @@ describe('Run Mapping Ontology Overlay component', function() {
             declarations: [
                 RunMappingOntologyOverlayComponent,
                 MockComponent(ErrorDisplayComponent),
+                MockComponent(RestErrorDisplayComponent),
                 MockComponent(BranchSelectComponent),
             ],
             providers: [
@@ -287,7 +289,7 @@ describe('Run Mapping Ontology Overlay component', function() {
                         expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
                         expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                         expect(matDialogRef.close).not.toHaveBeenCalled();
-                        expect(component.errorMessage).toEqual(error);
+                        expect(component.error).toEqual(error);
                     }));
                     describe('successfully', function() {
                         beforeEach(function() {
@@ -310,7 +312,7 @@ describe('Run Mapping Ontology Overlay component', function() {
                             expect(mapperStateStub.resetEdit).toHaveBeenCalledWith();
                             expect(delimitedManagerStub.reset).toHaveBeenCalledWith();
                             expect(matDialogRef.close).toHaveBeenCalledWith();
-                            expect(component.errorMessage).toEqual('');
+                            expect(component.error).toBeFalsy();
                         }));
                         it('committing the data with an active merge', fakeAsync(function() {
                             const listItem = new OntologyListItem();
@@ -328,7 +330,7 @@ describe('Run Mapping Ontology Overlay component', function() {
                             expect(mapperStateStub.resetEdit).toHaveBeenCalledWith();
                             expect(delimitedManagerStub.reset).toHaveBeenCalledWith();
                             expect(matDialogRef.close).toHaveBeenCalledWith();
-                            expect(component.errorMessage).toEqual('');
+                            expect(component.error).toBeFalsy();
                         }));
                     });
                 });
@@ -353,7 +355,7 @@ describe('Run Mapping Ontology Overlay component', function() {
                         expect(mapperStateStub.resetEdit).toHaveBeenCalledWith();
                         expect(delimitedManagerStub.reset).toHaveBeenCalledWith();
                         expect(matDialogRef.close).toHaveBeenCalledWith();
-                        expect(component.errorMessage).toEqual('');
+                        expect(component.error).toBeFalsy();
                     }));
                     it('and commits the data with an active merge', fakeAsync(function() {
                         const listItem = new OntologyListItem();
@@ -408,10 +410,10 @@ describe('Run Mapping Ontology Overlay component', function() {
             });
         });
         it('depending on whether there is an error', function() {
-            expect(element.queryAll(By.css('error-display')).length).toEqual(0);
-            component.errorMessage = 'Error message';
+            expect(element.queryAll(By.css('rest-error-display')).length).toEqual(0);
+            component.error = {error: '', errorMessage: 'Error message', errorDetails: []};
             fixture.detectChanges();
-            expect(element.queryAll(By.css('error-display')).length).toEqual(1);
+            expect(element.queryAll(By.css('rest-error-display')).length).toEqual(1);
         });
         it('with buttons to cancel and submit', function() {
             const buttons = element.queryAll(By.css('.mat-dialog-actions button'));

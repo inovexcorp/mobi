@@ -23,6 +23,7 @@ package com.mobi.etl.rest;
  * #L%
  */
 
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorResponse;
 import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
@@ -185,11 +186,11 @@ public class MappingRestTest extends MobiRestTestCXF {
         fd.bodyPart("file", "mapping.jsonld", content);
         fd.field("jsonld", mappingJsonld);
         Response response = target().path("mappings").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Must provide either a file or a JSON-LD string");
         verify(recordManager, times(0)).createRecord(any(User.class), any(RecordOperationConfig.class), eq(MappingRecord.class), any(RepositoryConnection.class));
 
         response = target().path("mappings").request().post(Entity.entity(FormDataMultiPart.emptyBody(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Must provide either a file or a JSON-LD string");
         verify(recordManager, times(0)).createRecord(any(User.class), any(RecordOperationConfig.class), eq(MappingRecord.class), any(RepositoryConnection.class));
     }
 
@@ -258,7 +259,7 @@ public class MappingRestTest extends MobiRestTestCXF {
         Response response = target().path("mappings/" + encode(ERROR_IRI)).request()
                 .accept(MediaType.APPLICATION_JSON_TYPE).get();
         verify(manager).retrieveMapping(vf.createIRI(ERROR_IRI));
-        assertEquals(404, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Mapping not found");
     }
 
     @Test
@@ -274,7 +275,7 @@ public class MappingRestTest extends MobiRestTestCXF {
         Response response = target().path("mappings/" + encode(ERROR_IRI)).request()
                 .accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
         verify(manager).retrieveMapping(vf.createIRI(ERROR_IRI));
-        assertEquals(404, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Mapping not found");
     }
 
     @Test
@@ -285,4 +286,5 @@ public class MappingRestTest extends MobiRestTestCXF {
         verify(recordManager).removeRecord(catalogId, recordId, user, MappingRecord.class, conn);
         verify(engineManager, atLeastOnce()).retrieveUser(anyString());
     }
+
 }

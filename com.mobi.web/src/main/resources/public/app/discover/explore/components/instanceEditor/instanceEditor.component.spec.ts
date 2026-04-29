@@ -192,7 +192,7 @@ describe('Instance Editor component', function() {
                         });
                 }));
                 it('rejected', fakeAsync(function()  {
-                    exploreServiceStub.getClassInstanceDetails.and.returnValue(throwError('error'));
+                    exploreServiceStub.getClassInstanceDetails.and.returnValue(throwError({error: '', errorMessage: 'error', errorDetails: []}));
                     component.save();
                     fixture.detectChanges();
                     tick();
@@ -205,7 +205,7 @@ describe('Instance Editor component', function() {
                 }));
             });
             it('rejected', fakeAsync(function() {
-                exploreServiceStub.updateInstance.and.returnValue(throwError('error'));
+                exploreServiceStub.updateInstance.and.returnValue(throwError({error: '', errorMessage: 'error', errorDetails: []}));
                 component.save();
                 fixture.detectChanges();
                 tick();

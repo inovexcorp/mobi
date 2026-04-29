@@ -28,6 +28,7 @@ import { UserStateService } from '../../../shared/services/userState.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { User } from '../../../shared/models/user.class';
+import { RESTError } from '../../../shared/models/RESTError.interface';
 
 /**
  * @class user-management.EditUserProfileOverlayComponent
@@ -41,7 +42,7 @@ import { User } from '../../../shared/models/user.class';
     templateUrl: './editUserProfileOverlay.component.html'
 })
 export class EditUserProfileOverlayComponent {
-    errorMessage = '';
+    error: RESTError;
     editProfileForm: UntypedFormGroup;
 
     constructor(private dialogRef: MatDialogRef<EditUserProfileOverlayComponent>, private fb: UntypedFormBuilder,
@@ -83,11 +84,11 @@ export class EditUserProfileOverlayComponent {
     }
     private _onNext(newUser: User) {
         this.toast.createSuccessToast('User profile successfully saved');
-        this.errorMessage = '';
+        this.error = undefined;
         this.state.selectedUser = newUser;
         this.dialogRef.close();
     }
-    private _onError(error: any) {
-        this.errorMessage = error;
+    private _onError(error: RESTError) {
+        this.error = error;
     }
 }

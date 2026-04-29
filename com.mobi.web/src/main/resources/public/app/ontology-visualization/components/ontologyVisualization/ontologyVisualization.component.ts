@@ -496,10 +496,11 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
    *
    * @param {string} reason - The reason for the initialization failure, used to display a warning message.
    */
-  private initFailed(reason: string): void {
+  private initFailed(reason: any): void {
     const commitGraphState = this.ovis.getGraphState(this.commitId);
     this.cyChartSize = commitGraphState.getElementsLength();
-    this.toast.createWarningToast(reason, this._toastrConfig);
+    const message = typeof reason === 'string' ? reason : reason?.errorMessage || 'An error occurred';
+    this.toast.createWarningToast(message, this._toastrConfig);
     this.status.hasWarningsMsg = true;
     this.status.loaded = true;
   }

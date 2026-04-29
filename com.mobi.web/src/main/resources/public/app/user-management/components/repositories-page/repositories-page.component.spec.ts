@@ -139,7 +139,7 @@ describe('RepositoriesPageComponent', () => {
       expect(toastStub.createErrorToast).not.toHaveBeenCalled();
     });
     it('if repositories could not be retrieved', fakeAsync(() => {
-      repositoryManagerStub.getRepositories.and.returnValue(throwError('Error'));
+      repositoryManagerStub.getRepositories.and.returnValue(throwError({error: '', errorMessage: 'Error', errorDetails: []}));
       component.repositories = [];
       component.ngOnInit();
       tick();

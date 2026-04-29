@@ -137,7 +137,7 @@ describe('Create Request component', function() {
                 expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless an error occurs', fakeAsync(function() {
-                mergeRequestManagerStub.createRequest.and.returnValue(throwError('error'));
+                mergeRequestManagerStub.createRequest.and.returnValue(throwError({error: '', errorMessage: 'error', errorDetails: []}));
                 component.submit();
                 tick();
                 expect(mergeRequestManagerStub.createRequest).toHaveBeenCalledWith(mergeRequestsStateStub.requestConfig);
