@@ -29,10 +29,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.platform.config.rest.response.RepositoryResponse;
 import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.api.RepositoryManager;
-import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.MobiNotFoundException;
+import com.mobi.rest.util.RestUtils;
 import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -79,7 +79,6 @@ public class RepositoryRest {
                     responseCode = "200",
                     description = "A JSON array of repository objects with ID, title, and type",
                     content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
                             array = @ArraySchema(
                                     schema = @Schema(
                                             implementation = RepositoryResponse.class)
@@ -89,11 +88,7 @@ public class RepositoryRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
@@ -130,28 +125,17 @@ public class RepositoryRest {
             @ApiResponse(
                     responseCode = "200",
                     description = "A JSON object with the repository ID, title, and type",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = RepositoryResponse.class)
-                    )
+                    content = @Content(schema = @Schema(implementation = RepositoryResponse.class))
             ),
             @ApiResponse(
-                    responseCode = "400",
+                    responseCode = "404",
                     description = "No repository found with the provided ID",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
@@ -162,12 +146,12 @@ public class RepositoryRest {
                     responseCode = "500",
                     description = "An error occurred while retrieving the repository",
                     content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
+
             )
     })
     public Response getRepository(@PathParam("repoId") String repoId) {
         OsgiRepository repo = repositoryManager.getRepository(repoId).orElseThrow(() ->
-                // TODO: Should be Response.Status.NOT_FOUND (404) — missing resource is not a bad request
-                ErrorUtils.sendError("No repository found for that id", Response.Status.BAD_REQUEST));
+                RestUtils.getErrorObjNotFound(new MobiNotFoundException("No repository found for that id")));
         ObjectNode obj = createRepoJson(repo);
         return Response.ok(obj.toString()).build();
     }

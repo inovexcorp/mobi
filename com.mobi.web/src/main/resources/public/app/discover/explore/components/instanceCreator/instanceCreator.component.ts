@@ -86,7 +86,7 @@ export class InstanceCreatorComponent {
                         }))
                         .subscribe((response) => {
                             this.ds.explore.classDetails = response;
-                        }, (error) => this.toast.createErrorToast(error));
+                        }, (error) => this.toast.createErrorToast(error.errorMessage));
                 } else {
                     this.toast.createErrorToast('You don\'t have permission to modify dataset');
                     this.cancel();

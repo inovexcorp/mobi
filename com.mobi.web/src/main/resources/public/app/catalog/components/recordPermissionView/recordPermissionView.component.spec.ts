@@ -214,7 +214,7 @@ describe('Record Permission View component', () => {
             expect(component.title).toEqual('title.ttl');
         });
         it('rejects', async function() {
-            recordPermissionsStub.getRecordPolicy.and.returnValue(throwError('Error Message'));
+            recordPermissionsStub.getRecordPolicy.and.returnValue(throwError({error: '', errorMessage: 'Error Message', errorDetails: []}));
             recordPermissionsStub.getRecordPolicy('');
             component.ngOnInit();
             fixture.detectChanges();

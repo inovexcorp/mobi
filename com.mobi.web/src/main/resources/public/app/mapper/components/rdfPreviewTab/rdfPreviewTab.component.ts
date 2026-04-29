@@ -26,6 +26,7 @@ import { toString } from 'lodash';
 
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
+import { RESTError } from '../../../shared/models/RESTError.interface';
 
 /**
  * @class mapper.RdfPreviewTabComponent
@@ -41,7 +42,7 @@ import { MapperStateService } from '../../../shared/services/mapperState.service
     styleUrls: ['./rdfPreviewTab.component.scss']
 })
 export class RdfPreviewTabComponent implements OnInit {
-    errorMessage = '';
+    error: RESTError;
     editorOptions = {
         mode: '',
         readOnly: true,
@@ -66,8 +67,8 @@ export class RdfPreviewTabComponent implements OnInit {
                 this.dm.preview = (serializeFormat === 'jsonld') ? JSON.stringify(preview, null, 4) : toString(preview);
                 this.previewForm.controls.preview.setValue(this.dm.preview);
                 this.dm.serializeFormat = serializeFormat;
-            }, errorMessage => {
-                this.errorMessage = errorMessage;
+            }, (error: RESTError) => {
+                this.error = error;
                 this.dm.preview = '';
                 this.previewForm.controls.preview.setValue(this.dm.preview);
             });

@@ -166,7 +166,7 @@ describe('Groups Page component', function() {
                     expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 }));
                 it('unless an error occurs', fakeAsync(function() {
-                    userManagerStub.addGroupRoles.and.returnValue(throwError('Error message'));
+                    userManagerStub.addGroupRoles.and.returnValue(throwError({error: '', errorMessage: 'Error message', errorDetails: []}));
                     component.changeAdmin(this.event);
                     tick();
                     expect(userManagerStub.addGroupRoles).toHaveBeenCalledWith(group.title, ['admin']);
@@ -188,7 +188,7 @@ describe('Groups Page component', function() {
                     expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 }));
                 it('unless an error occurs', fakeAsync(function() {
-                    userManagerStub.deleteGroupRole.and.returnValue(throwError('Error message'));
+                    userManagerStub.deleteGroupRole.and.returnValue(throwError({error: '', errorMessage: 'Error message', errorDetails: []}));
                     component.changeAdmin(this.event);
                     tick();
                     expect(userManagerStub.addGroupRoles).not.toHaveBeenCalled();
@@ -223,7 +223,7 @@ describe('Groups Page component', function() {
                 spyOn(component, 'setAdmin');
             });
             it('unless an error occurs', fakeAsync(function() {
-                userManagerStub.deleteGroup.and.returnValue(throwError('Error message'));
+                userManagerStub.deleteGroup.and.returnValue(throwError({error: '', errorMessage: 'Error message', errorDetails: []}));
                 component.deleteGroup();
                 tick();
                 expect(userManagerStub.deleteGroup).toHaveBeenCalledWith(group.title);
@@ -254,7 +254,7 @@ describe('Groups Page component', function() {
                 userStateStub.selectedGroup = group;
             });
             it('unless an error occurs', fakeAsync(function() {
-                userManagerStub.addUserGroup.and.returnValue(throwError('Error message'));
+                userManagerStub.addUserGroup.and.returnValue(throwError({error: '', errorMessage: 'Error message', errorDetails: []}));
                 component.addMember(this.user);
                 tick();
                 expect(userManagerStub.addUserGroup).toHaveBeenCalledWith(this.user.username, group.title);
@@ -282,7 +282,7 @@ describe('Groups Page component', function() {
                 userStateStub.selectedGroup = group;
             });
             it('unless an error occurs', fakeAsync(function() {
-                userManagerStub.deleteUserGroup.and.returnValue(throwError('Error message'));
+                userManagerStub.deleteUserGroup.and.returnValue(throwError({error: '', errorMessage: 'Error message', errorDetails: []}));
                 component.removeMember('batman');
                 tick();
                 expect(userManagerStub.deleteUserGroup).toHaveBeenCalledWith('batman', group.title);

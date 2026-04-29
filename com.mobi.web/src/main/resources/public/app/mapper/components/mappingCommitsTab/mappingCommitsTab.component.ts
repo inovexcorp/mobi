@@ -54,7 +54,7 @@ export class MappingCommitsTabComponent implements OnInit {
                     this.commitId = getPropertyId(this.state.selected.branch, `${CATALOG}head`);
                     this.branchTitle = getDctermsValue(this.state.selected.branch, 'title');
                 }, error => {
-                    this.toast.createErrorToast(error);
+                    this.toast.createErrorToast(error.errorMessage);
                 });
             } else {
                 this.commitId = getPropertyId(this.state.selected.branch, `${CATALOG}head`);

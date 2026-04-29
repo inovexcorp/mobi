@@ -23,6 +23,8 @@ package com.mobi.prov.rest;
  * #L%
  */
 
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorResponse;
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorType;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService;
@@ -339,8 +341,8 @@ public class ProvRestTest extends MobiRestTestCXF {
 
     @Test
     public void getActivityWithErrorTest() {
-        Response response = target().path("provenance-data/" + NULL_ACT_IRI).request().get();
-        assertEquals(404, response.getStatus());
+        Response response = target().path("provenance-data/" + ResourceUtils.encode(NULL_ACT_IRI)).request().get();
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Provenance Activity not found");
     }
 
     @Test
@@ -361,7 +363,7 @@ public class ProvRestTest extends MobiRestTestCXF {
         doThrow(new MobiException()).when(provService).getConnection();
 
         Response response = target().path("provenance-data").request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // Helper methods
@@ -401,4 +403,5 @@ public class ProvRestTest extends MobiRestTestCXF {
         List<String> resources = getResources((ArrayNode) entities);
         assertTrue(resources.containsAll(expected));
     }
+
 }

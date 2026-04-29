@@ -57,7 +57,7 @@ describe('Request Record Select component', function() {
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
     let toastStub: jasmine.SpyObj<ToastService>;
 
-    const error = 'Error Message';
+    const error = {error: '', errorMessage: 'Error Message', errorDetails: []};
     const catalogId = 'catalogId';
     const ontologyMergeRequestRecord: MergeRequestRecord = {
         title: 'title',
@@ -213,7 +213,7 @@ describe('Request Record Select component', function() {
                 expect(component.mergeRequestRecords).toEqual([]);
                 expect(component.totalSize).toEqual(0);
                 expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.mrRecords);
-                expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(error.errorMessage);
             }));
         });
         it('should set the initial page of records', function() {

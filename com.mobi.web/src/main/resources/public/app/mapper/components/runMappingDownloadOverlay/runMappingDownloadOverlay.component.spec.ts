@@ -37,6 +37,7 @@ import {
     cleanStylesFromDOM,
 } from '../../../../../public/test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { RestErrorDisplayComponent } from '../../../shared/components/restErrorDisplay/restErrorDisplay.component';
 import { Difference } from '../../../shared/models/difference.class';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
@@ -55,7 +56,7 @@ describe('Run Mapping Download Overlay component', function() {
     let camelCaseStub: jasmine.SpyObj<CamelCasePipe>;
     let toastStub: jasmine.SpyObj<ToastService>;
 
-    const error = 'Error message';
+    const error = {error: '', errorMessage: 'Error message', errorDetails: []};
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -72,6 +73,7 @@ describe('Run Mapping Download Overlay component', function() {
             declarations: [
                 RunMappingDownloadOverlayComponent,
                 MockComponent(ErrorDisplayComponent),
+                MockComponent(RestErrorDisplayComponent),
                 MockComponent(MapperSerializationSelectComponent),
             ],
             providers: [
@@ -162,7 +164,7 @@ describe('Run Mapping Download Overlay component', function() {
                         expect(mapperStateStub.resetEdit).not.toHaveBeenCalled();
                         expect(delimitedManagerStub.reset).not.toHaveBeenCalled();
                         expect(matDialogRef.close).not.toHaveBeenCalled();
-                        expect(component.errorMessage).toEqual(error);
+                        expect(component.error).toEqual(error);
                     }));
                     it('successfully downloading the data', fakeAsync(function() {
                         mapperStateStub.saveMapping.and.returnValue(of('id'));
@@ -176,7 +178,7 @@ describe('Run Mapping Download Overlay component', function() {
                         expect(delimitedManagerStub.reset).toHaveBeenCalledWith();
                         expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                         expect(matDialogRef.close).toHaveBeenCalledWith();
-                        expect(component.errorMessage).toEqual('');
+                        expect(component.error).toBeFalsy();
                     }));
                 });
                 it('and there are no changes and downloads the data', function() {
@@ -217,10 +219,10 @@ describe('Run Mapping Download Overlay component', function() {
             });
         });
         it('depending on whether there is an error', function() {
-            expect(element.queryAll(By.css('error-display')).length).toEqual(0);
-            component.errorMessage = 'Error message';
+            expect(element.queryAll(By.css('rest-error-display')).length).toEqual(0);
+            component.error = {error: '', errorMessage: 'Error message', errorDetails: []};
             fixture.detectChanges();
-            expect(element.queryAll(By.css('error-display')).length).toEqual(1);
+            expect(element.queryAll(By.css('rest-error-display')).length).toEqual(1);
         });
         it('depending on the validity of the form', function() {
             fixture.detectChanges();

@@ -171,7 +171,7 @@ describe('Changes Page component', function() {
         expect(component.index).toEqual(0);
       }));
       it('unless an error occurs', fakeAsync(function() {
-        stateStub.removeChanges.and.returnValue(throwError('Error'));
+        stateStub.removeChanges.and.returnValue(throwError({error: '', errorMessage: 'Error', errorDetails: []}));
         component.index = 100;
         component.removeChanges();
         tick();
@@ -216,7 +216,7 @@ describe('Changes Page component', function() {
         expect(toastStub.createErrorToast).not.toHaveBeenCalled();
       }));
       it('unless an error occurs', fakeAsync(function() {
-        stateStub.changeVersion.and.returnValue(throwError('Error'));
+        stateStub.changeVersion.and.returnValue(throwError({error: '', errorMessage: 'Error', errorDetails: []}));
 
         component.openCommit(commit);
         tick();

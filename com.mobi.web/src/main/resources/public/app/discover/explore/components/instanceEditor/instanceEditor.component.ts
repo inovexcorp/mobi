@@ -74,7 +74,7 @@ export class InstanceEditorComponent {
                             this.ds.explore.instance.metadata = find(response.body, {instanceIRI: instance['@id']});
                             this.ds.explore.breadcrumbs[this.ds.explore.breadcrumbs.length - 1] = this.ds.explore.instance.metadata.title;
                             this.ds.explore.editing = false;
-                        }, (error) => this.toast.createErrorToast(error));
+                        }, (error) => this.toast.createErrorToast(error.errorMessage));
                 } else {
                     this.toast.createErrorToast('You don\'t have permission to modify dataset');
                     this.cancel();

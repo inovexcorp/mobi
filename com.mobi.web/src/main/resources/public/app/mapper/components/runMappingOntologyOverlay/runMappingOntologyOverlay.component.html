@@ -22,7 +22,7 @@
   -->
 <h1 mat-dialog-title>Run Mapping to Ontology</h1>
 <div mat-dialog-content>
-    <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
+    <rest-error-display *ngIf="error" [error]="error"></rest-error-display>
     <p class="text-muted">Select an ontology and branch to commit the data mapping.</p>
     <mat-form-field class="w-100 ontology-select">
         <mat-label>Ontology</mat-label>

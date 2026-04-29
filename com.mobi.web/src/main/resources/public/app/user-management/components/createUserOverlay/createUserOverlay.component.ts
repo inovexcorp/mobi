@@ -30,6 +30,7 @@ import { UserManagerService } from '../../../shared/services/userManager.service
 import { ToastService } from '../../../shared/services/toast.service';
 import { uniqueValue } from '../../../shared/validators/uniqueValue.validator';
 import { NewUserConfig } from '../../../shared/models/new-user-config';
+import { RESTError } from '../../../shared/models/RESTError.interface';
 
 /**
  * @class user-management.CreateUserOverlayComponent
@@ -44,7 +45,7 @@ import { NewUserConfig } from '../../../shared/models/new-user-config';
 })
 export class CreateUserOverlayComponent {
     usernamePattern = REGEX.LOCALNAME;
-    errorMessage = '';
+    error: RESTError;
     createUserForm = this.fb.group({
         username: ['', [ Validators.required, Validators.pattern(this.usernamePattern), uniqueValue(this.getUsernames()) ]],
         unmaskPassword: ['', [Validators.required]],
@@ -81,13 +82,13 @@ export class CreateUserOverlayComponent {
         this.um.addUser(newUser).subscribe({
             next: () => {
                 this.toast.createSuccessToast('User successfully created');
-                this.errorMessage = '';
+                this.error = undefined;
                 this.dialogRef.close();
                 isDialogClosed = true;
-            }, 
-            error: (error) => {
+            },
+            error: (error: RESTError) => {
                 requestErrorFlag = true;
-                this.errorMessage = error;
+                this.error = error;
             },
             complete: () => {
                 if (!isDialogClosed && !requestErrorFlag) {

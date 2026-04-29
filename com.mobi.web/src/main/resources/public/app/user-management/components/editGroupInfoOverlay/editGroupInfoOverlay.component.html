@@ -22,7 +22,7 @@
   -->
 <h1 mat-dialog-title>Edit Group Description</h1>  
 <div mat-dialog-content [formGroup]="editGroupInfoForm">
-    <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
+    <rest-error-display *ngIf="error" [error]="error"></rest-error-display>
     <mat-form-field>
         <mat-label>Description</mat-label>
         <textarea matInput name="description" formControlName="description"></textarea>

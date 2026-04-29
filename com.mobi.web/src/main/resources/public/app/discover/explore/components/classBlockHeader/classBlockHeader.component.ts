@@ -88,9 +88,9 @@ export class ClassBlockHeaderComponent {
                     this.es.getClassDetails(this.ds.explore.recordId)
                         .subscribe(details => {
                             this.ds.explore.classDetails = details;
-                        }, errorMessage => {
+                        }, error => {
                             this.ds.explore.classDetails = [];
-                            this.toast.createErrorToast(errorMessage);
+                            this.toast.createErrorToast(error.errorMessage);
                         });
                 } else {
                     this.toast.createErrorToast('You don\'t have permission to read dataset');

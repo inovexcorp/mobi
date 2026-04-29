@@ -199,7 +199,7 @@ describe('Setting Manager service', function() {
     it('unless the record type does not have a default namespace', fakeAsync(() => {
       spyOn(service, 'getApplicationSettingByType');
       service.getDefaultNamespace('error').subscribe(() => fail('Observable should have rejected'), result => {
-        expect(result).toContain('No setting found');
+        expect(result.errorMessage).toContain('No setting found');
       });
       tick();
       expect(service.getApplicationSettingByType).not.toHaveBeenCalled();
@@ -226,7 +226,7 @@ describe('Setting Manager service', function() {
       it('unless the setting does not have a default value', fakeAsync(() => {
         spyOn(service, 'getApplicationSettingDefinitions').and.returnValue(of([{'@id': service.defaultNamespaceMap[type].propertyShape}]));
         service.getDefaultNamespaceFromSetting(type).subscribe(() => fail('Observable should have rejected'), result => {
-          expect(result).toEqual('');
+          expect(result).toEqual({error: '', errorMessage: '', errorDetails: []});
         });
         tick();
         expect(service.getApplicationSettingDefinitions).toHaveBeenCalledWith(service.namespaceGroup);
@@ -235,7 +235,7 @@ describe('Setting Manager service', function() {
       it('unless the property shape could not be found', fakeAsync(() => {
         spyOn(service, 'getApplicationSettingDefinitions').and.returnValue(of([]));
         service.getDefaultNamespaceFromSetting(type).subscribe(() => fail('Observable should have rejected'), result => {
-          expect(result).toEqual('');
+          expect(result).toEqual({error: '', errorMessage: '', errorDetails: []});
         });
         tick();
         expect(service.getApplicationSettingDefinitions).toHaveBeenCalledWith(service.namespaceGroup);
@@ -244,7 +244,7 @@ describe('Setting Manager service', function() {
       it('unless an error occurs', fakeAsync(() => {
         spyOn(service, 'getApplicationSettingDefinitions').and.returnValue(throwError('Error'));
         service.getDefaultNamespaceFromSetting(type).subscribe(() => fail('Observable should have rejected'), result => {
-          expect(result).toEqual('');
+          expect(result).toEqual({error: '', errorMessage: '', errorDetails: []});
         });
         tick();
         expect(service.getApplicationSettingDefinitions).toHaveBeenCalledWith(service.namespaceGroup);
@@ -269,7 +269,7 @@ describe('Setting Manager service', function() {
       it('unless the setting does not have a default value', fakeAsync(() => {
         spyOn(service, 'getApplicationSettingDefinitions').and.returnValue(of([{'@id': service.defaultNamespaceMap[type].propertyShape}]));
         service.getDefaultNamespaceFromSetting(type).subscribe(() => fail('Observable should have rejected'), result => {
-          expect(result).toEqual('');
+          expect(result).toEqual({error: '', errorMessage: '', errorDetails: []});
         });
         tick();
         expect(service.getApplicationSettingDefinitions).toHaveBeenCalledWith(service.namespaceGroup);
@@ -278,7 +278,7 @@ describe('Setting Manager service', function() {
       it('unless the property shape could not be found', fakeAsync(() => {
         spyOn(service, 'getApplicationSettingDefinitions').and.returnValue(of([]));
         service.getDefaultNamespaceFromSetting(type).subscribe(() => fail('Observable should have rejected'), result => {
-          expect(result).toEqual('');
+          expect(result).toEqual({error: '', errorMessage: '', errorDetails: []});
         });
         tick();
         expect(service.getApplicationSettingDefinitions).toHaveBeenCalledWith(service.namespaceGroup);
@@ -287,7 +287,7 @@ describe('Setting Manager service', function() {
       it('unless an error occurs', fakeAsync(() => {
         spyOn(service, 'getApplicationSettingDefinitions').and.returnValue(throwError('Error'));
         service.getDefaultNamespaceFromSetting(type).subscribe(() => fail('Observable should have rejected'), result => {
-          expect(result).toEqual('');
+          expect(result).toEqual({error: '', errorMessage: '', errorDetails: []});
         });
         tick();
         expect(service.getApplicationSettingDefinitions).toHaveBeenCalledWith(service.namespaceGroup);
@@ -297,7 +297,7 @@ describe('Setting Manager service', function() {
     it('unless the record type does not have a default namespace', fakeAsync(() => {
       spyOn(service, 'getApplicationSettingDefinitions');
       service.getDefaultNamespaceFromSetting('error').subscribe(() => fail('Observable should have rejected'), result => {
-        expect(result).toContain('No setting found');
+        expect(result.errorMessage).toContain('No setting found');
       });
       tick();
       expect(service.getApplicationSettingDefinitions).not.toHaveBeenCalled();
@@ -367,7 +367,7 @@ describe('Setting Manager service', function() {
         spyOn(service, 'getUserPreferenceByType').and.returnValue(of([annotationPreference]));
         spyOn(service, 'getPreferenceDefinitions').and.returnValue(of(annotationDefinition));
         service.getAnnotationPreference().subscribe(() => fail('Observable should have rejected'), result => {
-          expect(result).toEqual('No preference definition found');
+          expect(result).toEqual({error: '', errorMessage: 'No preference definition found', errorDetails: []});
         });
         tick();
         expect(service.getUserPreferenceByType).toHaveBeenCalledWith(annotationIRI);
@@ -394,10 +394,13 @@ describe('Setting Manager service', function() {
     it('unless an error occurs', function() {
       service.getUserPreferences()
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toBe(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(
+        {error: '', errorMessage: error, errorDetails: []},
+        { status: 400, statusText: error }
+      );
     });
     it('successfully', function() {
       service.getUserPreferences()
@@ -417,11 +420,13 @@ describe('Setting Manager service', function() {
         .subscribe(() => {
           fail('Observable should have rejected');
         }, response => {
-          expect(response).toBe(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
-      request.flush('flush', { status: 400, statusText: error });
-
+      request.flush(
+        {error: '', errorMessage: error, errorDetails: []},
+        { status: 400, statusText: error }
+      );
     });
     it('successfully', function() {
       service.getUserPreferenceByType(prefType)
@@ -487,10 +492,13 @@ describe('Setting Manager service', function() {
         .subscribe(() => {
           fail('Observable should have rejected');
         }, (response) => {
-          expect(response).toBe(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(
+        {error: '', errorMessage: error, errorDetails: []},
+        { status: 400, statusText: error }
+      );
     });
     it('successfully', function() {
       service.getPreferenceGroups()
@@ -512,11 +520,13 @@ describe('Setting Manager service', function() {
         .subscribe(() => {
           fail('Observable should have rejected');
         }, response => {
-          expect(response).toBe(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
-      request.flush('flush', { status: 400, statusText: error });
-      
+      request.flush(
+        {error: '', errorMessage: error, errorDetails: []},
+        { status: 400, statusText: error }
+      );
     });
     it('successfully', function() {
       service.getPreferenceDefinitions(prefGroup)
@@ -538,11 +548,13 @@ describe('Setting Manager service', function() {
         .subscribe(() => {
           fail('Observable should have rejected');
         }, response => {
-          expect(response).toBe(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
-      request.flush('flush', { status: 400, statusText: error });
-      
+      request.flush(
+        {error: '', errorMessage: error, errorDetails: []},
+        { status: 400, statusText: error }
+      );
     });
     it('successfully', function() {
       service.getApplicationSettings()
@@ -564,11 +576,13 @@ describe('Setting Manager service', function() {
         .subscribe(() => {
           fail('Observable should have rejected');
         }, response => {
-          expect(response).toBe(error);
+          expect(response).toEqual(errorObj);
         });
-      const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET'); 
-      request.flush('flush', { status: 400, statusText: error });
-      
+      const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
+      request.flush(
+        {error: '', errorMessage: error, errorDetails: []},
+        { status: 400, statusText: error }
+      );
     });
     it('successfully', function() {
       service.getApplicationSettingByType(appSettingType)
@@ -634,10 +648,13 @@ describe('Setting Manager service', function() {
         .subscribe(() => {
           fail('Observable should have rejected');
         }, response => {
-          expect(response).toBe(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(
+        {error: '', errorMessage: error, errorDetails: []},
+        { status: 400, statusText: error }
+      );
     });
     it('successfully', function() {
       service.getApplicationSettingGroups()
@@ -659,11 +676,13 @@ describe('Setting Manager service', function() {
         .subscribe(() => {
           fail('Observable should have rejected');
         }, response => {
-          expect(response).toBe(error);
+          expect(response).toEqual(errorObj);
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
-      request.flush('flush', { status: 400, statusText: error });
-      
+      request.flush(
+        {error: '', errorMessage: error, errorDetails: []},
+        { status: 400, statusText: error }
+      );
     });
     it('successfully', function() {
       service.getApplicationSettingDefinitions(appSettingGroup)

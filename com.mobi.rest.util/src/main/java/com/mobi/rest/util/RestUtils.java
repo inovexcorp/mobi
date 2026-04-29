@@ -505,7 +505,7 @@ public class RestUtils {
             });
             return updatedModel;
         } catch (Exception e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+            throw getErrorObjBadRequest(e);
         } finally {
             LOG.trace("jsonldToModel took {}ms", System.currentTimeMillis() - start);
         }
@@ -594,7 +594,7 @@ public class RestUtils {
      */
     public static User getActiveUser(ContainerRequestContext context, EngineManager engineManager) {
         return engineManager.retrieveUser(getActiveUsername(context)).orElseThrow(() ->
-                ErrorUtils.sendError("User not found", Response.Status.UNAUTHORIZED));
+                getErrorObjInternalServerError(new MobiException("User not found")));
     }
 
     /**
@@ -607,7 +607,7 @@ public class RestUtils {
      */
     public static User getActiveUser(HttpServletRequest servletRequest, EngineManager engineManager) {
         return engineManager.retrieveUser(getActiveUsername(servletRequest)).orElseThrow(() ->
-                ErrorUtils.sendError("User not found", Response.Status.UNAUTHORIZED));
+                getErrorObjInternalServerError(new MobiException("User not found")));
     }
 
     /**
@@ -619,7 +619,7 @@ public class RestUtils {
     public static String getActiveUsername(ContainerRequestContext context) {
         Object result = context.getProperty(AuthenticationProps.USERNAME);
         if (result == null) {
-            throw ErrorUtils.sendError("Missing username", Response.Status.UNAUTHORIZED);
+            throw getErrorObjInternalServerError(new MobiException("Missing username"));
         } else {
             return result.toString();
         }
@@ -634,7 +634,7 @@ public class RestUtils {
     public static String getActiveUsername(HttpServletRequest servletRequest) {
         Object result = servletRequest.getAttribute(AuthenticationProps.USERNAME);
         if (result == null) {
-            throw ErrorUtils.sendError("Missing username", Response.Status.UNAUTHORIZED);
+            throw getErrorObjInternalServerError(new MobiException("Missing username"));
         } else {
             return result.toString();
         }
@@ -799,7 +799,7 @@ public class RestUtils {
         try {
             return vf.createIRI(requestId);
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw getErrorObjBadRequest(ex);
         }
     }
 
@@ -856,7 +856,7 @@ public class RestUtils {
         long start = System.currentTimeMillis();
         try {
             if (offset > things.size()) {
-                throw ErrorUtils.sendError("Offset exceeds total size", Response.Status.BAD_REQUEST);
+                throw getErrorObjBadRequest(new IllegalArgumentException("Offset exceeds total size"));
             }
             Comparator<T> comparator = Comparator.comparing(dist -> dist.getProperty(sortIRI)
                     .orElse(vf.createLiteral("")).stringValue());
@@ -988,7 +988,7 @@ public class RestUtils {
      */
     public static void validatePaginationParams(String sortIRI, Set<String> sortResources, int limit, int offset) {
         if (sortIRI != null && !sortResources.contains(sortIRI)) {
-            throw ErrorUtils.sendError("Invalid sort property IRI", Response.Status.BAD_REQUEST);
+            throw getErrorObjBadRequest(new IllegalArgumentException("Invalid sort property IRI"));
         }
         LinksUtils.validateParams(limit, offset);
     }
@@ -1072,6 +1072,23 @@ public class RestUtils {
     }
 
     /**
+     * Creates a {@link MobiWebException} containing a 403 response with the error message and error details provided
+     * in the body of the response.
+     *
+     * @param throwable The {@link Throwable} to create a JSON error object from.
+     * @return A {@link MobiWebException} of a 403 with error information in the body.
+     */
+    public static MobiWebException getErrorObjForbidden(Throwable throwable) {
+        ObjectNode objectNode = createJsonErrorObject(throwable, Models.ERROR_OBJECT_DELIMITER);
+        Response response = Response
+                .status(Response.Status.FORBIDDEN)
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .entity(objectNode.toString())
+                .build();
+        return ErrorUtils.sendError(throwable, throwable.getMessage(), response);
+    }
+
+    /**
      * Creates a {@link MobiWebException} containing a 404 response with the error message and error details provided
      * in the body of the response.
      *
@@ -1113,6 +1130,23 @@ public class RestUtils {
                 .status(Response.Status.INTERNAL_SERVER_ERROR)
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .entity(overrideObjectNode.toString())
+                .build();
+        return ErrorUtils.sendError(throwable, throwable.getMessage(), response);
+    }
+
+    /**
+     * Creates a {@link MobiWebException} containing a 405 response with the error message and error details provided
+     * in the body of the response.
+     *
+     * @param throwable The {@link Throwable} to create a JSON error object from.
+     * @return A {@link MobiWebException} of a 405 with error information in the body.
+     */
+    public static MobiWebException getErrorObjMethodNotAllowed(Throwable throwable) {
+        ObjectNode objectNode = createJsonErrorObject(throwable, Models.ERROR_OBJECT_DELIMITER);
+        Response response = Response
+                .status(Response.Status.METHOD_NOT_ALLOWED)
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .entity(objectNode.toString())
                 .build();
         return ErrorUtils.sendError(throwable, throwable.getMessage(), response);
     }

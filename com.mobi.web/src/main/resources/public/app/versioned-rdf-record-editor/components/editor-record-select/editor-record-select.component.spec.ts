@@ -389,7 +389,7 @@ describe('Editor Record Select component', function() {
         expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
       });
       it('unless an error occurs', async function() {
-        stateStub.delete.and.returnValue(throwError('error'));
+        stateStub.delete.and.returnValue(throwError({error: '', errorMessage: 'error', errorDetails: []}));
         await component.deleteRecord('record1');
         expect(stateStub.delete).toHaveBeenCalledWith('record1');
         expect(toastStub.createSuccessToast).not.toHaveBeenCalled();

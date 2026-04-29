@@ -22,14 +22,7 @@
   -->
 <h1 mat-dialog-title>Add Logger</h1>
 <form mat-dialog-content [formGroup]="addForm">
-  <error-display *ngIf="error && error.errorMessage && error.errorDetails">
-    {{error.errorMessage}}
-    <ul>
-      <li class="text-danger m-0" *ngFor="let detailError of error.errorDetails">
-        {{ detailError }}
-      </li>
-    </ul>
-  </error-display>
+  <rest-error-display *ngIf="error" [error]="error"></rest-error-display>
   <mat-form-field class="logger-name-field w-100 mb-2">
     <mat-label>Logger Name</mat-label>
     <input matInput 

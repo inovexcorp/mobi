@@ -74,14 +74,14 @@ export class RequestDetailsFormComponent implements OnInit, OnDestroy {
                     this.targetBranchTitle = getDctermsValue(this.state.requestConfig.targetBranch, 'title');
                     this.targetCommitId = getPropertyId(this.state.requestConfig.targetBranch, `${CATALOG}head`);
                     this.state.updateRequestConfigDifference()
-                        .subscribe(() => {}, error => this.toast.createErrorToast(error));
+                        .subscribe(() => {}, error => this.toast.createErrorToast(error.errorMessage));
                 } else {
                     this.state.createRequestStep = 1;
                     this.state.difference = undefined;
                     this.toast.createErrorToast('Branch was deleted');
                 }
             }, error => {
-                this.toast.createErrorToast(error);
+                this.toast.createErrorToast(error.errorMessage);
             });
     }
     ngOnDestroy(): void {

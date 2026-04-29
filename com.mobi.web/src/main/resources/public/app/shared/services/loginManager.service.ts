@@ -38,6 +38,7 @@ import { DelimitedManagerService } from './delimitedManager.service';
 import { DiscoverStateService } from './discoverState.service';
 import { EntitySearchStateService } from '../../entity-search/services/entity-search-state.service';
 import { EventWithPayload } from '../models/eventWithPayload.interface';
+import { RESTError } from '../models/RESTError.interface';
 import { MapperStateService } from './mapperState.service';
 import { MergeRequestsStateService } from './mergeRequestsState.service';
 import { OntologyManagerService } from './ontologyManager.service';
@@ -149,15 +150,18 @@ export class LoginManagerService {
                 this.router.navigate(['/home']);
                 return true;
               }),
-              catchError(() => of(false))
+              catchError(error => {
+                console.error('Login check failed:', error);
+                return of(false);
+              })
             );
         }
       }),
       catchError(response => {
         if (response.status === 401) {
-          return throwError('This email/password combination is not correct.');
+          return throwError({error: '', errorMessage: 'This email/password combination is not correct.', errorDetails: []} as RESTError);
         } else {
-          return throwError('An error has occurred. Please try again later.');
+          return throwError({error: '', errorMessage: 'An error has occurred. Please try again later.', errorDetails: []} as RESTError);
         }
       })
     );
@@ -249,7 +253,8 @@ export class LoginManagerService {
         this.weGood = true;
         return of(true);
       }),
-      catchError(() => {
+      catchError(error => {
+        console.error('Session check failed:', error);
         this.clearServiceStates();
         return of(false);
       })
@@ -265,7 +270,7 @@ export class LoginManagerService {
    */
   getCurrentLogin(): Observable<string> {
     return this.http.get(this.prefix, {observe: 'response', responseType: 'text'}).pipe(
-      catchError(error => throwError(error.statusText)),
+      catchError(error => throwError({error: '', errorMessage: error.statusText || 'Login failed', errorDetails: []} as RESTError)),
       switchMap(response => {
         if (response.status === 200) {
           return of(response.body);

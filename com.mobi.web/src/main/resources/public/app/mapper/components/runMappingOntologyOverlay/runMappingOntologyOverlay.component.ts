@@ -38,6 +38,7 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { ToastService } from '../../../shared/services/toast.service';
 import { getDctermsValue, getPropertyId } from '../../../shared/utility';
+import { RESTError } from '../../../shared/models/RESTError.interface';
 
 interface OntologyPreview {
     id: string,
@@ -61,7 +62,7 @@ interface OntologyPreview {
     styleUrls: ['./runMappingOntologyOverlay.component.scss']
 })
 export class RunMappingOntologyOverlayComponent implements OnInit {
-    errorMessage = '';
+    error: RESTError;
     catalogId = '';
     ontologies = [];
     branches = [];
@@ -127,8 +128,8 @@ export class RunMappingOntologyOverlayComponent implements OnInit {
             this._runMapping(this.state.selected.record.id);
         }
     }
-    private _onError(error: JSONLDObject): void {
-        this.errorMessage = error.errorMessage ? error.errorMessage : error;
+    private _onError(error: RESTError): void {
+        this.error = error;
     }
     private _runMapping(id: string): void {
         this.dm.mapAndCommit(id, this.ontology.id, this.branch['@id'], this.update).subscribe(response => {
@@ -142,7 +143,7 @@ export class RunMappingOntologyOverlayComponent implements OnInit {
         }, error => this._onError(error));
     }
     private _reset(): void {
-        this.errorMessage = '';
+        this.error = undefined;
         this.state.step = this.state.selectMappingStep;
         this.state.initialize();
         this.state.resetEdit();

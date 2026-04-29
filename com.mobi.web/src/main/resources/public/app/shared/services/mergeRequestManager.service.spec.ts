@@ -31,6 +31,7 @@ import {
 import { MERGEREQ, USER } from '../../prefixes';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { RESTError } from '../models/RESTError.interface';
 import { MergeRequestPaginatedConfig } from '../models/mergeRequestPaginatedConfig.interface';
 import { MergeRequest } from '../models/mergeRequest.interface';
 import { EventWithPayload } from '../models/eventWithPayload.interface';
@@ -43,6 +44,11 @@ describe('Merge Request Manager service', function() {
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
 
     const error = 'Error Message';
+    const errorObj: RESTError = {
+        error: '',
+        errorDetails: [],
+        errorMessage: error
+    };
     const requestId = 'requestId';
     const commentId = 'commentId';
     const commentText = 'HELLO WORLD';
@@ -99,11 +105,11 @@ describe('Merge Request Manager service', function() {
         it('unless an error occurs', function() {
             service.getRequests({ requestStatus: 'accepted' })
                 .subscribe(() => fail('Observable should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
             expect(request.request.params.get('requestStatus')).toEqual('accepted');
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObj, { status: 400, statusText: error });
         });
         it('without parameters', function() {
             service.getRequests({ requestStatus: 'accepted' })
@@ -174,11 +180,11 @@ describe('Merge Request Manager service', function() {
         it('unless an error occurs', function() {
             service.createRequest(this.requestConfig)
                 .subscribe(() => fail('Observable should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne({url: this.url, method: 'POST'});
             expect(request.request.body instanceof FormData).toBeTrue();
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObj, { status: 400, statusText: error });
         });
         it('with a description and assignees', function() {
             service.createRequest(this.requestConfig)
@@ -222,10 +228,10 @@ describe('Merge Request Manager service', function() {
         it('unless an error occurs', function() {
             service.getRequest(requestId)
                 .subscribe(() => fail('Observable should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne({url: this.url, method: 'GET'});
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObj, { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.getRequest(requestId)
@@ -243,10 +249,10 @@ describe('Merge Request Manager service', function() {
         it('unless an error occurs', function() {
             service.deleteRequest(requestId)
                 .subscribe(() => fail('Observable should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne({url: this.url, method: 'DELETE'});
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObj, { status: 400, statusText: error });
         });
         it('successfully', function() {
           service.deleteRequest(requestId)
@@ -264,10 +270,10 @@ describe('Merge Request Manager service', function() {
         it('unless an error occurs', function() {
             service.updateRequestStatus(mergeRequest01, 'accept')
                 .subscribe(() => fail('Observable should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne({url: this.url, method: 'POST'});
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObj, { status: 400, statusText: error });
         });
         it('successfully', function() {
             const event: EventWithPayload = {
@@ -309,10 +315,10 @@ describe('Merge Request Manager service', function() {
         it('unless an error occurs', function() {
             service.getComments(requestId)
                 .subscribe(() => fail('Observable should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne({url: this.url, method: 'GET'});
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObj, { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.getComments(requestId)
@@ -330,10 +336,10 @@ describe('Merge Request Manager service', function() {
         it('unless an error occurs', function() {
             service.deleteComment(requestId, commentId)
                 .subscribe(() => fail('Observable should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne({url: this.url, method: 'DELETE'});
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObj, { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.deleteComment(requestId, commentId)
@@ -351,11 +357,11 @@ describe('Merge Request Manager service', function() {
         it('unless an error occurs', function() {
             service.createComment(requestId, commentText)
                 .subscribe(() => fail('Observable should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne(req => req.url === this.url && req.method === 'POST');
             expect(request.request.body).toEqual(commentText);
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObj, { status: 400, statusText: error });
         });
         it('with a parent comment id', function() {
             service.createComment(requestId, commentText, commentId)
@@ -385,11 +391,11 @@ describe('Merge Request Manager service', function() {
         it('unless an error occurs', function() {
             service.updateComment(requestId, commentId, commentText)
                 .subscribe(() => fail('Observable should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne({url: this.url, method: 'PUT'});
             expect(request.request.body).toEqual(commentText);
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObj, { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.updateComment(requestId, commentId, commentText)
@@ -408,11 +414,11 @@ describe('Merge Request Manager service', function() {
         it('unless an error occurs', function() {
             service.updateRequest(requestId, emptyObj)
                 .subscribe(() => fail('Observable should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne({url: this.url, method: 'PUT'});
             expect(request.request.body).toEqual(emptyObj);
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObj, { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.updateRequest(requestId, emptyObj)
@@ -443,10 +449,10 @@ describe('Merge Request Manager service', function() {
       it('unless an error occurs', function() {
           service.getCreators(this.config)
               .subscribe(() => fail('Observable should have rejected'), response => {
-                  expect(response).toEqual(error);
+                  expect(response).toEqual(errorObj);
               });
           const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
-          request.flush('flush', { status: 400, statusText: error });
+          request.flush(errorObj, { status: 400, statusText: error });
       });
       describe('successfully', function() {
           describe('when not tracked', function() {
@@ -516,10 +522,10 @@ describe('Merge Request Manager service', function() {
       it('unless an error occurs', function() {
           service.getAssignees(this.config)
               .subscribe(() => fail('Observable should have rejected'), response => {
-                  expect(response).toEqual(error);
+                  expect(response).toEqual(errorObj);
               });
           const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
-          request.flush('flush', { status: 400, statusText: error });
+          request.flush(errorObj, { status: 400, statusText: error });
       });
       describe('successfully', function() {
           describe('when not tracked', function() {
@@ -589,10 +595,10 @@ describe('Merge Request Manager service', function() {
         it('unless an error occurs', function() {
             service.getRecords(this.config)
                 .subscribe(() => fail('Observable should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObj, { status: 400, statusText: error });
         });
         describe('successfully', function() {
             describe('when not tracked', function() {

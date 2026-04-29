@@ -34,13 +34,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
+import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.Request;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -127,28 +127,25 @@ public class PolicyEnforcementRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Missing required action ID or resource ID in the request",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while evaluating the XACML policy request",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -187,9 +184,9 @@ public class PolicyEnforcementRest {
 
             return Response.ok(response.getDecision().toString()).build();
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (JsonProcessingException | MobiException ex) {
-            throw ErrorUtils.sendError("Request could not be evaluated", Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(new MobiException("Request could not be evaluated", ex));
         }
     }
 
@@ -220,28 +217,25 @@ public class PolicyEnforcementRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Invalid request JSON or both resource ID and action ID have multiple values",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while evaluating the multi-decision XACML request",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -270,7 +264,8 @@ public class PolicyEnforcementRest {
                     : Collections.emptyList();
 
             if (resourceIds.size() > 1 && actionIds.size() > 1) {
-                throw ErrorUtils.sendError("Only one field may have more than one value.", Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjBadRequest(
+                        new IllegalArgumentException("Only one field may have more than one value."));
             }
 
             Map<String, Literal> subjectAttrs = getAttrMap("subjectAttrs", json);
@@ -287,8 +282,10 @@ public class PolicyEnforcementRest {
             log.debug(String.format("Request Evaluated. %dms", System.currentTimeMillis() - start));
 
             return Response.ok(response.toString()).build();
-        } catch (JsonProcessingException | IllegalArgumentException | MobiException ex) {
-            throw ErrorUtils.sendError("Request could not be evaluated", Response.Status.INTERNAL_SERVER_ERROR);
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
+        } catch (JsonProcessingException | MobiException ex) {
+            throw RestUtils.getErrorObjInternalServerError(new MobiException("Request could not be evaluated", ex));
         }
     }
 

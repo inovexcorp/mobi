@@ -79,7 +79,7 @@ export class RequestBranchSelectComponent implements OnInit, OnDestroy {
                     this._updateDifference(true);
                 }
             }, error => {
-                this.toast.createErrorToast(error);
+                this.toast.createErrorToast(error.errorMessage);
                 this.branches = [];
             });
     }
@@ -136,7 +136,7 @@ export class RequestBranchSelectComponent implements OnInit, OnDestroy {
         this.mrState.updateRequestConfigDifference().subscribe(() => {
             this.spinnerSvc.finishLoadingForComponent(this.commitDifferenceTabset);
         }, error => {
-            this.toast.createErrorToast(error);
+            this.toast.createErrorToast(error.errorMessage);
             if (clearBranches) {
                 this.branches = [];
             }

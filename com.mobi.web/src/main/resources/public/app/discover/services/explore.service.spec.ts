@@ -36,7 +36,7 @@ describe('Explore Service', function() {
     let service: ExploreService;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
     let httpMock: HttpTestingController;
-    const error = 'Error Message';
+    const error = {error: 'IllegalArgumentException', errorMessage: 'Error Message', errorDetails: []};
     const obj = {
         classIRI: '',
         classTitle: 'string',
@@ -82,9 +82,10 @@ describe('Explore Service', function() {
             const url = `${service.prefix}${encodeURIComponent('recordId')}/class-details`;
             service.getClassDetails('recordId').subscribe(() => fail('Promise should have rejected'), response => {
                 expect(response).toEqual(error);
+                expect(response.errorMessage).toEqual('Error Message');
             });
             const request = httpMock.expectOne({url, method: 'GET'});
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(error, { status: 400, statusText: 'Error Message' });
         });
     });
 
@@ -115,12 +116,13 @@ describe('Explore Service', function() {
                 .subscribe(function() {
                     fail('Should have been rejected.');
                 }, function(response) {
-                    expect(response).toBe(error);
+                    expect(response).toEqual(error);
+                expect(response.errorMessage).toEqual('Error Message');
                 });
                 const request = httpMock.expectOne(req => req.url === url && req.method === 'GET');
                 expect(request.request.params.get('limit')).toEqual('99');
                 expect(request.request.params.get('offset')).toEqual('0');
-                request.flush('flush', { status: 400, statusText: error });
+                request.flush(error, { status: 400, statusText: 'Error Message' });
         });
     });
     describe('getClassPropertyDetails calls the correct functions when GET /mobirest/explorable-datasets/{recordId}/classes/{classId}/property-details', function() {
@@ -149,11 +151,12 @@ describe('Explore Service', function() {
                 .subscribe(function() {
                     fail('Should have been rejected.');
                 }, function(response) {
-                    expect(response).toBe(error);
+                    expect(response).toEqual(error);
+                expect(response.errorMessage).toEqual('Error Message');
                 });
 
             const request = httpMock.expectOne({url, method: 'GET'});
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(error, { status: 400, statusText: 'Error Message' });
         });
     });
     describe('createInstance calls the correct functions when POST /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances', function() {
@@ -175,11 +178,12 @@ describe('Explore Service', function() {
                 .subscribe(function() {
                     fail('Should have been rejected.');
                 }, function(response) {
-                    expect(response).toBe(error);
+                    expect(response).toEqual(error);
+                expect(response.errorMessage).toEqual('Error Message');
                 });
 
             const request = httpMock.expectOne({url, method: 'POST'});
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(error, { status: 400, statusText: 'Error Message' });
         });
     });
     describe('getInstance calls the correct functions when GET /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId}', function() {
@@ -205,11 +209,12 @@ describe('Explore Service', function() {
                 .subscribe(function() {
                     fail('Should have been rejected.');
                 }, function(response) {
-                    expect(response).toBe(error);
+                    expect(response).toEqual(error);
+                expect(response.errorMessage).toEqual('Error Message');
                 });
 
             const request = httpMock.expectOne({url, method: 'GET'});
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(error, { status: 400, statusText: 'Error Message' });
         });
     });
     describe('updateInstance calls the correct functions when PUT /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId}', function() {
@@ -230,11 +235,12 @@ describe('Explore Service', function() {
                 .subscribe(function() {
                     fail('Should have been rejected.');
                 }, function(response) {
-                    expect(response).toBe(error);
+                    expect(response).toEqual(error);
+                expect(response.errorMessage).toEqual('Error Message');
                 });
 
             const request = httpMock.expectOne({url, method: 'PUT'});
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(error, { status: 400, statusText: 'Error Message' });
         });
     });
     describe('deleteInstance calls the correct functions when DELETE /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId}', function() {
@@ -255,11 +261,12 @@ describe('Explore Service', function() {
                 .subscribe(function() {
                     fail('Should have been rejected.');
                 }, function(response) {
-                    expect(response).toBe(error);
+                    expect(response).toEqual(error);
+                expect(response.errorMessage).toEqual('Error Message');
                 });
 
             const request = httpMock.expectOne({url, method: 'DELETE'});
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(error, { status: 400, statusText: 'Error Message' });
         });
     });
 });

@@ -72,7 +72,7 @@ export class ClassCardsComponent implements OnChanges {
                             this.state.resetPagedInstanceDetails();
                             merge(this.state.explore.instanceDetails, this.es.createPagedResultsObject(response));
                             this.state.explore.breadcrumbs.push(item.classTitle);
-                        }, error => this.toast.createErrorToast(error));
+                        }, error => this.toast.createErrorToast(error.errorMessage));
                 } else {
                     this.toast.createErrorToast('You don\'t have permission to read dataset');
                     this.state.resetPagedInstanceDetails();

@@ -23,7 +23,7 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
+
 import { MockProvider } from 'ng-mocks';
 import { cloneDeep } from 'lodash';
 
@@ -37,6 +37,7 @@ import { ADMIN_USER_IRI } from '../../constants';
 import { DCTERMS, FOAF, ROLES, USER } from '../../prefixes';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { NewUserConfig } from '../models/new-user-config';
+import { RESTError } from '../models/RESTError.interface';
 import { UserManagerService } from './userManager.service';
 
 describe('User Manager service', function() {
@@ -57,6 +58,7 @@ describe('User Manager service', function() {
     let group: Group;
 
     const error = 'Error Message';
+    const errorObj: RESTError = {error: '', errorMessage: error, errorDetails: []};
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -127,8 +129,7 @@ describe('User Manager service', function() {
             expect(service.groups).toEqual([group]);
         }));
         it('unless there is an error', fakeAsync(function() {
-            const errorResp = new HttpErrorResponse({statusText: error});
-            spyOn(service, 'getUsers').and.returnValue(throwError(errorResp));
+            spyOn(service, 'getUsers').and.returnValue(throwError(errorObj));
             spyOn(service, 'getGroups').and.returnValue(of([groupRdf]));
             service.initialize().subscribe();
             tick();
@@ -146,10 +147,10 @@ describe('User Manager service', function() {
         });
         it('unless an error occurs', function() {
             service.getUsers().subscribe(() => fail('Promise should have rejected'), response => {
-                expect(response).toEqual(error);
+                expect(response).toEqual(errorObj);
             });
             const request = httpMock.expectOne({url: service.userPrefix, method: 'GET'});
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush({error: '', errorMessage: error, errorDetails: []}, { status: 400, statusText: error });
         });
     });
     describe('should get groups', function() {
@@ -162,10 +163,10 @@ describe('User Manager service', function() {
         });
         it('unless an error occurs', function() {
             service.getGroups().subscribe(() => fail('Promise should have rejected'), response => {
-                expect(response).toEqual(error);
+                expect(response).toEqual(errorObj);
             });
             const request = httpMock.expectOne({url: service.groupPrefix, method: 'GET'});
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush({error: '', errorMessage: error, errorDetails: []}, { status: 400, statusText: error });
         });
     });
     describe('should get the username of the user with the passed iri', function() {
@@ -184,11 +185,11 @@ describe('User Manager service', function() {
             it('unless an error occurs', function() {
                 service.getUsername('iri')
                     .subscribe(() => fail('Promise should have rejected'), response => {
-                        expect(response).toEqual(error);
+                        expect(response).toEqual(errorObj);
                     });
                 const request = httpMock.expectOne(req => req.url === `/mobirest/username` && req.method === 'GET');
                 expect(request.request.params.get('iri')).toEqual('iri');
-                request.flush('flush', { status: 400, statusText: error });
+                request.flush({error: '', errorMessage: error, errorDetails: []}, { status: 400, statusText: error });
                 expect(service.getUser).not.toHaveBeenCalled();
               });
             it('successfully', function() {
@@ -218,7 +219,7 @@ describe('User Manager service', function() {
         it('unless an error occurs', function() {
             service.addUser(config)
                 .subscribe(() => fail('Promise should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne({url: service.userPrefix, method: 'POST'});
             expect(request.request.body instanceof FormData).toBeTrue();
@@ -228,7 +229,7 @@ describe('User Manager service', function() {
             expect((request.request.body as FormData).get('lastName').toString()).toEqual(config.lastName);
             expect((request.request.body as FormData).get('email').toString()).toEqual(config.email);
             expect((request.request.body as FormData).getAll('roles')).toEqual(config.roles);
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush({error: '', errorMessage: error, errorDetails: []}, { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.addUser(config)
@@ -250,10 +251,10 @@ describe('User Manager service', function() {
         it('unless an error occurs', function() {
             service.getUser('user')
                 .subscribe(() => fail('Promise should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne({url: `${service.userPrefix}/user`, method: 'GET'});
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush({error: '', errorMessage: error, errorDetails: []}, { status: 400, statusText: error });
         });
         describe('successfully and update the users list if', function() {
             it('the user was already retrieved', function() {
@@ -291,11 +292,11 @@ describe('User Manager service', function() {
         it('unless an error occurs', function() {
             service.updateUser(user.username, newUser)
                 .subscribe(() => fail('Promise should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne({url: `${service.userPrefix}/${user.username}`, method: 'PUT'});
             expect(request.request.body).toEqual(newUserRdf);
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush({error: '', errorMessage: error, errorDetails: []}, { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.updateUser(user.username, newUser)
@@ -333,11 +334,11 @@ describe('User Manager service', function() {
         it('unless an error occurs', function() {
             service.resetPassword(user.username, 'newPassword')
                 .subscribe(() => fail('Promise should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne(req => req.url === `${service.userPrefix}/${user.username}/password` && req.method === 'PUT');
             expect(request.request.params.get('newPassword')).toEqual('newPassword');
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush({error: '', errorMessage: error, errorDetails: []}, { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.resetPassword(user.username, 'newPassword')
@@ -357,10 +358,10 @@ describe('User Manager service', function() {
         it('unless an error occurs', function() {
             service.deleteUser(user.username)
                 .subscribe(() => fail('Promise should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne({url: `${service.userPrefix}/${user.username}`, method: 'DELETE'});
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush({error: '', errorMessage: error, errorDetails: []}, { status: 400, statusText: error });
         });
         it('with the passed username', function() {
             service.deleteUser(user.username)
@@ -380,11 +381,11 @@ describe('User Manager service', function() {
         it('unless an error occurs', function() {
              service.addUserRoles(user.username, roles)
                 .subscribe(() => fail('Promise should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne(req => req.url === `${service.userPrefix}/${user.username}/roles` && req.method === 'PUT');
             expect(request.request.params.getAll('roles')).toEqual(roles);
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush({error: '', errorMessage: error, errorDetails: []}, { status: 400, statusText: error });
         });
         it('using the passed parameters', function() {
             const originalRoles = user.roles;
@@ -404,11 +405,11 @@ describe('User Manager service', function() {
         it('unless an error occurs', function() {
             service.deleteUserRole(user.username, 'user')
                 .subscribe(() => fail('Promise should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne(req => req.url === `${service.userPrefix}/${user.username}/roles` && req.method === 'DELETE');
             expect(request.request.params.get('role')).toEqual('user');
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush({error: '', errorMessage: error, errorDetails: []}, { status: 400, statusText: error });
         });
         it('using the passed parameters', function() {
             service.deleteUserRole(user.username, 'user')
@@ -429,11 +430,11 @@ describe('User Manager service', function() {
         it('unless an error occurs', function() {
             service.addUserGroup(user.username, group.title)
                 .subscribe(() => fail('Promise should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne(req => req.url === `${service.userPrefix}/${user.username}/groups` && req.method === 'PUT');
             expect(request.request.params.get('group')).toEqual(group.title);
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush({error: '', errorMessage: error, errorDetails: []}, { status: 400, statusText: error });
         });
         it('using the passed parameters', function() {
             service.addUserGroup(user.username, group.title)
@@ -453,11 +454,11 @@ describe('User Manager service', function() {
         it('unless an error occurs', function() {
             service.deleteUserGroup(user.username, group.title)
                 .subscribe(() => fail('Promise should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne(req => req.url === `${service.userPrefix}/${user.username}/groups` && req.method === 'DELETE');
             expect(request.request.params.get('group')).toEqual(group.title);
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush({error: '', errorMessage: error, errorDetails: []}, { status: 400, statusText: error });
         });
         it('using the passed parameters', function() {
             service.deleteUserGroup(user.username, group.title)
@@ -476,11 +477,11 @@ describe('User Manager service', function() {
         it('unless an error occurs', function() {
             service.addGroup(group)
                 .subscribe(() => fail('Promise should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne({url: service.groupPrefix, method: 'POST'});
             expect(request.request.body instanceof FormData).toBeTrue();
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush({error: '', errorMessage: error, errorDetails: []}, { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.addGroup(group)
@@ -496,10 +497,10 @@ describe('User Manager service', function() {
         it('unless an error occurs', function() {
             service.getGroup(group.title)
                 .subscribe(() => fail('Promise should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne({url: `${service.groupPrefix}/${group.title}`, method: 'GET'});
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush({error: '', errorMessage: error, errorDetails: []}, { status: 400, statusText: error });
         });
         describe('successfully and update the groups list if', function() {
             beforeEach(function() {
@@ -539,11 +540,11 @@ describe('User Manager service', function() {
         it('unless an error occurs', function() {
             service.updateGroup(group.title, this.newGroup)
                 .subscribe(() => fail('Promise should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne({url: `${service.groupPrefix}/${group.title}`, method: 'PUT'});
             expect(request.request.body).toEqual(this.newGroup.jsonld);
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush({error: '', errorMessage: error, errorDetails: []}, { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.updateGroup(group.title, this.newGroup)
@@ -562,10 +563,10 @@ describe('User Manager service', function() {
         it('unless an error occurs', function() {
             service.deleteGroup(group.title)
                 .subscribe(() => fail('Promise should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne({url: `${service.groupPrefix}/${group.title}`, method: 'DELETE'});
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush({error: '', errorMessage: error, errorDetails: []}, { status: 400, statusText: error });
     });
         it('with the passed title', function() {
             service.deleteGroup(group.title)
@@ -584,11 +585,11 @@ describe('User Manager service', function() {
         it('unless an error occurs', function() {
             service.addGroupRoles(group.title, roles)
                 .subscribe(() => fail('Promise should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne(req => req.url === `${service.groupPrefix}/${group.title}/roles` && req.method === 'PUT');
             expect(request.request.params.getAll('roles')).toEqual(roles);
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush({error: '', errorMessage: error, errorDetails: []}, { status: 400, statusText: error });
         });
         it('using the passed parameters', function() {
             const originalRoles = group.roles;
@@ -609,11 +610,11 @@ describe('User Manager service', function() {
         it('unless an error occurs', function() {
             service.deleteGroupRole(group.title, 'role')
                 .subscribe(() => fail('Promise should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne(req => req.url === `${service.groupPrefix}/${group.title}/roles` && req.method === 'DELETE');
             expect(request.request.params.get('role')).toEqual('role');
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush({error: '', errorMessage: error, errorDetails: []}, { status: 400, statusText: error });
         });
         it('using the passed parameters', function() {
             service.deleteGroupRole(group.title, 'role')
@@ -629,10 +630,10 @@ describe('User Manager service', function() {
         it('unless an error occurs', function() {
             service.getGroupUsers(group.title)
                 .subscribe(() => fail('Promise should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne({url: `${service.groupPrefix}/${group.title}/users`, method: 'GET'});
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush({error: '', errorMessage: error, errorDetails: []}, { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.getGroupUsers(group.title)
@@ -651,11 +652,11 @@ describe('User Manager service', function() {
         it('unless an error occurs', function() {
             service.addGroupUsers(group.title, users)
                 .subscribe(() => fail('Promise should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne(req => req.url === `${service.groupPrefix}/${group.title}/users` && req.method === 'PUT');
             expect(request.request.params.getAll('users')).toEqual(users);
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush({error: '', errorMessage: error, errorDetails: []}, { status: 400, statusText: error });
         });
         it('successfully', function() {
             const originalMembers = group.members;
@@ -675,11 +676,11 @@ describe('User Manager service', function() {
         it('unless an error occurs', function() {
             service.deleteGroupUser(group.title, user.username)
                 .subscribe(() => fail('Promise should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne(req => req.url === `${service.groupPrefix}/${group.title}/users` && req.method === 'DELETE');
             expect(request.request.params.get('user')).toEqual(user.username);
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush({error: '', errorMessage: error, errorDetails: []}, { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.deleteGroupUser(group.title, user.username)

@@ -83,7 +83,7 @@ describe('Edit Request Overlay Component', function() {
         [`${USER}hasUserRole`]: [],
     });
     const requestTitle = 'Merge Request 1';
-    const error = 'error';
+    const error = {error: '', errorMessage: 'error', errorDetails: []};
     const sourceBranch: JSONLDObject = {'@id': 'urn://test/branch/source'};
     const branch: JSONLDObject = {'@id': 'urn://test/branch/target', '@type': []};
     const emptyRequest: MergeRequest = {
@@ -197,7 +197,7 @@ describe('Edit Request Overlay Component', function() {
             expect(component.targetBranch).toEqual(branch);
             expect(component.assignees).toEqual(mergeRequestsStateStub.selected.assignees);
             expect(catalogManagerStub.getRecordBranches).toHaveBeenCalledWith(recordId, catalogId);
-            expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
+            expect(toastStub.createErrorToast).toHaveBeenCalledWith(error.errorMessage);
             expect(component.branches).toEqual([]);
         }));
     });
@@ -240,7 +240,7 @@ describe('Edit Request Overlay Component', function() {
                 expect(mergeRequestsStateStub.getRequestObj).not.toHaveBeenCalled();
                 expect(mergeRequestsStateStub.setRequestDetails).not.toHaveBeenCalled();
                 expect(matDialogRef.close).not.toHaveBeenCalled();
-                expect(component.errorMessage).toEqual(error);
+                expect(component.errorMessage).toEqual(error.errorMessage);
             }));
         });
     });

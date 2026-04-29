@@ -29,18 +29,17 @@ import com.mobi.document.translator.impl.csv.CsvSemanticTranslator;
 import com.mobi.document.translator.ontology.ExtractedOntology;
 import com.mobi.exception.MobiException;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
-import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.FileUpload;
 import com.mobi.rest.util.RestUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import org.apache.commons.io.FilenameUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
@@ -134,19 +133,17 @@ public class DocumentTranslatorRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Invalid or unsupported file type, or missing required file",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
@@ -156,10 +153,9 @@ public class DocumentTranslatorRest {
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while translating the document to RDF",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -182,7 +178,7 @@ public class DocumentTranslatorRest {
             String filename = file.getFilename();
 
             if (inputStream == null) {
-                throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("The file is missing."));
             }
 
             if (outputName == null) {
@@ -224,9 +220,9 @@ public class DocumentTranslatorRest {
                     .build();
 
         } catch (MobiException | SemanticTranslationException | IllegalStateException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         } catch (IOException | UnsupportedOperationException | IllegalArgumentException userError) {
-            throw ErrorUtils.sendError(userError, userError.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(userError);
         } finally {
             if (tempFolder != null) {
                 cleanupFiles(tempFolder);

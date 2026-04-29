@@ -33,7 +33,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import com.mobi.rest.util.swagger.JsonLdObject;
@@ -42,7 +41,6 @@ import com.mobi.setting.api.ontologies.setting.ApplicationSetting;
 import com.mobi.setting.api.ontologies.setting.Setting;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -96,8 +94,8 @@ public class SettingRest {
     private SettingService<?> getSettingService(String type) {
         SettingService<? extends Setting> service = settingServices.get(type);
         if (service == null) {
-            throw ErrorUtils.sendError("Could not find SettingService for type: " + type,
-                    Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(
+                    new IllegalArgumentException("Could not find SettingService for type: " + type));
         }
         return service;
     }
@@ -127,29 +125,17 @@ public class SettingRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided Setting data or parameters are invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving Settings",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response getAllSettings(
@@ -165,9 +151,9 @@ public class SettingRest {
             Set<? extends Setting> settings = service.getSettings(user);
             return settingsToJson(service, settings);
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException | IllegalStateException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -185,29 +171,17 @@ public class SettingRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided Setting data or parameters are invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving the Setting",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response getSetting(
@@ -223,9 +197,9 @@ public class SettingRest {
             SettingService<? extends Setting> service = getSettingService(type);
             return getSettingResponse(service, settingId);
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException | IllegalStateException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -250,10 +224,9 @@ public class SettingRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
@@ -315,11 +288,7 @@ public class SettingRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
@@ -383,11 +352,7 @@ public class SettingRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
@@ -436,29 +401,17 @@ public class SettingRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided Setting data or parameters are invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving SettingGroups",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response getGroups(
@@ -472,9 +425,9 @@ public class SettingRest {
             Model model = service.getSettingGroups();
             return Response.ok(RestUtils.modelToJsonld(model)).build();
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException | IllegalStateException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -493,29 +446,17 @@ public class SettingRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided Setting data or parameters are invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving the SettingGroup definitions",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response getSettingDefinitions(
@@ -533,9 +474,9 @@ public class SettingRest {
             Model model = service.getSettingDefinitions(vf.createIRI(groupId));
             return Response.ok(RestUtils.modelToJsonld(model)).build();
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException | IllegalStateException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -544,7 +485,7 @@ public class SettingRest {
     @Path("types/{settingType}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @Operation(summary = "Retrieves the Setting whose type is the provided Setting type")  
+    @Operation(summary = "Retrieves the Setting whose type is the provided Setting type")
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
@@ -553,29 +494,17 @@ public class SettingRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided Setting data or parameters are invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving the Setting by type",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response getSettingByType(
@@ -597,9 +526,9 @@ public class SettingRest {
             JsonNode result = getSettingAsJsonNode(setting);
             return Response.ok(result.toString()).build();
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException | IllegalStateException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -625,11 +554,7 @@ public class SettingRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
@@ -664,8 +589,9 @@ public class SettingRest {
 
     private Response getSettingResponse(SettingService<? extends Setting> settingService, String settingId) {
         Setting setting = settingService.getSetting(vf.createIRI(settingId))
-                .orElseThrow(() -> ErrorUtils.sendError("Setting with id " + settingId
-                        + " does not exist.", Response.Status.BAD_REQUEST));
+                .orElseThrow(() -> RestUtils.getErrorObjBadRequest(
+                        new IllegalArgumentException("Setting with id " + settingId
+                                + " does not exist.")));
         JsonNode result = getSettingAsJsonNode(setting);
         return Response.ok(result.toString()).build();
     }
@@ -690,11 +616,12 @@ public class SettingRest {
     private void checkAdmin(String type, User user) {
         if (ApplicationSetting.TYPE.equals(type)) {
             String username = user.getUsername().orElseThrow(() ->
-                            ErrorUtils.sendError("User must be a registered user.", Response.Status.BAD_REQUEST))
+                            RestUtils.getErrorObjBadRequest(
+                                    new IllegalArgumentException("User must be a registered user.")))
                     .stringValue();
             if (!RestUtils.isAdminUser(username, engineManager)) {
-                throw ErrorUtils.sendError("User must have Admin role to perform this action.",
-                        Response.Status.UNAUTHORIZED);
+                throw RestUtils.getErrorObjUnauthorized(
+                        new IllegalAccessException("User must have Admin role to perform this action."));
             }
         }
     }

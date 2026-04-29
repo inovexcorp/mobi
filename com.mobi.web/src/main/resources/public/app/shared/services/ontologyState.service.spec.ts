@@ -55,6 +55,7 @@ import { StateManagerService } from './stateManager.service';
 import { ToastService } from './toast.service';
 import { UpdateRefsService } from './updateRefs.service';
 import { VersionedRdfState } from './versionedRdfState.service';
+import { RESTError } from '../models/RESTError.interface';
 import { VocabularyStuff } from '../models/vocabularyStuff.interface';
 import { OntologyStateService } from './ontologyState.service';
 
@@ -83,6 +84,11 @@ describe('Ontology State Service', function() {
 
   const file = new File([''], '');
   const error = 'Error message';
+  const errorObject: RESTError = {
+    errorMessage: 'Error message',
+    errorDetails: [],
+    error: ''
+  };
   const catalogId = 'catalogId';
   const recordId = 'recordId';
   const branchId = 'branchId';
@@ -372,7 +378,7 @@ describe('Ontology State Service', function() {
   describe('create makes a new ontology without opening it', function() {
     it('unless no file or JSON-LD was provided', fakeAsync(function() {
       service.create({ title: '' }).subscribe(() => fail('Observable should have failed'), error => {
-        expect(error).toEqual('Creation requires a file or JSON-LD');
+        expect(error).toEqual({error: '', errorMessage: 'Creation requires a file or JSON-LD', errorDetails: []});
       });
       tick();
       expect(ontologyManagerStub.uploadOntology).not.toHaveBeenCalled();
@@ -402,7 +408,7 @@ describe('Ontology State Service', function() {
     });
     it('unless no file or JSON-LD was provided', fakeAsync(function() {
       service.createAndOpen({ title: '' }).subscribe(() => fail('Observable should have failed'), error => {
-        expect(error).toEqual('Creation requires a file or JSON-LD');
+        expect(error).toEqual({error: '', errorMessage: 'Creation requires a file or JSON-LD', errorDetails: []});
       });
       tick();
       expect(ontologyManagerStub.uploadOntology).not.toHaveBeenCalled();
@@ -468,10 +474,10 @@ describe('Ontology State Service', function() {
       it('when uploadOntology rejects', fakeAsync(function() {
         spyOn(service, 'createOntologyListItem');
         spyOn(service, 'createState');
-        ontologyManagerStub.uploadOntology.and.returnValue(throwError(error));
+        ontologyManagerStub.uploadOntology.and.returnValue(throwError(errorObject));
         service.createAndOpen(uploadDetails)
           .subscribe(() => fail('Observable should have rejected'), response => {
-            expect(response).toEqual(error);
+            expect(response).toEqual(errorObject);
           });
         tick();
         expect(ontologyManagerStub.uploadOntology).toHaveBeenCalledWith(uploadDetails);
@@ -530,10 +536,10 @@ describe('Ontology State Service', function() {
       });
       it('when uploadOntology rejects', fakeAsync(function() {
         spyOn(service, 'createState');
-        ontologyManagerStub.uploadOntology.and.returnValue(throwError(error));
+        ontologyManagerStub.uploadOntology.and.returnValue(throwError(errorObject));
         service.createAndOpen(uploadDetails)
           .subscribe(() => fail('Observable should have rejected'), response => {
-            expect(response).toEqual(error);
+            expect(response).toEqual(errorObject);
           });
         tick();
         expect(ontologyManagerStub.uploadOntology).toHaveBeenCalledWith(uploadDetails);
@@ -675,10 +681,10 @@ describe('Ontology State Service', function() {
       }));
     });
     it('when uploadChangesFile rejects', fakeAsync(function() {
-      ontologyManagerStub.uploadChangesFile.and.returnValue(throwError(error));
+      ontologyManagerStub.uploadChangesFile.and.returnValue(throwError(errorObject));
       spyOn(service, 'changeVersion');
       service.uploadChanges({ file, recordId, branchId, commitId }).subscribe(() => fail('Observable should have rejected'), response => {
-        expect(response).toEqual({ errorMessage: error, errorDetails: [] });
+        expect(response).toEqual(errorObject);
       });
       tick();
       expect(ontologyManagerStub.uploadChangesFile).toHaveBeenCalledWith(file, recordId, branchId, commitId);
@@ -1635,11 +1641,11 @@ describe('Ontology State Service', function() {
       tick();
     }));
     it('when more than one call fails', fakeAsync(function() {
-      ontologyManagerStub.getOntologyStuff.and.returnValue(throwError(error));
+      ontologyManagerStub.getOntologyStuff.and.returnValue(throwError(errorObject));
       catalogManagerStub.getRecordBranches.and.returnValue(throwError(error));
       service.createOntologyListItem(recordId, branchId, commitId, tagId, difference, true, title)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObject);
         });
       tick();
     }));
@@ -1702,7 +1708,7 @@ describe('Ontology State Service', function() {
       it('rejects', fakeAsync(function() {
         const originalConcepts = Object.assign({}, service.listItem.concepts);
         const originalConceptSchemes = Object.assign({}, service.listItem.conceptSchemes);
-        ontologyManagerStub.getVocabularyStuff.and.returnValue(throwError(error));
+        ontologyManagerStub.getVocabularyStuff.and.returnValue(throwError(errorObject));
         service.setVocabularyStuff();
         tick();
         expect(ontologyManagerStub.getVocabularyStuff).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, service.listItem.versionedRdfRecord.branchId, service.listItem.versionedRdfRecord.commitId/* , service.vocabularySpinnerId */);
@@ -1713,7 +1719,7 @@ describe('Ontology State Service', function() {
         expect(service.listItem.conceptSchemes).toEqual(originalConceptSchemes);
         expect(service.flattenHierarchy).not.toHaveBeenCalled();
         expect(service.listItem.editorTabStates.concepts).toEqual({ entityIRI: 'iri', usages: [] });
-        expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
+        expect(toastStub.createErrorToast).toHaveBeenCalledWith(errorObject.errorMessage);
       }));
     });
     describe('the provided listItem when getVocabularyStuff', function() {
@@ -1747,7 +1753,7 @@ describe('Ontology State Service', function() {
       it('rejects', fakeAsync(function() {
         const originalConcepts = Object.assign({}, listItem.concepts);
         const originalConceptSchemes = Object.assign({}, listItem.conceptSchemes);
-        ontologyManagerStub.getVocabularyStuff.and.returnValue(throwError(error));
+        ontologyManagerStub.getVocabularyStuff.and.returnValue(throwError(errorObject));
         service.setVocabularyStuff(listItem);
         tick();
         expect(ontologyManagerStub.getVocabularyStuff).toHaveBeenCalledWith(listItem.versionedRdfRecord.recordId, listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId);
@@ -1758,7 +1764,7 @@ describe('Ontology State Service', function() {
         expect(listItem.conceptSchemes).toEqual(originalConceptSchemes);
         expect(service.flattenHierarchy).not.toHaveBeenCalled();
         expect(listItem.editorTabStates.concepts).toEqual({ entityIRI: 'iri', usages: [] });
-        expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
+        expect(toastStub.createErrorToast).toHaveBeenCalledWith(errorObject.errorMessage);
       }));
     });
   });
@@ -2019,10 +2025,10 @@ describe('Ontology State Service', function() {
       expect(ontologyManagerStub.getEntityAndBlankNodes).toHaveBeenCalledWith(recordId, branchId, commitId, classId);
     }));
     it('unless an error occurs', fakeAsync(function() {
-      ontologyManagerStub.getEntityAndBlankNodes.and.returnValue(throwError(error));
+      ontologyManagerStub.getEntityAndBlankNodes.and.returnValue(throwError(errorObject));
       service.getEntity(classId, listItem)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObject);
         });
       tick();
       expect(ontologyManagerStub.getEntityAndBlankNodes).toHaveBeenCalledWith(recordId, branchId, commitId, classId);
@@ -2238,7 +2244,7 @@ describe('Ontology State Service', function() {
       expect(service.addToAdditions).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, statement);
     }));
     it('when getEntityUsages rejects', fakeAsync(function() {
-      ontologyManagerStub.getEntityUsages.and.returnValue(throwError(error));
+      ontologyManagerStub.getEntityUsages.and.returnValue(throwError(errorObject));
       service.onIriEdit(iriBegin, iriThen, iriEnd).subscribe();
       tick();
       expect(service.recalculateJoinedPaths).toHaveBeenCalledWith(service.listItem);
@@ -2347,7 +2353,7 @@ describe('Ontology State Service', function() {
         expect(service.listItem.editorTabStates[key].usages).toEqual(response);
       }));
       it('when getEntityUsages rejects', fakeAsync(function() {
-        ontologyManagerStub.getEntityUsages.and.returnValue(throwError(error));
+        ontologyManagerStub.getEntityUsages.and.returnValue(throwError(errorObject));
         service.setEntityUsages(id, undefined, 3);
         tick();
         expect(service.getActivePage).toHaveBeenCalledWith(service.listItem, 3);
@@ -2372,7 +2378,7 @@ describe('Ontology State Service', function() {
         expect(service.listItem.editorTabStates[key].usages).toEqual(response);
       }));
       it('when getEntityUsages rejects', fakeAsync(function() {
-        ontologyManagerStub.getEntityUsages.and.returnValue(throwError(error));
+        ontologyManagerStub.getEntityUsages.and.returnValue(throwError(errorObject));
         service.setEntityUsages(id);
         tick();
         expect(service.getActivePage).toHaveBeenCalledWith(service.listItem);
@@ -3805,14 +3811,14 @@ describe('Ontology State Service', function() {
       }));
     });
     it('when getEntityUsages rejects', fakeAsync(function() {
-      ontologyManagerStub.getEntityUsages.and.returnValue(throwError(error));
+      ontologyManagerStub.getEntityUsages.and.returnValue(throwError(errorObject));
       service.commonDelete('iri')
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObject);
         });
       tick();
       expect(ontologyManagerStub.getEntityUsages).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, service.listItem.versionedRdfRecord.branchId, service.listItem.versionedRdfRecord.commitId, 'iri', 'construct');
-      expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
+      expect(toastStub.createErrorToast).toHaveBeenCalledWith(errorObject.errorMessage);
     }));
   });
   it('deleteClass should call the proper methods', fakeAsync(function() {

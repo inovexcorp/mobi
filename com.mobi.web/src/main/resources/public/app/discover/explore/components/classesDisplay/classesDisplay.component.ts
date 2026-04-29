@@ -72,7 +72,7 @@ export class ClassesDisplayComponent {
                                     classes
                                 }
                             });
-                        }, error => this.toast.createErrorToast(error));
+                        }, error => this.toast.createErrorToast(error.errorMessage));
                 } else {
                     this.toast.createErrorToast('You don\'t have permission to modify dataset');
                 }
@@ -98,9 +98,9 @@ export class ClassesDisplayComponent {
                     this.es.getClassDetails(this.state.explore.recordId)
                         .subscribe(details => {
                             this.state.explore.classDetails = details;
-                        }, errorMessage => {
+                        }, error => {
                             this.state.explore.classDetails = [];
-                            this.toast.createErrorToast(errorMessage);
+                            this.toast.createErrorToast(error.errorMessage);
                         });
                 } else {
                     this.toast.createErrorToast('You don\'t have permission to read dataset');

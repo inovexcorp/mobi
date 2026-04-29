@@ -22,7 +22,7 @@
   -->
 <h1 mat-dialog-title>Run Mapping into Dataset</h1>
 <form mat-dialog-content [formGroup]="runMappingDatasetForm">
-    <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
+    <rest-error-display *ngIf="error" [error]="error"></rest-error-display>
     <mat-form-field class="w-100">
         <mat-label>Dataset</mat-label>
         <input type="text" matInput

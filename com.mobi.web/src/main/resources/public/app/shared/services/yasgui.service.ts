@@ -285,14 +285,15 @@ export class YasguiService {
                 includeImports: this.yasguiQuery.isImportedOntologyIncluded,
                 isOntology: this.isOntology
             }
-        }).afterClosed().subscribe((errorMessage) => {
-            if (errorMessage) {
+        }).afterClosed().subscribe((errorObj) => {
+            if (errorObj) {
+                const errorText = errorObj.errorMessage || errorObj;
                 tab.yasr.setResponse({
                         data: [],
-                        error: { 
+                        error: {
                             status: 401,
-                            text: errorMessage,
-                            statusText: errorMessage,
+                            text: errorText,
+                            statusText: errorText,
                             clear: true
                         },
                         status: 401,

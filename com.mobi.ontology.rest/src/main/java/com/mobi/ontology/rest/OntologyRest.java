@@ -90,8 +90,8 @@ import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
-import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.FileUpload;
+import com.mobi.rest.util.MobiNotFoundException;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import com.mobi.rest.util.swagger.JsonLdObject;
@@ -101,7 +101,6 @@ import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.ontologies.policy.Read;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Encoding;
@@ -308,38 +307,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "The provided ontology data or publisher information is invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to create an OntologyRecord",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while creating the OntologyRecord",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @RolesAllowed("user")
@@ -365,10 +348,9 @@ public class OntologyRest {
 
         checkStringParam(title, "The title is missing.");
         if (inputStream == null && json == null) {
-            throw ErrorUtils.sendError("The ontology data is missing.", Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("The ontology data is missing."));
         } else if (inputStream != null && json != null) {
-            throw ErrorUtils.sendError("Only provide either an ontology file or ontology json data.",
-                    Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Only provide either an ontology file or ontology json data."));
         }
 
         if (keywords == null) {
@@ -448,37 +430,30 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving the ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -516,13 +491,13 @@ public class OntologyRest {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     applyInProgressCommit, conn)
                     .orElseThrow(() ->
-                            ErrorUtils.sendError(ONTOLOGY_NOT_FOUND, Response.Status.BAD_REQUEST));
+                            RestUtils.getErrorObjNotFound(new MobiNotFoundException(ONTOLOGY_NOT_FOUND)));
 
             StreamingOutput output = outputStream ->
                     writeOntologyToStream(ontology, rdfFormat, skolemize, outputStream);
             return Response.ok(output).build();
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -578,14 +553,13 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     applyInProgressCommit, conn)
-                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
-                            Response.Status.BAD_REQUEST));
+                    .orElseThrow(() -> RestUtils.getErrorObjNotFound(new MobiNotFoundException(ONTOLOGY_NOT_FOUND)));
             StreamingOutput stream = getOntologyAsRdfStream(ontology, rdfFormat, false);
             return Response.ok(stream).header("Content-Disposition", "attachment;filename=" + fileName
                     + "." + getRDFFormatFileExtension(rdfFormat)).header("Content-Type",
                     getRDFFormatMimeType(rdfFormat)).build();
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -624,38 +598,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "The provided entity JSON or OntologyRecord ID is invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to modify this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while saving changes to the ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ActionId(Modify.TYPE)
@@ -674,8 +632,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
-                            Response.Status.BAD_REQUEST));
+                    .orElseThrow(() -> RestUtils.getErrorObjNotFound(new MobiNotFoundException(ONTOLOGY_NOT_FOUND)));
             Model entityModel = getModelForEntityInOntology(ontology, entityIdStr);
             Difference diff = differenceManager.getDiff(entityModel, getModelFromJson(entityJson));
             Resource recordId = vf.createIRI(recordIdStr);
@@ -684,8 +641,10 @@ public class OntologyRest {
             commitManager.updateInProgressCommit(configProvider.getLocalCatalogIRI(), recordId, inProgressCommitIRI,
                     diff.getAdditions(), diff.getDeletions(), conn);
             return Response.ok().build();
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -720,35 +679,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "The uploaded file is missing or contains invalid RDF data",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = ErrorObjectSchema.class)
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User does not have permission to modify this branch",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = ErrorObjectSchema.class)
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to modify this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while uploading changes to the ontology",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = ErrorObjectSchema.class)
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ActionId(Modify.TYPE)
@@ -913,19 +859,14 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to clear this ontology cache",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
@@ -986,38 +927,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving SKOS vocabulary information",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -1036,10 +961,10 @@ public class OntologyRest {
                 StreamingOutput output = getVocabularyStuffStream(optionalOntology.get());
                 return Response.ok(output).build();
             } else {
-                throw ErrorUtils.sendError(ONTOLOGY + recordIdStr + DOES_NOT_EXIST, Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjNotFound(new MobiNotFoundException(ONTOLOGY + recordIdStr + DOES_NOT_EXIST));
             }
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -1156,38 +1081,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving ontology information",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -1213,11 +1122,10 @@ public class OntologyRest {
                 StreamingOutput output = getOntologyStuffStream(optionalOntology.get());
                 return Response.ok(output).build();
             } else {
-                throw ErrorUtils.sendError(ONTOLOGY + recordIdStr + DOES_NOT_EXIST,
-                        Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjNotFound(new MobiNotFoundException(ONTOLOGY + recordIdStr + DOES_NOT_EXIST));
             }
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -1399,38 +1307,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving property ranges",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -1451,11 +1343,10 @@ public class OntologyRest {
                 StreamingOutput output = getPropertyToRangesStream(optionalOntology.get());
                 return Response.ok(output).build();
             } else {
-                throw ErrorUtils.sendError(ONTOLOGY + recordIdStr + DOES_NOT_EXIST,
-                        Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjNotFound(new MobiNotFoundException(ONTOLOGY + recordIdStr + DOES_NOT_EXIST));
             }
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -1504,38 +1395,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving ontology IRIs",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -1552,7 +1427,7 @@ public class OntologyRest {
                     true, conn);
             return Response.ok(result.toString()).build();
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -1585,38 +1460,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving annotation properties",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -1633,7 +1492,7 @@ public class OntologyRest {
                     this::getAnnotationIRIObject, true, conn);
             return Response.ok(result.toString()).build();
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -1662,38 +1521,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "The provided annotation JSON-LD is invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to modify this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while adding the annotation property",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ActionId(Modify.TYPE)
@@ -1709,7 +1552,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(annotationJson), conn);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -1745,38 +1588,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User does not have permission to modify this OntologyRecord",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to delete this annotation",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while deleting the annotation property",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ActionId(Modify.TYPE)
@@ -1794,11 +1621,10 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
-                            Response.Status.BAD_REQUEST));
+                    .orElseThrow(() -> RestUtils.getErrorObjNotFound(new MobiNotFoundException(ONTOLOGY_NOT_FOUND)));
             return deletionsToInProgressCommit(servletRequest, ontology, annotationIdStr, recordIdStr, conn);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -1833,38 +1659,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving ontology classes",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -1884,7 +1694,7 @@ public class OntologyRest {
                     this::getClassArray, applyInProgressCommit, conn);
             return Response.ok(result.toString()).build();
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -1913,38 +1723,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "The provided class JSON-LD is invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to modify this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while adding the class to the ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ActionId(Modify.TYPE)
@@ -1959,7 +1753,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(classJson), conn);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -1994,38 +1788,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to modify this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while deleting the class from the ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ActionId(Modify.TYPE)
@@ -2043,11 +1821,10 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
-                            Response.Status.BAD_REQUEST));
+                    .orElseThrow(() -> RestUtils.getErrorObjNotFound(new MobiNotFoundException(ONTOLOGY_NOT_FOUND)));
             return deletionsToInProgressCommit(servletRequest, ontology, classIdStr, recordIdStr, conn);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -2080,38 +1857,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving ontology datatypes",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -2128,7 +1889,7 @@ public class OntologyRest {
                     this::getDatatypeIRIObject, true, conn);
             return Response.ok(result.toString()).build();
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -2157,38 +1918,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "The provided datatype JSON-LD is invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to modify this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while adding the datatype to the ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ActionId(Modify.TYPE)
@@ -2203,7 +1948,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(datatypeJson), conn);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -2238,38 +1983,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to modify this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while deleting the datatype from the ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ActionId(Modify.TYPE)
@@ -2287,11 +2016,10 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
-                            Response.Status.BAD_REQUEST));
+                    .orElseThrow(() -> RestUtils.getErrorObjNotFound(new MobiNotFoundException(ONTOLOGY_NOT_FOUND)));
             return deletionsToInProgressCommit(servletRequest, ontology, datatypeIdStr, recordIdStr, conn);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -2324,38 +2052,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving object properties",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -2372,7 +2084,7 @@ public class OntologyRest {
                     this::getObjectPropertyArray, true, conn);
             return Response.ok(result.toString()).build();
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -2401,38 +2113,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "The provided object property JSON-LD is invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to modify this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while adding the object property",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ActionId(Modify.TYPE)
@@ -2447,7 +2143,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(objectPropertyJson), conn);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -2482,38 +2178,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to modify this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while deleting the object property",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ActionId(Modify.TYPE)
@@ -2531,11 +2211,10 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
-                            Response.Status.BAD_REQUEST));
+                    .orElseThrow(() -> RestUtils.getErrorObjNotFound(new MobiNotFoundException(ONTOLOGY_NOT_FOUND)));
             return deletionsToInProgressCommit(servletRequest, ontology, objectPropertyIdStr, recordIdStr, conn);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -2568,38 +2247,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving data properties",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -2616,7 +2279,7 @@ public class OntologyRest {
                     this::getDataPropertyArray, true, conn);
             return Response.ok(result.toString()).build();
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -2645,38 +2308,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "The provided data property JSON-LD is invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to modify this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while adding the data property",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ActionId(Modify.TYPE)
@@ -2691,7 +2338,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(dataPropertyJson), conn);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -2726,38 +2373,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to modify this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while deleting the data property",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ActionId(Modify.TYPE)
@@ -2775,11 +2406,10 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
-                            Response.Status.BAD_REQUEST));
+                    .orElseThrow(() -> RestUtils.getErrorObjNotFound(new MobiNotFoundException(ONTOLOGY_NOT_FOUND)));
             return deletionsToInProgressCommit(servletRequest, ontology, dataPropertyIdStr, recordIdStr, conn);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -2812,38 +2442,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving named individuals",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -2860,7 +2474,7 @@ public class OntologyRest {
                     this::getNamedIndividualIRIObject, true, conn);
             return Response.ok(result.toString()).build();
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -2889,38 +2503,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "The provided individual JSON-LD is invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to modify this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while adding the individual to the ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ActionId(Modify.TYPE)
@@ -2935,7 +2533,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(individualJson), conn);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -2970,38 +2568,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to modify this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while deleting the individual",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ActionId(Modify.TYPE)
@@ -3019,11 +2601,10 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
-                            Response.Status.BAD_REQUEST));
+                    .orElseThrow(() -> RestUtils.getErrorObjNotFound(new MobiNotFoundException(ONTOLOGY_NOT_FOUND)));
             return deletionsToInProgressCommit(servletRequest, ontology, individualIdStr, recordIdStr, conn);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -3058,38 +2639,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving IRIs from imported ontologies",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -3107,7 +2672,7 @@ public class OntologyRest {
             return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr, this::getAllIRIs,
                     applyInProgressCommit, conn);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -3141,38 +2706,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving imported ontology IRIs",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -3203,10 +2752,10 @@ public class OntologyRest {
                 }
                 return Response.ok(arrayNode.toString()).build();
             } else {
-                throw ErrorUtils.sendError(ONTOLOGY + recordIdStr + DOES_NOT_EXIST, Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjNotFound(new MobiNotFoundException(ONTOLOGY + recordIdStr + DOES_NOT_EXIST));
             }
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -3243,38 +2792,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving the imports closure",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -3299,7 +2832,7 @@ public class OntologyRest {
                     .forEach(arrayNode::add);
             return arrayNode.isEmpty() ? Response.noContent().build() : Response.ok(arrayNode.toString()).build();
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -3334,38 +2867,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving imported annotations",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -3383,7 +2900,7 @@ public class OntologyRest {
             return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     this::getAnnotationIRIObject, applyInProgressCommit, conn);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -3418,38 +2935,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving imported classes",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -3468,7 +2969,7 @@ public class OntologyRest {
             return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     this::getClassIRIArray, applyInProgressCommit, conn);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -3503,38 +3004,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving imported datatypes",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -3552,7 +3037,7 @@ public class OntologyRest {
             return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     this::getDatatypeIRIObject, applyInProgressCommit, conn);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -3587,38 +3072,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving imported object properties",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -3636,7 +3105,7 @@ public class OntologyRest {
             return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     this::getObjectPropertyIRIObject, applyInProgressCommit, conn);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -3671,38 +3140,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving imported data properties",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -3720,7 +3173,7 @@ public class OntologyRest {
             return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     this::getDataPropertyIRIObject, applyInProgressCommit, conn);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -3755,38 +3208,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving imported named individuals",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -3805,7 +3242,7 @@ public class OntologyRest {
             return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     this::getNamedIndividualIRIObject, applyInProgressCommit, conn);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -3844,38 +3281,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving the class hierarchy",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -3895,11 +3316,11 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     applyInProgressCommit, conn).orElseThrow(() ->
-                        ErrorUtils.sendError(ONTOLOGY_NOT_FOUND, Response.Status.BAD_REQUEST));
+                        RestUtils.getErrorObjNotFound(new MobiNotFoundException(ONTOLOGY_NOT_FOUND)));
             Hierarchy hierarchy = ontology.getSubClassesOf();
             return Response.ok(getHierarchyStream(hierarchy, nested, getClassIRIs(ontology))).build();
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -3937,38 +3358,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving the object property hierarchy",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -3985,12 +3390,11 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
-                            Response.Status.BAD_REQUEST));
+                    .orElseThrow(() -> RestUtils.getErrorObjNotFound(new MobiNotFoundException(ONTOLOGY_NOT_FOUND)));
             Hierarchy hierarchy = ontology.getSubObjectPropertiesOf();
             return Response.ok(getHierarchyStream(hierarchy, nested, getObjectPropertyIRIs(ontology))).build();
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -4028,38 +3432,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving the data property hierarchy",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -4076,12 +3464,11 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
-                            Response.Status.BAD_REQUEST));
+                    .orElseThrow(() -> RestUtils.getErrorObjNotFound(new MobiNotFoundException(ONTOLOGY_NOT_FOUND)));
             Hierarchy hierarchy = ontology.getSubDatatypePropertiesOf();
             return Response.ok(getHierarchyStream(hierarchy, nested, getDataPropertyIRIs(ontology))).build();
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -4120,38 +3507,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving the annotation property hierarchy",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -4168,12 +3539,11 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
-                            Response.Status.BAD_REQUEST));
+                    .orElseThrow(() -> RestUtils.getErrorObjNotFound(new MobiNotFoundException(ONTOLOGY_NOT_FOUND)));
             Hierarchy hierarchy = ontology.getSubAnnotationPropertiesOf();
             return Response.ok(getHierarchyStream(hierarchy, nested, getAnnotationIRIs(ontology))).build();
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -4210,38 +3580,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving the SKOS concept hierarchy",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -4258,12 +3612,11 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
-                            Response.Status.BAD_REQUEST));
+                    .orElseThrow(() -> RestUtils.getErrorObjNotFound(new MobiNotFoundException(ONTOLOGY_NOT_FOUND)));
             Hierarchy hierarchy = ontology.getConceptRelationships();
             return Response.ok(getHierarchyStream(hierarchy, nested, getConceptIRIs(ontology))).build();
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -4302,38 +3655,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving the concept scheme hierarchy",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -4350,12 +3687,11 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
-                            Response.Status.BAD_REQUEST));
+                    .orElseThrow(() -> RestUtils.getErrorObjNotFound(new MobiNotFoundException(ONTOLOGY_NOT_FOUND)));
             Hierarchy hierarchy = ontology.getConceptSchemeRelationships();
             return Response.ok(getHierarchyStream(hierarchy, nested, getConceptSchemeIRIs(ontology))).build();
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -4391,38 +3727,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving classes with individuals",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -4437,14 +3757,13 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
-                            Response.Status.BAD_REQUEST));
+                    .orElseThrow(() -> RestUtils.getErrorObjNotFound(new MobiNotFoundException(ONTOLOGY_NOT_FOUND)));
             ObjectNode objectNode = mapper.createObjectNode();
             objectNode.set("individuals",
                     mapper.valueToTree(ontology.getClassesWithIndividuals().getParentMap()));
             return Response.ok(objectNode.toString()).build();
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -4483,38 +3802,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology or entity with the provided IDs does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving entity usages",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -4533,8 +3836,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
-                            Response.Status.BAD_REQUEST));
+                    .orElseThrow(() -> RestUtils.getErrorObjNotFound(new MobiNotFoundException(ONTOLOGY_NOT_FOUND)));
             Resource entityIRI = vf.createIRI(entityIRIStr);
             if (queryType.equals("construct")) {
                 Model results = ontology.constructEntityUsages(entityIRI);
@@ -4543,11 +3845,12 @@ public class OntologyRest {
                 TupleQueryResult results = ontology.getEntityUsages(entityIRI);
                 return Response.ok(JSONQueryResults.getResponse(results).toString()).build();
             } else {
-                throw ErrorUtils.sendError("The queryType parameter is not select or construct as expected.",
-                        Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("The queryType parameter is not select or construct as expected."));
             }
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -4585,38 +3888,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "The search text is missing or the ontology does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while searching the ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -4634,8 +3921,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
-                            Response.Status.BAD_REQUEST));
+                    .orElseThrow(() -> RestUtils.getErrorObjNotFound(new MobiNotFoundException(ONTOLOGY_NOT_FOUND)));
             checkStringParam(searchText, "The searchText is missing.");
             TupleQueryResult results = ontology.getSearchResults(searchText);
             Map<String, Set<String>> response = new HashMap<>();
@@ -4658,7 +3944,7 @@ public class OntologyRest {
                     Response.ok(mapper.valueToTree(response).toString())
                             .build();
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -4691,38 +3977,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving the failed imports list",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -4737,11 +4007,10 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
-                            Response.Status.BAD_REQUEST));
+                    .orElseThrow(() -> RestUtils.getErrorObjNotFound(new MobiNotFoundException(ONTOLOGY_NOT_FOUND)));
             return Response.ok(getUnloadableImportIRIs(ontology)).build();
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -4796,37 +4065,30 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology or entity with the provided IDs does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving the entity triples",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -4851,8 +4113,8 @@ public class OntologyRest {
     ) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
-                    applyInProgressCommit, conn).orElseThrow(() -> ErrorUtils.sendError(
-                            ONTOLOGY_NOT_FOUND, Response.Status.BAD_REQUEST));
+                    applyInProgressCommit, conn).orElseThrow(() -> RestUtils.getErrorObjBadRequest(
+                            new IllegalArgumentException(ONTOLOGY_NOT_FOUND)));
 
             IRI entity = vf.createIRI(entityIdStr);
             String queryString = GET_ENTITY_QUERY.replace("%ENTITY%", "<" + entity.stringValue() + ">");
@@ -4860,8 +4122,10 @@ public class OntologyRest {
             return getResponseBuilderForGraphQuery(ontology, queryString, includeImports, format.equals(JSONLD),
                     format).type(format.equals(JSONLD) ? MediaType.APPLICATION_JSON_TYPE : MediaType.TEXT_PLAIN_TYPE)
                     .build();
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -4897,38 +4161,22 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist or filter is invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving entity names",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ActionId(Read.TYPE)
@@ -4980,11 +4228,12 @@ public class OntologyRest {
                 log.trace("Entity names endpoint: {}ms", watch.getTime());
                 return Response.ok(output).build();
             } else {
-                throw ErrorUtils.sendError(ONTOLOGY + recordIdStr + DOES_NOT_EXIST,
-                        Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjNotFound(new MobiNotFoundException(ONTOLOGY + recordIdStr + DOES_NOT_EXIST));
             }
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException | IOException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -5034,37 +4283,33 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Ontology with the provided record ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to read this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while converting the ontology to SHACL",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -5093,11 +4338,10 @@ public class OntologyRest {
                         repoManager, outputStream, rdfFormat);
                 return Response.ok(output).header("Content-Type", getRDFFormatMimeType(format)).build();
             } else {
-                throw ErrorUtils.sendError(ONTOLOGY + recordIdStr + DOES_NOT_EXIST,
-                        Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjNotFound(new MobiNotFoundException(ONTOLOGY + recordIdStr + DOES_NOT_EXIST));
             }
         } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -5130,28 +4374,25 @@ public class OntologyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "The provided IRI does not correspond to any OntologyRecord",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to access this ontology",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
@@ -5198,13 +4439,13 @@ public class OntologyRest {
                             writeOntologyToStream(ontology, finalFormat, false, outputStream);
                     return Response.ok(output).header("Content-Type", getRDFFormatMimeType(finalFormat)).build();
                 } else {
-                    throw ErrorUtils.sendError("User does not have permission to access ontology.",
-                            Response.Status.FORBIDDEN);
+                    throw RestUtils.getErrorObjUnauthorized(new IllegalAccessException("User does not have permission to access ontology."));
                 }
             } else {
-                throw ErrorUtils.sendError("IRI does not correspond to any ontology record.",
-                        Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("IRI does not correspond to any ontology record."));
             }
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException ex) {
             throw RestUtils.getErrorObjInternalServerError(ex);
         }
@@ -5436,7 +4677,7 @@ public class OntologyRest {
         if (optionalOntology.isPresent()) {
             return iriFunction.apply(optionalOntology.get());
         } else {
-            throw ErrorUtils.sendError(ONTOLOGY + recordIdStr + DOES_NOT_EXIST, Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjNotFound(new MobiNotFoundException(ONTOLOGY + recordIdStr + DOES_NOT_EXIST));
         }
     }
 
@@ -5464,7 +4705,7 @@ public class OntologyRest {
             importedOntologies = getImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     applyInProgressCommit, conn);
         } catch (RDFHandlerException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
         if (!importedOntologies.isEmpty()) {
             return Response.ok(doWithOntologies(importedOntologies, iriFunction).toString()).build();
@@ -5509,7 +4750,7 @@ public class OntologyRest {
             Ontology baseOntology = optionalOntology.get();
             return OntologyUtils.getImportedOntologies(baseOntology.getImportsClosure(), baseOntology);
         } else {
-            throw ErrorUtils.sendError(ONTOLOGY + recordIdStr + DOES_NOT_EXIST, Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjNotFound(new MobiNotFoundException(ONTOLOGY + recordIdStr + DOES_NOT_EXIST));
         }
     }
 
@@ -5998,8 +5239,7 @@ public class OntologyRest {
                         || statement.getPredicate().equals(entityId) || statement.getObject().equals(entityId))
                 .collect(Collectors.toSet()));
         if (model.isEmpty()) {
-            throw ErrorUtils.sendError(entityIdStr + " was not found within the ontology.",
-                    Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjNotFound(new MobiNotFoundException(entityIdStr + " was not found within the ontology."));
         }
         commitManager.updateInProgressCommit(configProvider.getLocalCatalogIRI(), recordId, inProgressCommitIRI,
                 null, model, conn);
@@ -6031,22 +5271,20 @@ public class OntologyRest {
             JsonNode json = mapper.readTree(jsonldStr);
 
             if (!json.has("@type")) {
-                throw ErrorUtils.sendError("The JSON-LD does not contain \"@type\".", Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("The JSON-LD does not contain \"@type\"."));
             }
 
             JsonNode jsonNode = json.get("@type");
             if (jsonNode.isArray()) {
                 List<String> values = mapper.readerFor(new TypeReference<List<String>>() {}).readValue(jsonNode);
                 if (!values.contains(type)) {
-                    throw ErrorUtils.sendError("The JSON-LD does not contain the proper type: " + type + ".",
-                            Response.Status.BAD_REQUEST);
+                    throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("The JSON-LD does not contain the proper type: " + type + "."));
                 }
             } else {
-                throw ErrorUtils.sendError("The JSON-LD does not contain an array of types.",
-                        Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("The JSON-LD does not contain an array of types."));
             }
         } catch (IOException e) {
-            throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException(e.getMessage()));
         }
     }
 
@@ -6084,8 +5322,7 @@ public class OntologyRest {
                     vf.createIRI(Branch.head_IRI), null);
             if (!commitStmt.hasNext()) {
                 commitStmt.close();
-                throw ErrorUtils.sendError("The requested instance could not be found.",
-                        Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjNotFound(new MobiNotFoundException("The requested instance could not be found."));
             }
             commitId = (Resource) commitStmt.next().getObject();
             commitStmt.close();

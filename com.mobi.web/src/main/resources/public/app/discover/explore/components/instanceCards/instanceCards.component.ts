@@ -91,7 +91,7 @@ export class InstanceCardsComponent implements OnInit, OnChanges {
                             if (has(response, 'results')) {
                                 forEach(response.results.bindings, binding => this.ds.explore.instance.objectMap[binding.object.value] = binding.title.value);
                             }
-                        }, error => this.toast.createErrorToast(error));
+                        }, error => this.toast.createErrorToast(error.errorMessage));
                 } else {
                     this.toast.createErrorToast('You don\'t have permission to read dataset');
                     this.ds.explore.breadcrumbs = initial(this.ds.explore.breadcrumbs);

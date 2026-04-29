@@ -136,7 +136,7 @@ export class EntitySearchFiltersComponent implements OnInit, OnChanges, OnDestro
           pagingData['totalSize'] = Number(response.headers.get('x-total-count')) || 0;
           pagingData['hasNextPage'] = filterInstance.filterItems.length < pagingData.totalSize;
           filterInstance.numChecked = componentContext.keywordFilterItems.length;
-        });
+        }, error => console.error('Failed to load keywords:', error.errorMessage));
       },
       getItemTooltip: function(filterItem: FilterItem) {
         return filterItem.value;

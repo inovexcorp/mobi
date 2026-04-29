@@ -119,7 +119,7 @@ export class NodeShapesDisplayComponent implements OnChanges {
       if (result) {
         this.stateService.removeNodeShape(this.nodeShape, this._propertyShapes).subscribe({
           error: error => {
-            this._toast.createErrorToast(`Error deleting node shape: ${error}`);
+            this._toast.createErrorToast(`Error deleting node shape: ${error.errorMessage}`);
           }
         });
       }

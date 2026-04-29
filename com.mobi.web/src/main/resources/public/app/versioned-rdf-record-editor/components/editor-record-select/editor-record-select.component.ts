@@ -242,7 +242,7 @@ export class EditorRecordSelectComponent<TData extends VersionedRdfListItem> imp
       this.textInput.nativeElement.blur();
       this.recordSearchControl.setValue(record.title);
       this.autocompleteTrigger.closePanel();
-    }, error => this._toast.createErrorToast(error));
+    }, error => this._toast.createErrorToast(error.errorMessage));
   }
 
   /**
@@ -294,7 +294,7 @@ export class EditorRecordSelectComponent<TData extends VersionedRdfListItem> imp
           }
         }),
         catchError(errorMessage => {
-          this._toast.createErrorToast(errorMessage);
+          this._toast.createErrorToast(errorMessage.errorMessage);
           return throwError(errorMessage);
         }),
         finalize(() => {
@@ -379,7 +379,7 @@ export class EditorRecordSelectComponent<TData extends VersionedRdfListItem> imp
     this._state.delete(recordIri)
       .subscribe(() => {
         this._toast.createSuccessToast(`${recordIri} deleted successfully!`);
-      }, errorMessage => this._toast.createErrorToast(errorMessage));
+      }, errorMessage => this._toast.createErrorToast(errorMessage.errorMessage));
   }
 
   /**

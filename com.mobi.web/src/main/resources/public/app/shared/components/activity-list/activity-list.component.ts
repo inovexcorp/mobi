@@ -29,6 +29,7 @@ import { ProgressSpinnerService } from '../../../shared/components/progress-spin
 import { ToastService } from '../../services/toast.service';
 import { ProvManagerService } from '../../../shared/services/provManager.service';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
+import { RESTError } from '../../models/RESTError.interface';
 import { PROV } from '../../../prefixes';
 import { getDate, getPropertyValue } from '../../utility';
 
@@ -54,6 +55,7 @@ export class ActivityListComponent implements OnInit, OnDestroy {
     activities: ActivityDisplay[] = [];
     entities: JSONLDObject[] = [];
     totalSize = 0;
+    error: RESTError;
     subscription: Subscription;
     
     @Input() entityIri: string;
@@ -88,9 +90,11 @@ export class ActivityListComponent implements OnInit, OnDestroy {
                 }));
                 this.entities = response.body.entities;
                 this.totalSize = Number(response.headers.get('x-total-count')) || 0;
-            }, errorMessage => {
-                if (errorMessage) {
-                    this.toast.createErrorToast(errorMessage);
+                this.error = undefined;
+            }, (error: RESTError) => {
+                this.error = error;
+                if (error && error.errorMessage) {
+                    this.toast.createErrorToast(error.errorMessage);
                 }
             });
     }

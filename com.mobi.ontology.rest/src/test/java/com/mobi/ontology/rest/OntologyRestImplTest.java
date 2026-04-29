@@ -23,6 +23,9 @@ package com.mobi.ontology.rest;
  * #L%
  */
 
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorContains;
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorResponse;
+import static com.mobi.rest.test.util.ErrorResponseAssert.getResponse;
 import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
@@ -799,14 +802,6 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         assertEquals(ontologyIRI.stringValue(), ontologyId.asText());
     }
 
-    private ObjectNode getResponse(Response response) {
-        try {
-            return objectMapper.readValue(response.readEntity(String.class), ObjectNode.class);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Expected no exception", e);
-        }
-    }
-
     private ArrayNode getResponseArray(Response response) {
         try {
             return objectMapper.readValue(response.readEntity(String.class), ArrayNode.class);
@@ -984,12 +979,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(500, response.getStatus());
-
-        ObjectNode responseObject = getResponse(response);
-        assertEquals("MobiException", responseObject.get("error").asText());
-        assertEquals("I'm an exception!", responseObject.get("errorMessage").asText());
-        assertNotEquals(responseObject.get("errorDetails"), null);
+        assertErrorResponse(response, 500, "MobiException", "I'm an exception!");
     }
 
     @Test
@@ -1006,12 +996,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(400, response.getStatus());
-
-        ObjectNode responseObject = getResponse(response);
-        assertEquals("RDFParseException", responseObject.get("error").asText());
-        assertEquals("I'm an exception!", responseObject.get("errorMessage").asText());
-        assertNotEquals(responseObject.get("errorDetails"), null);
+        assertErrorResponse(response, 400, "RDFParseException", "I'm an exception!");
     }
 
     @Test
@@ -1028,12 +1013,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(400, response.getStatus());
-
-        ObjectNode responseObject = getResponse(response);
-        assertEquals("IllegalArgumentException", responseObject.get("error").asText());
-        assertEquals("I'm an exception!", responseObject.get("errorMessage").asText());
-        assertNotEquals(responseObject.get("errorDetails"), null);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "I'm an exception!");
     }
 
     @Test
@@ -1046,7 +1026,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         fd.field("keywords", "keyword2");
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "The title is missing.");
     }
 
     // Test upload ontology json
@@ -1090,7 +1070,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         fd.field("keywords", "keyword2");
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "The title is missing.");
     }
 
     @Test
@@ -1103,7 +1083,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         fd.field("keywords", "keyword2");
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "The ontology data is missing.");
     }
 
     @Test
@@ -1119,7 +1099,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         fd.field("keywords", "keyword2");
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Only provide either an ontology file or ontology json data.");
     }
 
     // Test get ontology
@@ -1175,7 +1155,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .request().accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "The ontology could not be found.");
     }
 
     // Test download ontology file
@@ -1256,7 +1236,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "The ontology could not be found.");
     }
 
     // Test save changes to ontology
@@ -1366,7 +1346,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .queryParam("entityId", catalogId.stringValue()).request().post(Entity.json(entity.toString()));
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "The ontology could not be found.");
     }
 
     // Test get vocabulary stuff
@@ -1475,7 +1455,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Ontology " + recordId.stringValue() + " does not exist.");
     }
 
     // Test get ontology stuff
@@ -1549,7 +1529,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Ontology " + recordId.stringValue() + " does not exist.");
     }
 
     @Test
@@ -1874,7 +1854,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Ontology " + recordId.stringValue() + " does not exist.");
     }
 
     // Test get annotations in ontology
@@ -1947,7 +1927,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Ontology " + recordId.stringValue() + " does not exist.");
     }
 
     @Test
@@ -1987,7 +1967,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/annotations").request()
                 .post(Entity.json(entity.toString()));
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "The JSON-LD does not contain \"@type\".");
     }
 
     @Test
@@ -1995,7 +1975,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/annotations").request()
                 .post(Entity.json(INVALID_JSON));
 
-        assertEquals(400, response.getStatus());
+        assertErrorContains(response, 400, "IllegalArgumentException", "Unexpected character");
     }
 
     @Test
@@ -2082,7 +2062,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().delete();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "The ontology could not be found.");
     }
 
     @Test
@@ -2091,7 +2071,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(missingIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", missingIRI.stringValue() + " was not found within the ontology.");
     }
 
     // Test get classes in ontology
@@ -2180,7 +2160,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Ontology " + recordId.stringValue() + " does not exist.");
     }
 
     @Test
@@ -2219,7 +2199,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/classes").request()
                 .post(Entity.json(entity.toString()));
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "The JSON-LD does not contain \"@type\".");
     }
 
     @Test
@@ -2227,7 +2207,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/classes").request()
                 .post(Entity.json(INVALID_JSON));
 
-        assertEquals(400, response.getStatus());
+        assertErrorContains(response, 400, "IllegalArgumentException", "Unexpected character");
     }
 
     @Test
@@ -2314,7 +2294,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().delete();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "The ontology could not be found.");
     }
 
     @Test
@@ -2323,7 +2303,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(missingIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", missingIRI.stringValue() + " was not found within the ontology.");
     }
 
     // Test get datatypes in ontology
@@ -2396,7 +2376,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Ontology " + recordId.stringValue() + " does not exist.");
     }
 
     @Test
@@ -2435,7 +2415,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/datatypes").request()
                 .post(Entity.json(entity.toString()));
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "The JSON-LD does not contain \"@type\".");
     }
 
     @Test
@@ -2443,7 +2423,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/datatypes").request()
                 .post(Entity.json(INVALID_JSON));
 
-        assertEquals(400, response.getStatus());
+        assertErrorContains(response, 400, "IllegalArgumentException", "Unexpected character");
     }
 
     @Test
@@ -2530,7 +2510,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(datatypeIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "The ontology could not be found.");
     }
 
     @Test
@@ -2539,7 +2519,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(missingIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", missingIRI.stringValue() + " was not found within the ontology.");
     }
 
     // Test get object properties in ontology
@@ -2612,7 +2592,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                         commitId.stringValue()).request().get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Ontology " + recordId.stringValue() + " does not exist.");
     }
 
     @Test
@@ -2651,7 +2631,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/object-properties")
                 .request().post(Entity.json(entity.toString()));
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "The JSON-LD does not contain \"@type\".");
     }
 
     @Test
@@ -2659,7 +2639,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/object-properties")
                 .request().post(Entity.json(INVALID_JSON));
 
-        assertEquals(400, response.getStatus());
+        assertErrorContains(response, 400, "IllegalArgumentException", "Unexpected character");
     }
 
     @Test
@@ -2748,7 +2728,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(objectPropertyIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "The ontology could not be found.");
     }
 
     @Test
@@ -2757,7 +2737,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(missingIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", missingIRI.stringValue() + " was not found within the ontology.");
     }
 
     // Test get data properties in ontology
@@ -2828,7 +2808,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                         commitId.stringValue()).request().get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Ontology " + recordId.stringValue() + " does not exist.");
     }
 
     @Test
@@ -2867,7 +2847,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/data-properties")
                 .request().post(Entity.json(entity.toString()));
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "The JSON-LD does not contain \"@type\".");
     }
 
     @Test
@@ -2875,7 +2855,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/data-properties")
                 .request().post(Entity.json(INVALID_JSON));
 
-        assertEquals(400, response.getStatus());
+        assertErrorContains(response, 400, "IllegalArgumentException", "Unexpected character");
     }
 
     @Test
@@ -2964,7 +2944,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(dataPropertyIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "The ontology could not be found.");
     }
 
     @Test
@@ -2973,7 +2953,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(missingIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", missingIRI.stringValue() + " was not found within the ontology.");
     }
 
     // Test get named individuals in ontology
@@ -3044,7 +3024,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Ontology " + recordId.stringValue() + " does not exist.");
     }
 
     @Test
@@ -3083,7 +3063,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/named-individuals")
                 .request().post(Entity.json(entity.toString()));
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "The JSON-LD does not contain \"@type\".");
     }
 
     @Test
@@ -3091,7 +3071,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/named-individuals")
                 .request().post(Entity.json(INVALID_JSON));
 
-        assertEquals(400, response.getStatus());
+        assertErrorContains(response, 400, "IllegalArgumentException", "Unexpected character");
     }
 
     @Test
@@ -3118,7 +3098,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/data-properties")
                 .request().post(Entity.json(entity.toString()));
 
-        assertEquals(400, response.getStatus());
+        assertErrorContains(response, 400, "IllegalArgumentException", "The JSON-LD does not contain the proper type");
     }
 
     // Test delete named individual from ontology
@@ -3193,7 +3173,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(individualIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "The ontology could not be found.");
     }
 
     @Test
@@ -3202,7 +3182,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(missingIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", missingIRI.stringValue() + " was not found within the ontology.");
     }
 
     // Test get IRIs in imported ontologies
@@ -3325,7 +3305,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                         commitId.stringValue()).request().get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Ontology " + recordId.stringValue() + " does not exist.");
     }
 
     @Test
@@ -3494,7 +3474,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Ontology " + recordId.stringValue() + " does not exist.");
     }
 
     @Test
@@ -3583,7 +3563,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Ontology " + recordId.stringValue() + " does not exist.");
     }
 
     @Test
@@ -3672,7 +3652,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Ontology " + recordId.stringValue() + " does not exist.");
     }
 
     @Test
@@ -3761,7 +3741,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                         commitId.stringValue()).request().get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Ontology " + recordId.stringValue() + " does not exist.");
     }
 
     @Test
@@ -3850,7 +3830,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/imported-object-properties").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Ontology " + recordId.stringValue() + " does not exist.");
     }
 
     @Test
@@ -3939,7 +3919,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/imported-data-properties").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Ontology " + recordId.stringValue() + " does not exist.");
     }
 
     @Test
@@ -4028,7 +4008,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/imported-named-individuals").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Ontology " + recordId.stringValue() + " does not exist.");
     }
 
     @Test
@@ -4117,7 +4097,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "The ontology could not be found.");
     }
 
     // Test get ontology object property hierarchy
@@ -4195,7 +4175,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/object-property-hierarchies").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "The ontology could not be found.");
     }
 
     // Test get ontology data property hierarchy
@@ -4273,7 +4253,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/data-property-hierarchies").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "The ontology could not be found.");
     }
 
     // Test get ontology annotation property hierarchy
@@ -4351,7 +4331,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/annotation-property-hierarchies").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "The ontology could not be found.");
     }
 
     // Test get concept hierarchy
@@ -4429,7 +4409,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "The ontology could not be found.");
     }
 
     // Test get concept scheme hierarchy
@@ -4507,7 +4487,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "The ontology could not be found.");
     }
 
     // Test get classes with individuals
@@ -4579,7 +4559,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/classes-with-individuals").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "The ontology could not be found.");
     }
 
     // Test get entity usages when queryType is "select"
@@ -4659,7 +4639,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).queryParam("queryType", "select").request().get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "The ontology could not be found.");
     }
 
     // Test get entity usages when queryType is "construct"
@@ -4739,7 +4719,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).queryParam("queryType", "construct").request().get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "The ontology could not be found.");
     }
 
     // Test get entity usages when queryType is "wrong"
@@ -4750,7 +4730,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).queryParam("queryType", "wrong").request().get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "The queryType parameter is not select or construct as expected.");
     }
 
     // Test get search results
@@ -4801,7 +4781,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "The searchText is missing.");
     }
 
     @Test
@@ -4846,7 +4826,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .queryParam("searchText", "class").request().get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "The ontology could not be found.");
     }
 
     // Test upload changes
@@ -5007,11 +4987,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .request()
                 .put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
-        ObjectNode responseObject = getResponse(response);
-        assertEquals("IllegalArgumentException", responseObject.get("error").asText());
-        assertEquals("TriG data is not supported for upload changes.", responseObject.get("errorMessage").asText());
-        assertNotEquals(responseObject.get("errorDetails"), null);
+        assertErrorResponse(response, Response.Status.BAD_REQUEST.getStatusCode(), "IllegalArgumentException", "TriG data is not supported for upload changes.");
     }
     
     // Test failed-imports
@@ -5079,7 +5055,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .request().get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "The ontology could not be found.");
     }
 
     // Test getEntity
@@ -5476,7 +5452,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .post(Entity.json(objectMapper.createObjectNode().toString()));
 
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Ontology " + recordId.stringValue() + " does not exist.");
     }
 
     @Test
@@ -5523,7 +5499,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/ontology/" + encode(recordId.stringValue()))
                 .request().get();
 
-        assertEquals(response.getStatus(), 403);
+        assertErrorResponse(response, 401, "IllegalAccessException", "User does not have permission to access ontology.");
     }
 
     @Test
@@ -5533,8 +5509,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
         Response response = target().path("ontologies/ontology/" + encode("https://www.non-exists.com")).request()
                 .accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
-        assertEquals("", response.readEntity(String.class));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "IRI does not correspond to any ontology record.");
     }
 
     @Test
@@ -5544,8 +5519,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
         Response response = target().path("ontologies/ontology/" + encode("www.non-exists.com")).request()
                 .accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
-        assertEquals("", response.readEntity(String.class));
-        assertEquals(500, response.getStatus());
+        assertErrorContains(response, 400, "IllegalArgumentException", "IRI must be absolute");
     }
 
     private void setupEntityNamesRepo() throws Exception {

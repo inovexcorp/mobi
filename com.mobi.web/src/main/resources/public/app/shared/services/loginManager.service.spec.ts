@@ -183,7 +183,7 @@ describe('Login Manager service', function() {
         it('unless an error occurs', function() {
             service.login(params.username, params.password)
                 .subscribe(() => fail('Observable should have rejected'), response => {
-                    expect(response).toEqual('An error has occurred. Please try again later.');
+                    expect(response).toEqual({error: '', errorMessage: 'An error has occurred. Please try again later.', errorDetails: []});
                 });
 
             const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'POST');
@@ -194,7 +194,7 @@ describe('Login Manager service', function() {
         it('unless the credentials are wrong', function() {
             service.login(params.username, params.password)
                 .subscribe(() => fail('Observable should have rejected'), response => {
-                    expect(response).toEqual('This email/password combination is not correct.');
+                    expect(response).toEqual({error: '', errorMessage: 'This email/password combination is not correct.', errorDetails: []});
                 });
 
             const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'POST');
@@ -268,7 +268,7 @@ describe('Login Manager service', function() {
         it('unless an error occurs', function() {
             service.getCurrentLogin()
                 .subscribe(() => fail('Observable should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual({error: '', errorMessage: error, errorDetails: []});
                 });
 
             const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');

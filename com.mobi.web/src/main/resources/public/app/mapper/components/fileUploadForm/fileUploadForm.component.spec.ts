@@ -33,6 +33,9 @@ import { of, throwError } from 'rxjs';
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { FileInputComponent } from '../../../shared/components/fileInput/fileInput.component';
+import {
+    RestErrorDisplayComponent
+} from '../../../shared/components/restErrorDisplay/restErrorDisplay.component';
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { FileUploadFormComponent } from './fileUploadForm.component';
@@ -44,7 +47,7 @@ describe('File Upload Form component', function() {
     let mapperStateStub: jasmine.SpyObj<MapperStateService>;
     let delimitedManagerStub: jasmine.SpyObj<DelimitedManagerService>;
 
-    const error = 'Error message';
+    const error = {error: '', errorMessage: 'Error message', errorDetails: []};
     const file: File = new File([''], 'test.xlsx');
 
     beforeEach(async () => {
@@ -60,6 +63,7 @@ describe('File Upload Form component', function() {
                 FileUploadFormComponent,
                 MockComponent(ErrorDisplayComponent),
                 MockComponent(FileInputComponent),
+                MockComponent(RestErrorDisplayComponent),
             ],
             providers: [
                 MockProvider(MapperStateService),
@@ -126,7 +130,7 @@ describe('File Upload Form component', function() {
                     expect(delimitedManagerStub.upload).toHaveBeenCalledWith(file);
                     expect(delimitedManagerStub.previewFile).not.toHaveBeenCalled();
                     expect(mapperStateStub.setInvalidProps).not.toHaveBeenCalled();
-                    expect(component.errorMessage).toEqual(error);
+                    expect(component.error).toEqual(error);
                     expect(delimitedManagerStub.dataRows).toBeUndefined();
                     expect(mapperStateStub.invalidProps).toEqual([]);
                 }));
@@ -138,7 +142,7 @@ describe('File Upload Form component', function() {
                     expect(delimitedManagerStub.fileObj).toEqual(file);
                     expect(component.isExcel).toBeTrue();
                     expect(delimitedManagerStub.upload).toHaveBeenCalledWith(file);
-                    expect(component.errorMessage).toEqual('');
+                    expect(component.error).toBeUndefined();
                     expect(delimitedManagerStub.previewFile).toHaveBeenCalledWith(50);
                     expect(mapperStateStub.setInvalidProps).toHaveBeenCalledWith();
                     expect(delimitedManagerStub.dataRows).toEqual([]);
@@ -163,7 +167,7 @@ describe('File Upload Form component', function() {
                 tick();
                 expect(delimitedManagerStub.separator).toEqual(';');
                 expect(delimitedManagerStub.previewFile).toHaveBeenCalledWith(50);
-                expect(component.errorMessage).toEqual(error);
+                expect(component.error).toEqual(error);
                 expect(mapperStateStub.setInvalidProps).not.toHaveBeenCalled();
                 expect(delimitedManagerStub.dataRows).toBeUndefined();
                 expect(mapperStateStub.invalidProps).toEqual([]);
@@ -173,7 +177,7 @@ describe('File Upload Form component', function() {
                 tick();
                 expect(delimitedManagerStub.separator).toEqual(';');
                 expect(delimitedManagerStub.previewFile).toHaveBeenCalledWith(50);
-                expect(component.errorMessage).toEqual('');
+                expect(component.error).toBeUndefined();
                 expect(mapperStateStub.setInvalidProps).toHaveBeenCalledWith();
                 expect(delimitedManagerStub.dataRows).toEqual([]);
                 expect(mapperStateStub.invalidProps).toEqual([{
@@ -202,10 +206,10 @@ describe('File Upload Form component', function() {
             expect(element.queryAll(By.css('mat-radio-group')).length).toEqual(0);
         });
         it('depending on whether there is an error', function() {
-            expect(element.queryAll(By.css('error-display')).length).toEqual(0);
-            component.errorMessage = 'Error message';
+            expect(element.queryAll(By.css('rest-error-display')).length).toEqual(0);
+            component.error = {error: '', errorMessage: 'Error message', errorDetails: []};
             fixture.detectChanges();
-            expect(element.queryAll(By.css('error-display')).length).toEqual(1);
+            expect(element.queryAll(By.css('rest-error-display')).length).toEqual(1);
         });
     });
 });

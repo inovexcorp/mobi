@@ -166,7 +166,7 @@ describe('New Instance Class Overlay component', function() {
                 discoverStateStub.explore.instanceDetails.limit = 99;
             });
             it('unless getClassInstanceDetails rejects', function() {
-                exploreServiceStub.getClassInstanceDetails.and.returnValue(throwError('Error message'));
+                exploreServiceStub.getClassInstanceDetails.and.returnValue(throwError({error: '', errorMessage: 'Error message', errorDetails: []}));
                 component.submit();
                 fixture.detectChanges();
                 expect(exploreServiceStub.getClassInstanceDetails).toHaveBeenCalledWith('www.test.com', 'http://test.com#class', {pageIndex: 0, limit: 99});

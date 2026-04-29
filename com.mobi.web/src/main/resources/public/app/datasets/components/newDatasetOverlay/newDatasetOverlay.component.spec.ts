@@ -39,6 +39,7 @@ import {
   cleanStylesFromDOM,
 } from '../../../../../public/test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { RestErrorDisplayComponent } from '../../../shared/components/restErrorDisplay/restErrorDisplay.component';
 import { KeywordSelectComponent } from '../../../shared/components/keywordSelect/keywordSelect.component';
 import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
 import { RepositoryManagerService } from '../../../shared/services/repositoryManager.service';
@@ -71,6 +72,7 @@ describe('New Dataset Overlay component', function () {
       declarations: [
         NewDatasetOverlayComponent,
         MockComponent(ErrorDisplayComponent),
+        MockComponent(RestErrorDisplayComponent),
         MockComponent(DatasetsOntologyPickerComponent),
         MockComponent(KeywordSelectComponent)
       ],
@@ -131,7 +133,8 @@ describe('New Dataset Overlay component', function () {
         ];
       });
       it('unless an error occurs', fakeAsync(function () {
-        datasetManagerStub.createDatasetRecord.and.callFake(() => throwError('Error Message'));
+        const errorObj = {error: 'Error', errorMessage: 'Error Message', errorDetails: []};
+        datasetManagerStub.createDatasetRecord.and.callFake(() => throwError(errorObj));
         component.create();
         tick();
         expect(datasetManagerStub.createDatasetRecord).toHaveBeenCalledWith({
@@ -144,7 +147,7 @@ describe('New Dataset Overlay component', function () {
         });
         expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
         expect(matDialogRef.close).not.toHaveBeenCalled();
-        expect(component.error).toBe('Error Message');
+        expect(component.error).toEqual(errorObj);
       }));
       it('successfully', fakeAsync(function () {
         datasetManagerStub.createDatasetRecord.and.returnValue(of(null));
@@ -160,7 +163,7 @@ describe('New Dataset Overlay component', function () {
         });
         expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
         expect(matDialogRef.close).toHaveBeenCalledWith(true);
-        expect(component.error).toBe('');
+        expect(component.error).toBeUndefined();
       }));
     });
   });
@@ -176,10 +179,10 @@ describe('New Dataset Overlay component', function () {
       });
     });
     it('depending on whether there is an error', function () {
-      expect(element.queryAll(By.css('error-display')).length).toEqual(0);
-      component.error = 'Error message';
+      expect(element.queryAll(By.css('rest-error-display')).length).toEqual(0);
+      component.error = {error: 'Error', errorMessage: 'Error message', errorDetails: []};
       fixture.detectChanges();
-      expect(element.queryAll(By.css('error-display')).length).toEqual(1);
+      expect(element.queryAll(By.css('rest-error-display')).length).toEqual(1);
     });
     it('depending on the validity of the form', function () {
       const button = element.queryAll(By.css('.mat-dialog-actions button[color="primary"]'))[0];

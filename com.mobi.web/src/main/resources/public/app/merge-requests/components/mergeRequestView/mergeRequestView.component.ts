@@ -200,7 +200,7 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
         }).afterClosed().subscribe((result: boolean) => {
             if (result) {
                 this.state.deleteRequest(this.state.selected)
-                    .subscribe(() => {}, error => this.toast.createErrorToast(error));
+                    .subscribe(() => {}, error => this.toast.createErrorToast(error.errorMessage));
             }
         });
     }
@@ -253,7 +253,7 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
                 }))
             .subscribe(() => {
                 this.state.selected = requestToReopen;
-            }, error => this.toast.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error.errorMessage));
     }
     closeRequest(): void {
         const requestToAccept: MergeRequest = Object.assign({}, this.state.selected);
@@ -271,7 +271,7 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
                 }))
             .subscribe(() => {
                 this.state.selected = requestToAccept;
-            }, error => this.toast.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error.errorMessage));
     }
     acceptRequest(): void {
         const requestToAccept: MergeRequest = Object.assign({}, this.state.selected);
@@ -298,7 +298,7 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
                 }))
             .subscribe(() => {
                 this.state.selected = requestToAccept;
-            }, error => this.toast.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error.errorMessage));
     }
     showResolutionForm(): void {
         this.resolveConflicts = true;
@@ -317,7 +317,7 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
                 this.copiedConflicts = [];
                 this.resolveError = false;
             }, error => {
-                this.toast.createErrorToast(error);
+                this.toast.createErrorToast(error.errorMessage);
                 this.resolveError = true;
             });
     }

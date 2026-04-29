@@ -363,8 +363,8 @@ export class PropertyShapesDisplayComponent implements OnChanges {
       if (idx >= 0) {
         this.propertyShapes.splice(idx, 1);
       }
-    }, (error: string) => {
-      this._toast.createErrorToast(`Property Shape unable to be deleted: ${error}`);
+    }, (error) => {
+      this._toast.createErrorToast(`Property Shape unable to be deleted: ${error.errorMessage}`);
     });
   }
 

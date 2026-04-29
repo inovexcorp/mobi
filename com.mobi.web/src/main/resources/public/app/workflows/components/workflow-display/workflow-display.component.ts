@@ -40,6 +40,7 @@ import { entityNameProps, getBeautifulIRI, getEntityName, getEntityNameProp } fr
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { ModalConfig, ModalType } from '../../models/modal-config.interface';
+import { RESTError } from '../../../shared/models/RESTError.interface';
 import { SettingManagerService } from '../../../shared/services/settingManager.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { WORKFLOWS } from '../../../prefixes';
@@ -505,8 +506,8 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
         this._handleAddedStatements([newTriples]);
         this._workflowsState.hasChanges = true;
       },
-      error: (error: string) => {
-        this._toast.createErrorToast(`Edge could not be saved: ${error}`);
+      error: (error: RESTError) => {
+        this._toast.createErrorToast(`Edge could not be saved: ${error.errorMessage}`);
         addedEdge.remove();
       }
     });
@@ -905,8 +906,8 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
           this.getDeleteEntityDifference(id, ele.data('entityType')).subscribe(diff => {
             this._deleteNode(ele);
             this.handleModalResponse(diff);
-          }, error => {
-            this._toast.createErrorToast(`Error saving changes: ${error}`);
+          }, (error: RESTError) => {
+            this._toast.createErrorToast(`Error saving changes: ${error.errorMessage}`);
           });
         }
       });
@@ -930,8 +931,8 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
           this.getDeleteEdgeDifference(sourceId, targetId).subscribe(diff => {
             ele.remove();
             this.handleModalResponse(diff);
-          }, error => {
-            this._toast.createErrorToast(`Error saving changes: ${error}`);
+          }, (error: RESTError) => {
+            this._toast.createErrorToast(`Error saving changes: ${error.errorMessage}`);
           });
         }
       });

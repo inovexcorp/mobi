@@ -137,7 +137,7 @@ export class ChangesPageComponent<TData extends VersionedRdfListItem> implements
     this.state.removeChanges().subscribe(() => {
       this._toast.createSuccessToast('Changes removed successfully.');
       this.index = 0;
-    }, errorMessage => this._toast.createErrorToast(`Error removing changes: ${errorMessage}`));
+    }, errorMessage => this._toast.createErrorToast(`Error removing changes: ${errorMessage.errorMessage}`));
   }
 
   /**
@@ -162,7 +162,7 @@ export class ChangesPageComponent<TData extends VersionedRdfListItem> implements
     }
     this.state.changeVersion(this.state.listItem.versionedRdfRecord.recordId, null, commit.id, null,
       condenseCommitId(commit.id), true, false, false)
-      .subscribe(() => {}, error => this._toast.createErrorToast(error));
+      .subscribe(() => {}, error => this._toast.createErrorToast(error.errorMessage));
   }
 
   private __findEntityObject(id, arr1, arr2) {

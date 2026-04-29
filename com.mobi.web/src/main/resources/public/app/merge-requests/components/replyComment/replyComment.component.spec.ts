@@ -121,7 +121,7 @@ describe('Reply Comment component', function() {
                     expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 }));
                 it('unless getComments rejects', fakeAsync(function() {
-                    mergeRequestManagerStub.getComments.and.returnValue(throwError('Error message'));
+                    mergeRequestManagerStub.getComments.and.returnValue(throwError({error: '', errorMessage: 'Error message', errorDetails: []}));
                     component.reply();
                     tick();
                     expect(mergeRequestManagerStub.createComment).toHaveBeenCalledWith(request.jsonld['@id'], replyComment, component.parentId);
@@ -133,7 +133,7 @@ describe('Reply Comment component', function() {
                 }));
             });
             it('unless createComment rejects', fakeAsync(function() {
-                mergeRequestManagerStub.createComment.and.returnValue(throwError('Error message'));
+                mergeRequestManagerStub.createComment.and.returnValue(throwError({error: '', errorMessage: 'Error message', errorDetails: []}));
                 component.reply();
                 tick();
                 expect(mergeRequestManagerStub.createComment).toHaveBeenCalledWith(request.jsonld['@id'], replyComment, component.parentId);

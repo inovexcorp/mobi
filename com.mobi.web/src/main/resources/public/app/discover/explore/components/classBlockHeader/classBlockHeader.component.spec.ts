@@ -235,7 +235,7 @@ describe('Class Block Header component', function() {
             }));
             it('rejects and user have permissions to read', fakeAsync(function() {
                 policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
-                exploreServiceStub.getClassDetails.and.returnValue(throwError('error'));
+                exploreServiceStub.getClassDetails.and.returnValue(throwError({error: '', errorMessage: 'error', errorDetails: []}));
                 component.refresh();
                 fixture.detectChanges();
                 tick();
@@ -246,7 +246,7 @@ describe('Class Block Header component', function() {
             }));
             it('rejects and user does not have permission to read', fakeAsync(function() {
                 policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
-                exploreServiceStub.getClassDetails.and.returnValue(throwError('error'));
+                exploreServiceStub.getClassDetails.and.returnValue(throwError({error: '', errorMessage: 'error', errorDetails: []}));
                 component.refresh();
                 fixture.detectChanges();
                 tick();

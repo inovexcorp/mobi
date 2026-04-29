@@ -88,7 +88,7 @@ export class MergePageComponent<TData extends VersionedRdfListItem> implements O
         this.state.listItem.merge.difference = undefined;
         this.state.listItem.merge.startIndex = 0;
         this.state.listItem.merge.target = undefined;
-      }, error => this._toast.createErrorToast(error));
+      }, error => this._toast.createErrorToast(error.errorMessage));
   }
   ngOnDestroy(): void {
     if (this.state.listItem && this.state.listItem.merge) {
@@ -110,7 +110,7 @@ export class MergePageComponent<TData extends VersionedRdfListItem> implements O
           return this.state.getMergeDifferences(this.state.listItem.versionedRdfRecord.commitId, this.targetHeadCommitId, this._cm.differencePageSize, 0);
         }))
         .subscribe(() => {}, errorMessage => {
-          this._toast.createErrorToast(errorMessage);
+          this._toast.createErrorToast(errorMessage.errorMessage);
           this.state.listItem.merge.difference = undefined;
         });
 
@@ -139,7 +139,7 @@ export class MergePageComponent<TData extends VersionedRdfListItem> implements O
   }
   retrieveMoreResults(event: {limit: number, offset: number}): void {
     this.state.getMergeDifferences(this.state.listItem.versionedRdfRecord.commitId, this.targetHeadCommitId, event.limit, event.offset)
-      .subscribe(() => {}, error => this._toast.createErrorToast(error));
+      .subscribe(() => {}, error => this._toast.createErrorToast(error.errorMessage));
   }
   submit(): void {
     this.state.attemptMerge()

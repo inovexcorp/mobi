@@ -115,6 +115,6 @@ export class NewInstanceClassOverlayComponent implements OnInit {
                 this.state.explore.breadcrumbs.push(this.selectedClass.title);
                 this.state.explore.breadcrumbs.push('New Instance');
                 this.dialogRef.close();
-            }, error => this.toast.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error.errorMessage));
     }
 }

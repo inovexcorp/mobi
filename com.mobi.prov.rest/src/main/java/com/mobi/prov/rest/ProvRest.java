@@ -45,17 +45,18 @@ import com.mobi.prov.api.ProvActivityAction;
 import com.mobi.prov.api.ProvenanceService;
 import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.api.RepositoryManager;
-import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
+import com.mobi.rest.util.MobiNotFoundException;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.rest.util.jaxb.Links;
+import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.ontologies.policy.Read;
 import com.mobi.security.policy.api.xacml.XACML;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -181,29 +182,17 @@ public class ProvRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to view provenance activities",
-                        headers = @Header(
-                                name = "HTTP Status",
-                                description = "Reason Phrase contains error message",
-                                schema = @Schema(type = "string")
-                        )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving provenance activities",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response getActivities(@Parameter(hidden = true) @Context HttpServletRequest servletRequest,
@@ -321,7 +310,7 @@ public class ProvRest {
             List<Activity> activityList = new ArrayList<>();
             activities.stream().skip(offset).limit(limit).forEach(activityIRI -> {
                 Activity fullActivity = provService.getActivity(activityIRI).orElseThrow(() ->
-                        ErrorUtils.sendError("Activity could not be found", Response.Status.INTERNAL_SERVER_ERROR));
+                        RestUtils.getErrorObjInternalServerError(new IllegalStateException("Activity could not be found")));
                 activityList.add(fullActivity);
                 Model entityModel = mf.createEmptyModel();
                 entityModel.addAll(fullActivity.getModel());
@@ -352,8 +341,10 @@ public class ProvRest {
                 response = response.link(links.getBase() + links.getPrev(), "prev");
             }
             return response.build();
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -376,46 +367,27 @@ public class ProvRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "The provided activity ID is not a valid IRI",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string"))
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to view this activity",
-                        headers = @Header(
-                                name = "HTTP Status",
-                                description = "Reason Phrase contains error message",
-                                schema = @Schema(type = "string")
-                        )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "404",
                     description = "Provenance Activity with the provided ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving the provenance activity",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response getActivity(
@@ -423,13 +395,13 @@ public class ProvRest {
             @PathParam("activityId") String provenanceId) {
         try {
             Activity provActivity = provService.getActivity(vf.createIRI(provenanceId)).orElseThrow(() ->
-                    ErrorUtils.sendError("Provenance Activity not found", Response.Status.NOT_FOUND));
+                    RestUtils.getErrorObjNotFound(new MobiNotFoundException("Provenance Activity not found")));
             String json = groupedModelToString(provActivity.getModel(), getRDFFormat("jsonld"));
             return Response.ok(getObjectFromJsonld(json)).build();
         } catch (IllegalArgumentException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(e);
         } catch (IllegalStateException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 
@@ -453,47 +425,27 @@ public class ProvRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Invalid request for activity action words",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to view activity actions",
-                        headers = @Header(
-                                name = "HTTP Status",
-                                description = "Reason Phrase contains error message",
-                                schema = @Schema(type = "string")
-                        )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "404",
                     description = "No activity action words found",
-                        headers = @Header(
-                                name = "HTTP Status",
-                                description = "Reason Phrase contains error message",
-                                schema = @Schema(type = "string")
-                        )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving activity action words",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response getActionWords() {
@@ -502,9 +454,9 @@ public class ProvRest {
             String json = mapper.writeValueAsString(activityToAction);
             return Response.ok(json).build();
         } catch (IllegalArgumentException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(e);
         } catch (IllegalStateException | JsonProcessingException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(e);
         }
     }
 

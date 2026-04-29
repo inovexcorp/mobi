@@ -22,7 +22,7 @@
   -->
 <h1 mat-dialog-title>Run Mapping and Download</h1>
 <form mat-dialog-content [formGroup]="runMappingDownloadForm">
-    <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
+    <rest-error-display *ngIf="error" [error]="error"></rest-error-display>
     <mat-form-field class="w-100">
         <mat-label>Data File Name</mat-label>
         <input type="text" aria-label="File Name" matInput formControlName="fileName" required>

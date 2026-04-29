@@ -32,7 +32,7 @@ import { PaginatedConfig } from '../../shared/models/paginatedConfig.interface';
 import { ClassDetails } from '../models/classDetails.interface';
 import { InstanceDetails } from '../models/instanceDetails.interface';
 import { PropertyDetails } from '../models/propertyDetails.interface';
-import { getBeautifulIRI, handleError, paginatedConfigToHttpParams } from '../../shared/utility';
+import { getBeautifulIRI, handleErrorObject, paginatedConfigToHttpParams } from '../../shared/utility';
 
 /**
  * @class discover.ExploreService
@@ -57,7 +57,7 @@ export class ExploreService {
     getClassDetails(recordId: string): Observable<ClassDetails[]> {
         const url = `${this.prefix}${encodeURIComponent(recordId)}/class-details`;
         return this.spinnerSvc.track(this.http.get<ClassDetails[]>(url, {observe: 'body'}))
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
 
     /**
@@ -76,7 +76,7 @@ export class ExploreService {
         const params = paginatedConfigToHttpParams(paginatedConfig);
         const url = `${this.prefix}${encodeURIComponent(recordId)}/classes/${encodeURIComponent(classId)}/instance-details`;
         return this._trackedRequest(this.http.get<InstanceDetails[]>(url, { params, observe: 'response' }), isTracked)
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
 
     /**
@@ -91,7 +91,7 @@ export class ExploreService {
     getClassPropertyDetails(recordId: string, classId: string): Observable<PropertyDetails[]> {
         const url = `${this.prefix}${encodeURIComponent(recordId)}/classes/${encodeURIComponent(classId)}/property-details`;
         return this.spinnerSvc.track(this.http.get<PropertyDetails[]>(url)).pipe(
-            catchError(handleError),
+            catchError(handleErrorObject),
             tap(details => {
                 details.forEach(detail => {
                     detail.display = getBeautifulIRI(detail.propertyIRI);
@@ -111,7 +111,7 @@ export class ExploreService {
     createInstance(recordId: string, json: JSONLDObject[]): Observable<string> {
         const url = `${this.prefix}${encodeURIComponent(recordId)}/instances`;
         return this.spinnerSvc.track(this.http.post(url, json, {responseType: 'text'}))
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
 
     /**
@@ -126,7 +126,7 @@ export class ExploreService {
     getInstance(recordId: string, instanceId: string): Observable<JSONLDObject[]> {
         const url = `${this.prefix}${encodeURIComponent(recordId)}/instances/${encodeURIComponent(instanceId)}`;
         return this.spinnerSvc.track(this.http.get<JSONLDObject[]>(url))
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
 
     /**
@@ -141,7 +141,7 @@ export class ExploreService {
     updateInstance(recordId: string, instanceId: string, json: JSONLDObject[]): Observable<void> {
         const url = `${this.prefix}${encodeURIComponent(recordId)}/instances/${encodeURIComponent(instanceId)}`;
         return this.spinnerSvc.track(this.http.put(url, json)).pipe(
-            catchError(handleError),
+            catchError(handleErrorObject),
             map(() => {})
         );
     }
@@ -157,7 +157,7 @@ export class ExploreService {
     deleteInstance(recordId: string, instanceId: string): Observable<void> {
         const url = `${this.prefix}${encodeURIComponent(recordId)}/instances/${encodeURIComponent(instanceId)}`;
         return this.spinnerSvc.track(this.http.delete(url)).pipe(
-            catchError(handleError),
+            catchError(handleErrorObject),
             map(() => {})
         );
     }

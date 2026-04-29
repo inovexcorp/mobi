@@ -149,7 +149,7 @@ describe('Branch List component', function() {
                     expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 }));
                 it('unless getRecordBranches rejects', fakeAsync(function() {
-                    catalogManagerStub.getRecordBranches.and.returnValue(throwError('Error Message'));
+                    catalogManagerStub.getRecordBranches.and.returnValue(throwError({error: '', errorMessage: 'Error Message', errorDetails: []}));
                     component.setBranches();
                     tick();
                     expect(catalogManagerStub.getRecordBranches).toHaveBeenCalledWith(recordId, catalogId, {pageIndex: 0, limit: component.limit, sortOption: sortOption});

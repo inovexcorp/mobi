@@ -23,6 +23,8 @@ package com.mobi.shapes.rest;
  * #L%
  */
 
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorResponse;
+import static com.mobi.rest.test.util.ErrorResponseAssert.getResponse;
 import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
@@ -45,7 +47,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -320,13 +321,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         fd.field("keywords", "keyword2");
 
         Response response = target().path("shapes-graphs").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-
-        assertEquals(500, response.getStatus());
-
-        ObjectNode responseObject = getResponse(response);
-        assertEquals("MobiException", responseObject.get("error").asText());
-        assertEquals("I'm an exception!", responseObject.get("errorMessage").asText());
-        assertNotEquals(null, responseObject.get("errorDetails"));
+        assertErrorResponse(response, 500, "MobiException", "I'm an exception!");
     }
 
     @Test
@@ -342,13 +337,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         fd.field("keywords", "keyword2");
 
         Response response = target().path("shapes-graphs").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-
-        assertEquals(400, response.getStatus());
-
-        ObjectNode responseObject = getResponse(response);
-        assertEquals("RDFParseException", responseObject.get("error").asText());
-        assertEquals("I'm an exception!", responseObject.get("errorMessage").asText());
-        assertNotEquals(null, responseObject.get("errorDetails"));
+        assertErrorResponse(response, 400, "RDFParseException", "I'm an exception!");
     }
 
     @Test
@@ -364,13 +353,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         fd.field("keywords", "keyword2");
 
         Response response = target().path("shapes-graphs").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-
-        assertEquals(400, response.getStatus());
-
-        ObjectNode responseObject = getResponse(response);
-        assertEquals("IllegalArgumentException", responseObject.get("error").asText());
-        assertEquals("I'm an exception!", responseObject.get("errorMessage").asText());
-        assertNotEquals(null, responseObject.get("errorDetails"));
+        assertErrorResponse(response, 400, "IllegalArgumentException", "I'm an exception!");
     }
 
     @Test
@@ -675,11 +658,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
                 .request()
                 .put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
-        ObjectNode responseObject = getResponse(response);
-        assertEquals("IllegalArgumentException", responseObject.get("error").asText());
-        assertEquals("TriG data is not supported for shapes graph upload changes.", responseObject.get("errorMessage").asText());
-        assertNotEquals(null, responseObject.get("errorDetails"));
+        assertErrorResponse(response, Response.Status.BAD_REQUEST.getStatusCode(), "IllegalArgumentException", "TriG data is not supported for shapes graph upload changes.");
     }
 
     @Test
@@ -1220,14 +1199,6 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
             assertEquals(expected, actual);
         } catch (Exception e) {
             fail("Exception should not have been thrown: " + e.getMessage());
-        }
-    }
-
-    private ObjectNode getResponse(Response response) {
-        try {
-            return mapper.readValue(response.readEntity(String.class), ObjectNode.class);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
         }
     }
 

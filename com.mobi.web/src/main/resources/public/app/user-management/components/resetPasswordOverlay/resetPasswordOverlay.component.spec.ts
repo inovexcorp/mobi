@@ -32,6 +32,7 @@ import { of, throwError } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { RestErrorDisplayComponent } from '../../../shared/components/restErrorDisplay/restErrorDisplay.component';
 import { UnmaskPasswordComponent } from '../../../shared/components/unmaskPassword/unmaskPassword.component';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { UserStateService } from '../../../shared/services/userState.service';
@@ -59,6 +60,7 @@ describe('Reset Password Overlay component', function() {
             declarations: [
                 ResetPasswordOverlayComponent,
                 MockComponent(ErrorDisplayComponent),
+                MockComponent(RestErrorDisplayComponent),
                 MockComponent(UnmaskPasswordComponent),
             ],
             providers: [
@@ -101,11 +103,11 @@ describe('Reset Password Overlay component', function() {
                 fixture.detectChanges();
             });
             it('unless an error occurs', fakeAsync(function() {
-                userManagerStub.resetPassword.and.returnValue(throwError('Error message'));
+                userManagerStub.resetPassword.and.returnValue(throwError({error: '', errorMessage: 'Error message', errorDetails: []}));
                 component.set();
                 tick();
                 expect(userManagerStub.resetPassword).toHaveBeenCalledWith(userStateStub.selectedUser.username, this.pw);
-                expect(component.errorMessage).toEqual('Error message');
+                expect(component.error).toEqual({error: '', errorMessage: 'Error message', errorDetails: []});
                 expect(matDialogRef.close).not.toHaveBeenCalled();
             }));
             it('successfully', fakeAsync(function() {
@@ -113,7 +115,7 @@ describe('Reset Password Overlay component', function() {
                 component.set();
                 tick();
                 expect(userManagerStub.resetPassword).toHaveBeenCalledWith(userStateStub.selectedUser.username, this.pw);
-                expect(component.errorMessage).toEqual('');
+                expect(component.error).toBeFalsy();
                 expect(matDialogRef.close).toHaveBeenCalledWith();
             }));
         });
@@ -141,10 +143,10 @@ describe('Reset Password Overlay component', function() {
             expect(button.properties['disabled']).toBeFalsy();
         });
         it('depending on whether there is an error', function() {
-            expect(element.queryAll(By.css('error-display')).length).toEqual(0);
-            component.errorMessage = 'Error message';
+            expect(element.queryAll(By.css('rest-error-display')).length).toEqual(0);
+            component.error = {error: '', errorMessage: 'Error message', errorDetails: []};
             fixture.detectChanges();
-            expect(element.queryAll(By.css('error-display')).length).toEqual(1);
+            expect(element.queryAll(By.css('rest-error-display')).length).toEqual(1);
         });
         it('with buttons to cancel and submit', function() {
             const buttons = element.queryAll(By.css('.mat-dialog-actions button'));

@@ -67,7 +67,7 @@ export class RecordPermissionViewComponent implements OnInit {
             .subscribe(responsePolicy => {
                 this.recordId = recordId;
                 this.policies = this.convertResponsePolicy(responsePolicy);
-            }, error => this.toast.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error.errorMessage));
     }
     public hasChanges(): boolean {
         return some(this.policies, 'changed');
@@ -89,7 +89,7 @@ export class RecordPermissionViewComponent implements OnInit {
                         return policyItem;
                     });
                     this.toast.createSuccessToast('Permissions updated');
-                }, error => this.toast.createErrorToast(error));
+                }, error => this.toast.createErrorToast(error.errorMessage));
         }
     }
     goBack(): void {

@@ -85,14 +85,15 @@ describe('Policy Enforcement service', function() {
 
     describe('should evaluate a request', function() {
         it('unless an error occurs', function() {
+            const error = {error: '', errorMessage: 'Error Message', errorDetails: []};
             service.evaluateRequest(jsonRequest)
                 .subscribe(() => {
                     fail('Observable should have resolved');
                 }, (value) => {
-                    expect(value).toEqual('Error Message');
+                    expect(value).toEqual(error);
                 });
             const request = httpMock.expectOne({url: '/mobirest/pep', method: 'POST'});
-            request.flush('flush', { status: 400, statusText: 'Error Message' });
+            request.flush(error, { status: 400, statusText: 'Error Message' });
         });
         it('when resolved', function() {
             service.evaluateRequest(jsonRequest)
@@ -115,14 +116,15 @@ describe('Policy Enforcement service', function() {
     });
     describe('should evaluate a multi request', function() {
         it('unless an error occurs', function() {
+            const error = {error: '', errorMessage: 'Error Message', errorDetails: []};
             service.evaluateMultiDecisionRequest(jsonMultiRequest)
                 .subscribe(() => {
                     fail('Observable should have resolved');
                 }, (value) => {
-                    expect(value).toEqual('Error Message');
+                    expect(value).toEqual(error);
                 });
             const request = httpMock.expectOne({url: '/mobirest/pep/multiDecisionRequest', method: 'POST'});
-            request.flush('flush', { status: 400, statusText: 'Error Message' });
+            request.flush(error, { status: 400, statusText: 'Error Message' });
         });
         it('when resolved', function() {
             service.evaluateMultiDecisionRequest(jsonMultiRequest)

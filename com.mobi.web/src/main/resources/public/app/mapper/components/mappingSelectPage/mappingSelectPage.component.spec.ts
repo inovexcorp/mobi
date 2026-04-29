@@ -255,7 +255,7 @@ describe('Mapping Select Page component', function() {
                 expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless an error occurs', fakeAsync(function() {
-                catalogManagerStub.getRecords.and.returnValue(throwError(error));
+                catalogManagerStub.getRecords.and.returnValue(throwError({error: '', errorMessage: error, errorDetails: []}));
                 component.setResults();
                 tick();
                 expect(catalogManagerStub.getRecords).toHaveBeenCalledWith(catalogId, mapperStateStub.paginationConfig, true);
@@ -288,7 +288,7 @@ describe('Mapping Select Page component', function() {
                 expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless an error occurs', fakeAsync(function() {
-                spyOn(component, 'setStateIfCompatible').and.returnValue(throwError(error));
+                spyOn(component, 'setStateIfCompatible').and.returnValue(throwError({error: '', errorMessage: error, errorDetails: []}));
                 component.run(mappingRecord);
                 tick();
                 expect(component.setStateIfCompatible).toHaveBeenCalledWith(mappingRecord);
@@ -326,7 +326,7 @@ describe('Mapping Select Page component', function() {
                 expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             }));
             it('unless an error occurs', fakeAsync(function() {
-                spyOn(component, 'setStateIfCompatible').and.returnValue(throwError(error));
+                spyOn(component, 'setStateIfCompatible').and.returnValue(throwError({error: '', errorMessage: error, errorDetails: []}));
                 component.edit(mappingRecord);
                 tick();
                 expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: `${CATALOG}Modify`, actionAttrs: { [`${CATALOG}branch`]: branchId}});
@@ -409,7 +409,7 @@ describe('Mapping Select Page component', function() {
                 expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             }));
             it('unless an error occurs', fakeAsync(function() {
-                spyOn(component, 'setStateIfCompatible').and.returnValue(throwError(error));
+                spyOn(component, 'setStateIfCompatible').and.returnValue(throwError({error: '', errorMessage: error, errorDetails: []}));
                 component.duplicate(mappingRecord);
                 tick();
                 expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: catalogId, actionId: `${POLICY}Create`, actionAttrs: { [`${RDF}type`]: `${DELIM}MappingRecord`}});
@@ -433,7 +433,7 @@ describe('Mapping Select Page component', function() {
                 expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless an error occurs', fakeAsync(function() {
-                mappingManagerStub.deleteMapping.and.returnValue(throwError(error));
+                mappingManagerStub.deleteMapping.and.returnValue(throwError({error: '', errorMessage: error, errorDetails: []}));
                 component.deleteMapping(mappingRecord);
                 tick();
                 expect(mapperStateStub.resetPagination).not.toHaveBeenCalled();
@@ -446,10 +446,10 @@ describe('Mapping Select Page component', function() {
                 mapperStateStub.getMappingState.and.returnValue(of(mappingState));
             });
             it('unless getting the mapping state throws an error', fakeAsync(function() {
-                mapperStateStub.getMappingState.and.returnValue(throwError(error));
+                mapperStateStub.getMappingState.and.returnValue(throwError({error: '', errorMessage: error, errorDetails: []}));
                 component.setStateIfCompatible(mappingRecord)
                     .subscribe(() => fail('Observable should have rejected'), response => {
-                        expect(response).toEqual(error);
+                        expect(response).toEqual({error: '', errorMessage: error, errorDetails: []});
                     });
                 tick();
                 expect(mapperStateStub.findIncompatibleMappings).not.toHaveBeenCalled();
@@ -457,10 +457,10 @@ describe('Mapping Select Page component', function() {
                 expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless getting incompatible mappings throws an error', fakeAsync(function() {
-                mapperStateStub.findIncompatibleMappings.and.returnValue(throwError(error));
+                mapperStateStub.findIncompatibleMappings.and.returnValue(throwError({error: '', errorMessage: error, errorDetails: []}));
                 component.setStateIfCompatible(mappingRecord)
                     .subscribe(() => fail('Observable should have rejected'), response => {
-                        expect(response).toEqual(error);
+                        expect(response).toEqual({error: '', errorMessage: error, errorDetails: []});
                     });
                 tick();
                 expect(mapperStateStub.findIncompatibleMappings).toHaveBeenCalledWith(mappingState.mapping);

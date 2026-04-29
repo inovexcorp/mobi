@@ -33,7 +33,7 @@ describe('Record Permissions service', function() {
     let httpMock: HttpTestingController;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
 
-    const error = 'Error Message';
+    const error = {error: '', errorMessage: 'Error Message', errorDetails: []};
     let recordId: string;
     let policy;
 
@@ -62,9 +62,9 @@ describe('Record Permissions service', function() {
     describe('should retrieve a record policy json representation', function() {
         it('unless an error occurs', function() {
             service.getRecordPolicy(recordId)
-                .subscribe(() => fail('Promise should have rejected'), (response) => expect(response).toBe('Error Message'));
+                .subscribe(() => fail('Promise should have rejected'), (response) => expect(response).toEqual(error));
             const request = httpMock.expectOne({url: `/mobirest/record-permissions/${recordId}`, method: 'GET'});
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(error, { status: 400, statusText: 'Error Message' });
         });
         it('successfully', function() {
             service.getRecordPolicy(recordId)
@@ -76,10 +76,10 @@ describe('Record Permissions service', function() {
     describe('should update a record policy with the json representation', function() {
         it('unless an error occurs', function() {
             service.updateRecordPolicy(recordId, policy)
-                .subscribe(() => fail('Promise should have rejected'), (response) => expect(response).toBe('Error Message'));
+                .subscribe(() => fail('Promise should have rejected'), (response) => expect(response).toEqual(error));
 
             const request = httpMock.expectOne({url: `/mobirest/record-permissions/${recordId}`, method: 'PUT'});
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(error, { status: 400, statusText: 'Error Message' });
         });
         it('when resolved', function() {
             service.updateRecordPolicy(recordId, policy)

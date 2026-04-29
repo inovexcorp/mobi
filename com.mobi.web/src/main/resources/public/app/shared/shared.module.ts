@@ -83,6 +83,7 @@ import { DatasetSelectComponent } from './components/datasetSelect/datasetSelect
 import { DownloadQueryOverlayComponent } from './components/downloadQueryOverlay/downloadQueryOverlay.component';
 import { EditIriOverlayComponent } from './components/editIriOverlay/editIriOverlay.component';
 import { ErrorDisplayComponent } from './components/errorDisplay/errorDisplay.component';
+import { RestErrorDisplayComponent } from './components/restErrorDisplay/restErrorDisplay.component';
 import { FileInputComponent } from './components/fileInput/fileInput.component';
 import { FiltersSelectedListComponent } from './components/filters-selected-list/filters-selected-list.component';
 import { ImportsBlockComponent } from './components/importsBlock/importsBlock.component';
@@ -234,6 +235,7 @@ import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
     DragFileDirective,
     EditIriOverlayComponent,
     ErrorDisplayComponent,
+    RestErrorDisplayComponent,
     FileInputComponent,
     FiltersSelectedListComponent,
     FocusDirective,
@@ -330,6 +332,7 @@ import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
     DatasetSelectComponent,
     DragFileDirective,
     ErrorDisplayComponent,
+    RestErrorDisplayComponent,
     FileInputComponent,
     FiltersSelectedListComponent,
     FocusDirective,

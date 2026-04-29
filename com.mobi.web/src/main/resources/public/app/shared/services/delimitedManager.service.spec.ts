@@ -40,6 +40,7 @@ describe('Delimited Manager service', function() {
   let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
 
   const error = 'Error Message';
+  const errorObject = { error: '', errorMessage: 'Error Message', errorDetails: [] };
   const mappingRecordIRI = 'http://test.org/mapping';
   const datasetRecordIRI = 'http://test.org/record';
   const ontologyRecordIRI = 'http://test.org/ontology';
@@ -79,11 +80,11 @@ describe('Delimited Manager service', function() {
     it('unless an error occurs', function() {
       service.upload(new File([''], ''))
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObject);
         });
       const request = httpMock.expectOne({ url: service.prefix, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTrue();
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush({ errorMessage: error }, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.upload(new File([''], ''))
@@ -102,16 +103,16 @@ describe('Delimited Manager service', function() {
     it('unless an error occurs', function() {
       service.previewFile(5)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObject);
           expect(service.dataRows).toBeUndefined();
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush({ errorMessage: error }, { status: 400, statusText: error });
     });
     it('unless there are no rows', function() {
       service.previewFile(5)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toBe('No rows were found');
+          expect(response).toEqual({error: '', errorMessage: 'No rows were found', errorDetails: []});
           expect(service.dataRows).toBeUndefined();
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
@@ -174,10 +175,10 @@ describe('Delimited Manager service', function() {
     it('unless an error occurs', function() {
       service.previewMap(this.jsonld, this.format)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObject);
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'POST');
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush({ errorMessage: error }, { status: 400, statusText: error });
     });
     it('as JSON-LD using mapping JSON-LD', function() {
       const result = [{ '@id': 'result' }];
@@ -218,10 +219,10 @@ describe('Delimited Manager service', function() {
     it('unless an error occurs', function() {
       service.mapAndUpload(mappingRecordIRI, datasetRecordIRI)
         .subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual(errorObject);
         });
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'POST');
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush({ errorMessage: error }, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.mapAndUpload(mappingRecordIRI, datasetRecordIRI)

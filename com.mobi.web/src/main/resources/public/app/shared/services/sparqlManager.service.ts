@@ -25,7 +25,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
-import { createHttpParams, handleError } from '../utility';
+import { createHttpParams, handleErrorObject } from '../utility';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { REPOS } from '../../prefixes';
 import { REPOSITORY_STORE_TYPE, REST_PREFIX } from '../../constants';
@@ -71,7 +71,7 @@ export class SparqlManagerService {
         };
         const request = this.http.get(`${this.prefix}/${encodeURIComponent(storeType)}/${encodeURIComponent(resourceId)}`, {params: createHttpParams(params), responseType: 'text', observe: 'response'})
             .pipe(
-                catchError(handleError),
+                catchError(handleErrorObject),
                 map((response: HttpResponse<string>) => {
                     const contentType = response.headers.get('Content-Type');
                     if (contentType === 'application/json') {
@@ -115,7 +115,7 @@ export class SparqlManagerService {
         headers = headers.append('Content-Type', 'application/sparql-query');
         const request = this.http.post(`${this.prefix}/${encodeURIComponent(storeType)}/${encodeURIComponent(resourceId)}`, query, {params: createHttpParams(params), responseType: 'text', observe: 'response', headers})
             .pipe(
-                catchError(handleError),
+                catchError(handleErrorObject),
                 map((response: HttpResponse<string>) => {
                     const contentType = response.headers.get('Content-Type');
                     if (contentType === 'application/json') {
@@ -192,7 +192,7 @@ export class SparqlManagerService {
         
         return this.spinnerSvc.track(this.http.post(`${this.prefix}/${encodeURIComponent(storeType)}/${encodeURIComponent(resourceId)}`, query, {headers, params: createHttpParams(params), responseType: 'arraybuffer', observe: 'response'}))
             .pipe(
-                catchError(handleError),
+                catchError(handleErrorObject),
                 map((response: HttpResponse<ArrayBuffer>) => {
                     const file = new Blob([response.body], {
                         type: response.headers.get('Content-Type')

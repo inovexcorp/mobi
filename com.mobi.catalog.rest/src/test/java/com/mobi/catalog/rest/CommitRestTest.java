@@ -23,6 +23,8 @@ package com.mobi.catalog.rest;
  * #L%
  */
 
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorResponse;
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorType;
 import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
@@ -262,7 +264,7 @@ public class CommitRestTest extends MobiRestTestCXF {
 
         Response response = target().path("commits/" + encode(ERROR_IRI))
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     // GET commits/{commitId}/history
@@ -344,7 +346,7 @@ public class CommitRestTest extends MobiRestTestCXF {
 
         Response response = target().path("commits/" + encode(ERROR_IRI) + "/history")
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -354,12 +356,12 @@ public class CommitRestTest extends MobiRestTestCXF {
 
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/history")
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
 
         doThrow(new IllegalStateException()).when(commitManager).getCommitChain(vf.createIRI(COMMIT_IRIS[1]), conn);
         response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/history")
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     // GET commits/{commitId}/resource
@@ -498,17 +500,17 @@ public class CommitRestTest extends MobiRestTestCXF {
         doThrow(new IllegalArgumentException()).when(differenceManager).getDifference(eq(vf.createIRI(ERROR_IRI)), eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class));
         Response response = target().path("commits/" + encode(ERROR_IRI) + "/difference")
                 .queryParam("targetId", encode(COMMIT_IRIS[0])).request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
 
         doThrow(new MobiException()).when(differenceManager).getDifference(eq(vf.createIRI(COMMIT_IRIS[1])), eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class));
         response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference")
                 .queryParam("targetId", encode(COMMIT_IRIS[0])).request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
 
         doThrow(new IllegalStateException()).when(differenceManager).getDifference(eq(vf.createIRI(COMMIT_IRIS[1])), eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class));
         response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference")
                 .queryParam("targetId", encode(COMMIT_IRIS[0])).request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     @Test
@@ -558,19 +560,19 @@ public class CommitRestTest extends MobiRestTestCXF {
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference/" + encode(SUBJECT_IRI[0]))
                 .request().get();
         verify(commitManager).getCommit(vf.createIRI(COMMIT_IRIS[1]), conn);
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
 
         doThrow(new MobiException()).when(differenceManager).getCommitDifferenceForSubject(eq(vf.createIRI(SUBJECT_IRI[0])), eq(vf.createIRI(COMMIT_IRIS[1])), any(RepositoryConnection.class));
         response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference/" + encode(SUBJECT_IRI[0]))
                 .request().get();
         verify(commitManager, times(2)).getCommit(vf.createIRI(COMMIT_IRIS[1]), conn);
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
 
         doThrow(new IllegalStateException()).when(differenceManager).getCommitDifferenceForSubject(eq(vf.createIRI(SUBJECT_IRI[0])), eq(vf.createIRI(COMMIT_IRIS[1])), any(RepositoryConnection.class));
         response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference/" + encode(SUBJECT_IRI[0]))
                 .request().get();
         verify(commitManager, times(3)).getCommit(vf.createIRI(COMMIT_IRIS[1]), conn);
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     @Test
@@ -583,8 +585,8 @@ public class CommitRestTest extends MobiRestTestCXF {
                 .request().get();
 
         // Then:
-        assertEquals(404, response.getStatus());
         verify(commitManager).getCommit(vf.createIRI(COMMIT_IRIS[1]), conn);
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Commit " + COMMIT_IRIS[1] + " could not be found");
     }
 
     // GET commits/{commitId}/history?entityId
@@ -645,4 +647,5 @@ public class CommitRestTest extends MobiRestTestCXF {
             fail("Expected no exception, but got: " + e.getMessage());
         }
     }
+
 }

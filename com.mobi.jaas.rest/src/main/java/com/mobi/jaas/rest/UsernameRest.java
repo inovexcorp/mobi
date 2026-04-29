@@ -24,10 +24,12 @@ package com.mobi.jaas.rest;
  */
 
 import com.mobi.jaas.api.engines.EngineManager;
-import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.MobiNotFoundException;
+import com.mobi.rest.util.RestUtils;
+import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -78,28 +80,25 @@ public class UsernameRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "The provided IRI is not valid",
-                    headers = @Header(
-                        name = "HTTP Status",
-                        description = "Reason Phrase contains error message",
-                        schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                        name = "HTTP Status",
-                        description = "Reason Phrase contains error message",
-                        schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "404",
                     description = "User with the provided IRI does not exist",
-                    headers = @Header(
-                        name = "HTTP Status",
-                        description = "Reason Phrase contains error message",
-                        schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -108,10 +107,10 @@ public class UsernameRest {
             @QueryParam("iri") String userIri) {
         try {
             String username = engineManager.getUsername(vf.createIRI(userIri)).orElseThrow(() ->
-                    ErrorUtils.sendError("User not found", Response.Status.NOT_FOUND));
+                    RestUtils.getErrorObjNotFound(new MobiNotFoundException("User not found")));
             return Response.ok(username).build();
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         }
     }
 

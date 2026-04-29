@@ -22,14 +22,7 @@
   -->
 <h1 mat-dialog-title>Upload Workflow</h1>
 <form mat-dialog-content [formGroup]="uploadWorkflowForm">
-  <error-display *ngIf="error">
-    {{error.errorMessage || error}}
-    <ul *ngIf="error.errorDetails">
-      <li class="text-danger m-0" *ngFor="let detailError of error.errorDetails">
-        {{ detailError }}
-      </li>
-    </ul>
-  </error-display>
+  <rest-error-display *ngIf="error" [error]="error"></rest-error-display>
   <mat-form-field class="w-100">
     <mat-label>Title</mat-label>
     <input matInput type="text" name="title" formControlName="title" required focus />

@@ -328,7 +328,7 @@ describe('Ontology Manager service', function() {
                 expect((request.request.body).get('title')).toEqual(this.recordConfig.title);
                 expect((request.request.body).get('description')).toEqual(this.recordConfig.description);
                 expect((request.request.body).getAll('keywords')).toEqual(this.recordConfig.keywords);
-                request.flush('', { status: 400, statusText: error });
+                request.flush(errorObject, { status: 400, statusText: error });
             });
         });
         describe('with JSON-LD', function() {
@@ -375,7 +375,7 @@ describe('Ontology Manager service', function() {
                 const request = httpMock.expectOne({url: '/mobirest/ontologies', method: 'POST'});
                 expect(request.request.body instanceof FormData).toBeTrue();
                 expect((request.request.body).get('title')).toEqual(this.recordConfig.title);
-                request.flush('', { status: 400, statusText: error });
+                request.flush(errorObject, { status: 400, statusText: error });
             });
         });
     });
@@ -557,10 +557,10 @@ describe('Ontology Manager service', function() {
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toBe(error);
+                    expect(response).toEqual(errorObject);
                 });
             const request = httpMock.expectOne(req => req.url === '/mobirest/ontologies/' + encodeURIComponent(recordId) && req.method === 'GET');
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObject, { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.getOntology(recordId, branchId, commitId, format, false, false, true)
@@ -594,10 +594,10 @@ describe('Ontology Manager service', function() {
         it('unless an error occurs', function() {
             service.deleteOntologyBranch(recordId, branchId)
                 .subscribe(() => fail('Observable should have errored'), response => {
-                    expect(response).toBe(error);
+                    expect(response).toEqual(errorObject);
                 });
             const request = httpMock.expectOne(req => req.url === (`${service.prefix}/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}`) && req.method === 'DELETE');
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObject, { status: 400, statusText: error });
         });
     });
     describe('getVocabularyStuff retrieves information about skos:Concepts and skos:ConceptSchemes in an ontology', function() {
@@ -605,14 +605,14 @@ describe('Ontology Manager service', function() {
             it('unless an error occurs', function() {
                 service.getVocabularyStuff(recordId, branchId, commitId)
                     .subscribe(() => fail('Observable should have errored'), response => {
-                        expect(response).toEqual(error);
+                        expect(response).toEqual(errorObject);
                     });
 
                 const request = httpMock.expectOne(req => req.url === (`${service.prefix}/${encodeURIComponent(recordId)}/vocabulary-stuff`) && req.method === 'GET');
 
                 expect((request.request.params).get('branchId').toString()).toEqual(branchId);
                 expect((request.request.params).get('commitId')).toEqual(commitId);
-                request.flush('flush', { status: 400, statusText: error });
+                request.flush(errorObject, { status: 400, statusText: error });
             });
             it('successfully', function() {
                 service.getVocabularyStuff(recordId, branchId, commitId)
@@ -637,12 +637,12 @@ describe('Ontology Manager service', function() {
                     .subscribe(() => {
                         fail('Observable should have errored');
                     }, response => {
-                        expect(response).toBe(error);
+                        expect(response).toEqual(errorObject);
                     });
                 const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/ontology-stuff`) && req.method === 'GET');
                 expect(request.request.params.get('branchId')).toEqual(branchId);
                 expect((request.request.params).get('commitId')).toEqual(commitId);
-                request.flush('flush', { status: 400, statusText: error });
+                request.flush(errorObject, { status: 400, statusText: error });
             });
             it('successfully clearing the cache', function() {
                 service.getOntologyStuff(recordId, branchId, commitId, true)
@@ -677,13 +677,13 @@ describe('Ontology Manager service', function() {
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObject);
                 });
             const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/property-ranges`) && req.method === 'GET');
             expect(request.request.params.get('branchId')).toEqual(branchId);
             expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('false');
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObject, { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.getPropertyToRange(recordId, branchId, commitId, false)
@@ -705,12 +705,12 @@ describe('Ontology Manager service', function() {
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObject);
                 });
             const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/iris`) && req.method === 'GET');
             expect(request.request.params.get('branchId')).toEqual(branchId);
             expect((request.request.params).get('commitId')).toEqual(commitId);
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObject, { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.getIris(recordId, branchId, commitId)
@@ -731,13 +731,13 @@ describe('Ontology Manager service', function() {
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObject);
                 });
             const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/classes`) && req.method === 'GET');
             expect(request.request.params.get('branchId')).toEqual(branchId);
             expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('false');
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObject, { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.getOntologyClasses(recordId, branchId, commitId, false)
@@ -759,12 +759,12 @@ describe('Ontology Manager service', function() {
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObject);
                 });
             const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/data-properties`) && req.method === 'GET');
             expect(request.request.params.get('branchId')).toEqual(branchId);
             expect((request.request.params).get('commitId')).toEqual(commitId);
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObject, { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.getDataProperties(recordId, branchId, commitId)
@@ -785,12 +785,12 @@ describe('Ontology Manager service', function() {
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObject);
                 });
             const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/object-properties`) && req.method === 'GET');
             expect(request.request.params.get('branchId')).toEqual(branchId);
             expect((request.request.params).get('commitId')).toEqual(commitId);
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObject, { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.getObjProperties(recordId, branchId, commitId)
@@ -811,13 +811,13 @@ describe('Ontology Manager service', function() {
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObject);
                 });
             const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/imported-iris`) && req.method === 'GET');
             expect(request.request.params.get('branchId')).toEqual(branchId);
             expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('true');
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObject, { status: 400, statusText: error });
         });
         it('unless there are none', function() {
             service.getImportedIris(recordId, branchId, commitId, this.applyInProgressCommit)
@@ -852,13 +852,13 @@ describe('Ontology Manager service', function() {
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObject);
                 });
             const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/class-hierarchies`) && req.method === 'GET');
             expect(request.request.params.get('branchId')).toEqual(branchId);
             expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('true');
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObject, { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.getClassHierarchies(recordId, branchId, commitId, this.applyInProgressCommit)
@@ -880,12 +880,12 @@ describe('Ontology Manager service', function() {
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObject);
                 });
             const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/classes-with-individuals`) && req.method === 'GET');
             expect(request.request.params.get('branchId')).toEqual(branchId);
             expect((request.request.params).get('commitId')).toEqual(commitId);
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObject, { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.getClassesWithIndividuals(recordId, branchId, commitId)
@@ -906,12 +906,12 @@ describe('Ontology Manager service', function() {
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObject);
                 });
             const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/data-property-hierarchies`) && req.method === 'GET');
             expect(request.request.params.get('branchId')).toEqual(branchId);
             expect((request.request.params).get('commitId')).toEqual(commitId);
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObject, { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.getDataPropertyHierarchies(recordId, branchId, commitId)
@@ -932,12 +932,12 @@ describe('Ontology Manager service', function() {
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObject);
                 });
             const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/object-property-hierarchies`) && req.method === 'GET');
             expect(request.request.params.get('branchId')).toEqual(branchId);
             expect((request.request.params).get('commitId')).toEqual(commitId);
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObject, { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.getObjectPropertyHierarchies(recordId, branchId, commitId)
@@ -958,12 +958,12 @@ describe('Ontology Manager service', function() {
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObject);
                 });
             const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/annotation-property-hierarchies`) && req.method === 'GET');
             expect(request.request.params.get('branchId')).toEqual(branchId);
             expect((request.request.params).get('commitId')).toEqual(commitId);
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObject, { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.getAnnotationPropertyHierarchies(recordId, branchId, commitId)
@@ -984,12 +984,12 @@ describe('Ontology Manager service', function() {
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObject);
                 });
             const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/concept-hierarchies`) && req.method === 'GET');
             expect(request.request.params.get('branchId')).toEqual(branchId);
             expect((request.request.params).get('commitId')).toEqual(commitId);
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObject, { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.getConceptHierarchies(recordId, branchId, commitId)
@@ -1010,12 +1010,12 @@ describe('Ontology Manager service', function() {
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObject);
                 });
             const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/concept-scheme-hierarchies`) && req.method === 'GET');
             expect(request.request.params.get('branchId')).toEqual(branchId);
             expect((request.request.params).get('commitId')).toEqual(commitId);
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObject, { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.getConceptSchemeHierarchies(recordId, branchId, commitId)
@@ -1085,7 +1085,7 @@ describe('Ontology Manager service', function() {
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObject);
                 });
                 
             const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/imported-ontologies`) && req.method === 'GET');
@@ -1094,7 +1094,7 @@ describe('Ontology Manager service', function() {
             expect((request.request.params).get('rdfFormat')).toEqual('jsonld');
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('true');
 
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObject, { status: 400, statusText: error });
         });
         it('when apply-in-progress is not passed in', function () {
             const ontDoc: OntologyDocument = {
@@ -1155,14 +1155,14 @@ describe('Ontology Manager service', function() {
                     .subscribe(() => {
                         fail('Observable should have errored');
                     }, response => {
-                        expect(response).toBe(error);
+                        expect(response).toEqual(errorObject);
                     });
                 const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/entity-usages/${classId}`) && req.method === 'GET');
                 expect(request.request.params.get('branchId')).toEqual(branchId);
                 expect((request.request.params).get('commitId')).toEqual(commitId);
                 expect((request.request.params).get('queryType')).toEqual('select');
                 
-                request.flush('flush', { status: 400, statusText: error });
+                request.flush(errorObject, { status: 400, statusText: error });
             });
         });
     });
@@ -1191,7 +1191,7 @@ describe('Ontology Manager service', function() {
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObject);
                 });
                 
             const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/entity-names`) && req.method === 'POST');
@@ -1203,7 +1203,7 @@ describe('Ontology Manager service', function() {
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('false');
             expect((request.request.headers).get('Content-Type')).toEqual('application/json');
     
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObject, { status: 400, statusText: error });
         });
     });
     describe('getSearchResults should call the correct functions', function() {
@@ -1258,14 +1258,14 @@ describe('Ontology Manager service', function() {
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObject);
                 });
             const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/search-results`) && req.method === 'GET');
             expect(request.request.params.get('branchId')).toEqual(branchId);
             expect((request.request.params).get('commitId')).toEqual(commitId);
             expect((request.request.params).get('searchText')).toEqual('searchText');
     
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObject, { status: 400, statusText: error });
         });
     });
     describe('getFailedImports calls the correct functions when GET /mobirest/ontologies/{recordId}/failed-imports', function() {
@@ -1286,12 +1286,12 @@ describe('Ontology Manager service', function() {
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toBe(error);
+                    expect(response).toEqual(errorObject);
                 });
             const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/failed-imports`) && req.method === 'GET');
             expect(request.request.params.get('branchId')).toEqual(branchId);
             expect((request.request.params).get('commitId')).toEqual(commitId);
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObject, { status: 400, statusText: error });
         });
     });
     describe('getObjectPropertyValues calls the correct functions when GET /mobirest/ontologies/{recordId}/query', function() {
@@ -1306,12 +1306,12 @@ describe('Ontology Manager service', function() {
             expect(sparqlManagerStub.query).toHaveBeenCalledWith(jasmine.stringContaining(objectPropertyId), recordId, ONTOLOGY_STORE_TYPE, branchId, '', true, true, false);
         });
         it('fails', function() {
-            sparqlManagerStub.query.and.returnValue(throwError(error));
+            sparqlManagerStub.query.and.returnValue(throwError(errorObject));
             service.getObjectPropertyValues(recordId, branchId, objectPropertyId)
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toBe(error);
+                    expect(response).toEqual(errorObject);
                 });
             expect(sparqlManagerStub.query).toHaveBeenCalledWith(jasmine.stringContaining(objectPropertyId), recordId, ONTOLOGY_STORE_TYPE, branchId, '', true, true, false);
         });
@@ -1354,7 +1354,7 @@ describe('Ontology Manager service', function() {
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
-                    expect(response).toBe(error);
+                    expect(response).toEqual(errorObject);
                 });
             const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/entities/${classId}`) && req.method === 'GET');
             expect(request.request.params.get('branchId')).toEqual(branchId);
@@ -1363,7 +1363,7 @@ describe('Ontology Manager service', function() {
             expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('true');
             expect((request.request.params).get('includeImports').toString()).toEqual('true');
             
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObject, { status: 400, statusText: error });
         });
     });
     describe('isOntology should return', function() {
@@ -2121,7 +2121,7 @@ describe('Ontology Manager service', function() {
             expect(request.request.headers.get('Content-Type')).toEqual(null);
             expect(request.request.headers.get('Accept')).toEqual('application/json');
 
-            request.flush('', { status: 400, statusText: errorObject.errorMessage });
+            request.flush(errorObject, { status: 400, statusText: errorObject.errorMessage });
         });
     });
 });

@@ -72,7 +72,7 @@ describe('Merge Request View component', function() {
     let toastStub: jasmine.SpyObj<ToastService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
 
-    const error = 'Error Message';
+    const error = {error: '', errorMessage: 'Error Message', errorDetails: []};
     const requestId = 'requestId';
     const recordId = 'recordId';
     const sourceBranchId = 'sourceBranchId';
@@ -387,7 +387,7 @@ describe('Merge Request View component', function() {
                                 expect(mergeRequestsStateStub.selected.jsonld).not.toEqual(mergeRequestJsonLd);
                                 expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(this.updatedRequest);
                                 expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, sourceBranchId, catalogId);
-                                expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
+                                expect(toastStub.createErrorToast).toHaveBeenCalledWith(error.errorMessage);
                             }));
                         });
                         it('if removeSource is set to false', fakeAsync(function() {
@@ -416,7 +416,7 @@ describe('Merge Request View component', function() {
                         expect(mergeRequestsStateStub.selected.jsonld).not.toEqual(mergeRequestJsonLd);
                         expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(this.updatedRequest);
                         expect(catalogManagerStub.deleteRecordBranch).not.toHaveBeenCalled();
-                        expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
+                        expect(toastStub.createErrorToast).toHaveBeenCalledWith(error.errorMessage);
                     }));
                 });
                 it('unless getRequest rejects', fakeAsync(function() {
@@ -428,7 +428,7 @@ describe('Merge Request View component', function() {
                     expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
                     expect(mergeRequestsStateStub.selected.jsonld).not.toEqual(mergeRequestJsonLd);
                     expect(mergeRequestsStateStub.setRequestDetails).not.toHaveBeenCalled();
-                    expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
+                    expect(toastStub.createErrorToast).toHaveBeenCalledWith(error.errorMessage);
                 }));
             });
             it('unless acceptRequest rejects', fakeAsync(function() {
@@ -440,7 +440,7 @@ describe('Merge Request View component', function() {
                 expect(mergeRequestManagerStub.getRequest).not.toHaveBeenCalled();
                 expect(mergeRequestsStateStub.setRequestDetails).not.toHaveBeenCalled();
                 expect(mergeRequestsStateStub.selected.jsonld).not.toEqual(mergeRequestJsonLd);
-                expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith(error.errorMessage);
             }));
         });
         it('show the conflict resolution form', function() {

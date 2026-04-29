@@ -41,6 +41,7 @@ import { of, throwError } from 'rxjs';
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { Difference } from '../../../shared/models/difference.class';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { RestErrorDisplayComponent } from '../../../shared/components/restErrorDisplay/restErrorDisplay.component';
 import { FileInputComponent } from '../../../shared/components/fileInput/fileInput.component';
 import { PolicyManagerService } from '../../../shared/services/policyManager.service';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
@@ -88,6 +89,7 @@ describe('WorkflowUploadChangesModalComponent', () => {
       declarations: [
         WorkflowUploadChangesModalComponent,
         MockComponent(ErrorDisplayComponent),
+        MockComponent(RestErrorDisplayComponent),
         MockComponent(FileInputComponent),
         MockComponent(ShaclValidationReportComponent)
       ],
@@ -137,6 +139,15 @@ describe('WorkflowUploadChangesModalComponent', () => {
         expect(matDialogRef.close).not.toHaveBeenCalled();
         expect(component.error).toEqual({error: '', errorMessage: '', errorDetails: []});
       }));
+      it('should close dialog on successful submit after previous error', fakeAsync(() => {
+        component.error = {error: '', errorMessage: 'Previous error', errorDetails: []};
+        component.file = file;
+        workflowManagerStub.uploadChanges.and.returnValue(of(new HttpResponse<null>({body: null, status: 200})));
+        component.submit();
+        tick();
+        expect(workflowManagerStub.uploadChanges).toHaveBeenCalledWith(component.data.recordId, component.data.branchId, component.data.commitId, file);
+        expect(matDialogRef.close).toHaveBeenCalled();
+      }));
     });
   });
   describe('contains the correct html', () => {
@@ -146,7 +157,7 @@ describe('WorkflowUploadChangesModalComponent', () => {
     });
     it('if an InvalidWorkflowException error occurred', () => {
       expect(element.queryAll(By.css('app-shacl-validation-report')).length).toEqual(0);
-      expect(element.queryAll(By.css('error-display')).length).toEqual(0);
+      expect(element.queryAll(By.css('rest-error-display')).length).toEqual(0);
       component.error = {
         error: 'InvalidWorkflowException',
         errorMessage: 'Error',
@@ -155,11 +166,11 @@ describe('WorkflowUploadChangesModalComponent', () => {
       fixture.detectChanges();
 
       expect(element.queryAll(By.css('app-shacl-validation-report')).length).toEqual(1);
-      expect(element.queryAll(By.css('error-display')).length).toEqual(1);
+      expect(element.queryAll(By.css('rest-error-display')).length).toEqual(1);
     });
     it('if a standard error occurred', () => {
       expect(element.queryAll(By.css('app-shacl-validation-report')).length).toEqual(0);
-      expect(element.queryAll(By.css('error-display')).length).toEqual(0);
+      expect(element.queryAll(By.css('rest-error-display')).length).toEqual(0);
       component.error = {
         error: 'IllegalArgumentException',
         errorMessage: 'Error',
@@ -168,7 +179,7 @@ describe('WorkflowUploadChangesModalComponent', () => {
       fixture.detectChanges();
 
       expect(element.queryAll(By.css('app-shacl-validation-report')).length).toEqual(0);
-      expect(element.queryAll(By.css('error-display')).length).toEqual(1);
+      expect(element.queryAll(By.css('rest-error-display')).length).toEqual(1);
     });
     it('with buttons to cancel and submit', () => {
       const buttons = element.queryAll(By.css('.mat-dialog-actions button'));

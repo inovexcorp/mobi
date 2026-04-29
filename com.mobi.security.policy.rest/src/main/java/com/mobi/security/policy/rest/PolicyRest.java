@@ -31,16 +31,16 @@ import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 import com.mobi.exception.MobiException;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
-import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.MobiNotFoundException;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.security.policy.api.exception.PolicySyntaxException;
 import com.mobi.security.policy.api.xacml.PolicyQueryParams;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
+import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -106,20 +106,12 @@ public class PolicyRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving security policies",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response getPolicies(
@@ -132,26 +124,28 @@ public class PolicyRest {
             @Parameter(description = "Boolean of whether to only return system policies")
             @DefaultValue("false")
             @QueryParam("systemOnly") boolean systemOnly) {
-        PolicyQueryParams.Builder params = new PolicyQueryParams.Builder();
-        if (StringUtils.isNotEmpty(relatedResource)) {
-            params.addResourceIRI(vf.createIRI(relatedResource));
-        }
-        if (StringUtils.isNotEmpty(relatedSubject)) {
-            params.addSubjectIRI(vf.createIRI(relatedSubject));
-        }
-        if (StringUtils.isNotEmpty(relatedAction)) {
-            params.addActionIRI(vf.createIRI(relatedAction));
-        }
-        if (systemOnly) {
-            params.setSystemOnly(true);
-        }
         try {
+            PolicyQueryParams.Builder params = new PolicyQueryParams.Builder();
+            if (StringUtils.isNotEmpty(relatedResource)) {
+                params.addResourceIRI(vf.createIRI(relatedResource));
+            }
+            if (StringUtils.isNotEmpty(relatedSubject)) {
+                params.addSubjectIRI(vf.createIRI(relatedSubject));
+            }
+            if (StringUtils.isNotEmpty(relatedAction)) {
+                params.addActionIRI(vf.createIRI(relatedAction));
+            }
+            if (systemOnly) {
+                params.setSystemOnly(true);
+            }
             return Response.ok(policyManager.getPolicies(params.build()).stream()
                     .map(this::policyToJson)
                     .map(RestUtils::getObjectNodeFromJson)
                     .collect(getMapper()::createArrayNode, ArrayNode::add, ArrayNode::add)).build();
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (Exception ex) {
-            throw ErrorUtils.sendError(ex, "Error retrieving policies", Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -179,28 +173,25 @@ public class PolicyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Invalid policy JSON or missing required policy ID",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while creating the security policy",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -211,9 +202,9 @@ public class PolicyRest {
             Resource policyId = policyManager.addPolicy(jsonToPolicy(policyJson));
             return Response.status(201).entity(policyId.stringValue()).build();
         } catch (IllegalArgumentException | PolicySyntaxException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, "Policy could not be created", Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -238,28 +229,17 @@ public class PolicyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Policy with the provided ID could not be found",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string"))
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving the security policy",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ResourceId(type = ValueType.PATH, value = "policyId")
@@ -269,12 +249,13 @@ public class PolicyRest {
         try {
             Optional<XACMLPolicy> policy = policyManager.getPolicy(vf.createIRI(policyId));
             if (policy.isEmpty()) {
-                // TODO: Should be Response.Status.NOT_FOUND (404) — missing resource is not a bad request
-                throw ErrorUtils.sendError("Policy could not be found", Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjNotFound(new MobiNotFoundException("Policy could not be found"));
             }
             return Response.ok(policyToJson(policy.get())).build();
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, "Policy could not be retrieved", Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -305,28 +286,22 @@ public class PolicyRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Invalid policy JSON or policy ID mismatch",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while updating the security policy",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -339,14 +314,15 @@ public class PolicyRest {
         try {
             XACMLPolicy policy = jsonToPolicy(policyJson);
             if (!policy.getId().equals(vf.createIRI(policyId))) {
-                throw ErrorUtils.sendError("Policy Id does not match provided policy", Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjBadRequest(
+                        new IllegalArgumentException("Policy Id does not match provided policy"));
             }
             policyManager.updatePolicy(policy);
             return Response.ok().build();
         } catch (IllegalArgumentException | PolicySyntaxException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, "Policy could not be updated", Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -354,11 +330,12 @@ public class PolicyRest {
         try {
             PolicyType converted = getMapper().readValue(json, PolicyType.class);
             if (StringUtils.isEmpty(converted.getPolicyId())) {
-                throw ErrorUtils.sendError("Policy must have a value", Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjBadRequest(
+                        new IllegalArgumentException("Policy must have a value"));
             }
             return policyManager.createPolicy(converted);
         } catch (IOException ex) {
-            throw ErrorUtils.sendError(ex, "Error converting policy", Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -366,7 +343,7 @@ public class PolicyRest {
         try {
             return getMapper().writeValueAsString(policy.getJaxbPolicy());
         } catch (JsonProcessingException ex) {
-            throw ErrorUtils.sendError(ex, "Error converting policy", Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 

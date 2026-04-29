@@ -23,6 +23,8 @@ package com.mobi.catalog.rest;
  * #L%
  */
 
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorResponse;
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorType;
 import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getOrmFactoryRegistry;
@@ -518,11 +520,11 @@ public class CatalogRestTest extends MobiRestTestCXF {
         doThrow(new MobiException()).when(catalogManager).getLocalCatalog(any(RepositoryConnection.class));
 
         Response response = target().path("catalogs").request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
 
         doThrow(new IllegalStateException()).when(catalogManager).getLocalCatalog(any(RepositoryConnection.class));
         response = target().path("catalogs").request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     // GET catalogs/{catalogId}
@@ -541,7 +543,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void getCatalogThatDoesNotExistTest() {
         Response response = target().path("catalogs/" + encode(ERROR_IRI)).request().get();
-        assertEquals(404, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Catalog " + ERROR_IRI + " does not exist");
     }
 
     @Test
@@ -550,11 +552,11 @@ public class CatalogRestTest extends MobiRestTestCXF {
         doThrow(new MobiException()).when(catalogManager).getLocalCatalog(any(RepositoryConnection.class));
 
         Response response = target().path(CATALOG_URL_LOCAL).request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
 
         doThrow(new IllegalStateException()).when(catalogManager).getLocalCatalog(any(RepositoryConnection.class));
         response = target().path(CATALOG_URL_LOCAL).request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
 
@@ -668,7 +670,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
                 any(PaginatedSearchParams.class), eq(user), eq(conn));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/entities").queryParam("offset", 9999).request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     // GET catalogs/{catalogId}/records
@@ -813,7 +815,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
                 any(PaginatedSearchParams.class), eq(user), eq(conn));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records").queryParam("offset", 9999).request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -824,7 +826,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path("catalogs/" + encode(ERROR_IRI) + "/records")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -835,7 +837,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // GET catalogs/{catalogId}/records/{recordId}
@@ -863,7 +865,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI))
                 .request().get();
-        assertEquals(404, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Record " + ERROR_IRI + " could not be found");
     }
 
     @Test
@@ -895,7 +897,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI))
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -905,7 +907,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI))
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // DELETE catalogs/{catalogId}/records/{recordId}
@@ -928,7 +930,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI))
                 .request().delete();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -940,7 +942,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI))
                 .request().delete();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // PUT catalogs/{catalogId}/records/{recordId}
@@ -973,7 +975,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI))
                 .request().put(Entity.json(record.toString()));
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -985,7 +987,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path("catalogs/" + encode(ERROR_IRI) + "/records/" + encode(RECORD_IRI))
                 .request().put(Entity.json(record.toString()));
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -997,7 +999,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI))
                 .request().put(Entity.json(record.toString()));
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // PUT catalogs/{catalogId}/records/{recordId}/statistics
@@ -1063,7 +1065,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/statistics")
                 .request().get();
-        assertEquals(404, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Record " + ERROR_IRI + " could not be found");
     }
 
     // GET catalogs/{catalogId}/keywords
@@ -1160,7 +1162,6 @@ public class CatalogRestTest extends MobiRestTestCXF {
                 .request().get();
 
         assertEquals(400, response.getStatus());
-        assertEquals("Bad Request", response.getStatusInfo().getReasonPhrase());
     }
 
     @Test
@@ -1184,7 +1185,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
                 .queryParam("limit", 1)
                 .request().get();
 
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
         assertEquals("Bad Request", response.getStatusInfo().getReasonPhrase());
     }
 
@@ -1198,7 +1199,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
                 .queryParam("limit", 1)
                 .request().get();
 
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
         assertEquals("Internal Server Error", response.getStatusInfo().getReasonPhrase());
     }
 
@@ -1283,7 +1284,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/distributions")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -1293,7 +1294,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/distributions")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // POST catalogs/{catalogId}/records/{recordId}/distributions
@@ -1323,7 +1324,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/distributions")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Distribution title is required");
     }
 
     @Test
@@ -1334,7 +1335,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/distributions")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(401, response.getStatus());
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -1345,7 +1346,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/distributions")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -1356,7 +1357,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/distributions")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // GET catalogs/{catalogId}/records/{recordId}/distributions/{distributionId}
@@ -1379,7 +1380,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/distributions/" + encode(ERROR_IRI))
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -1390,7 +1391,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/distributions/" + encode(ERROR_IRI))
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -1400,7 +1401,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/distributions/" + encode(DISTRIBUTED_IRI)).request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // DELETE catalogs/{catalogId}/records/{recordId}/distributions/{distributionId}
@@ -1422,7 +1423,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/distributions/" + encode(ERROR_IRI))
                 .request().delete();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -1433,7 +1434,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/distributions/" + encode(DISTRIBUTION_IRI))
                 .request().delete();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // PUT catalogs/{catalogId}/records/{recordId}/distributions/{distributionId}
@@ -1468,7 +1469,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/distributions/" + encode(DISTRIBUTION_IRI))
                 .request().put(Entity.json(distribution.toString()));
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -1480,18 +1481,19 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI)
                 + "/distributions/" + encode(DISTRIBUTION_IRI))
                 .request().put(Entity.json(distribution.toString()));
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
     public void updateUnversionedDistributionWithErrorTest() {
         //Setup:
-        ObjectNode distribution = mapper.createObjectNode().put("@id", DISTRIBUTION_IRI);
+        ObjectNode distribution = mapper.createObjectNode().put("@id", DISTRIBUTION_IRI)
+                .set("@type", mapper.createArrayNode().add(Distribution.TYPE));
         doThrow(new MobiException()).when(distributionManager).updateUnversionedDistribution(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Distribution.class), any(RepositoryConnection.class));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/distributions/" + encode(DISTRIBUTION_IRI)).request().put(Entity.json(distribution.toString()));
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // GET catalogs/{catalogId}/records/{recordId}/versions
@@ -1575,7 +1577,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/versions")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -1585,7 +1587,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // POST catalogs/{catalogId}/records/{recordId}/versions
@@ -1607,7 +1609,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Version title is required");
     }
 
     @Test
@@ -1619,7 +1621,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Invalid Version type");
     }
 
     @Test
@@ -1632,7 +1634,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(401, response.getStatus());
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -1645,7 +1647,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/versions")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -1658,7 +1660,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // POST catalogs/{catalogId}/records/{recordId}/tags
@@ -1686,7 +1688,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/tags")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Tag title is required");
     }
 
     @Test
@@ -1696,7 +1698,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/tags")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Tag iri is required");
     }
 
     @Test
@@ -1706,7 +1708,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/tags")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Tag commit is required");
     }
 
     @Test
@@ -1719,7 +1721,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/tags")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Commit " + COMMIT_IRIS[1] + " is not in record " + RECORD_IRI);
     }
 
     @Test
@@ -1733,7 +1735,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/tags")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(401, response.getStatus());
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -1747,7 +1749,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/tags")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // GET catalogs/{catalogId}/records/{recordId}/versions/latest
@@ -1768,7 +1770,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions/latest")
                 .request().get();
-        assertEquals(404, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Latest Version could not be found");
     }
 
     @Test
@@ -1778,7 +1780,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/versions/latest")
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -1788,7 +1790,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions/latest")
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // GET catalogs/{catalogId}/records/{recordId}/versions/{versionId}
@@ -1811,7 +1813,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(ERROR_IRI))
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -1822,7 +1824,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(ERROR_IRI))
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -1833,7 +1835,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI))
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // DELETE catalogs/{catalogId}/records/{recordId}/versions/{versionId}
@@ -1855,7 +1857,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(ERROR_IRI))
                 .request().delete();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -1866,7 +1868,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI))
                 .request().delete();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // PUT catalogs/{catalogId}/records/{recordId}/versions/{versionId}
@@ -1901,7 +1903,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI))
                 .request().put(Entity.json(version.toString()));
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -1913,7 +1915,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI))
                 .request().put(Entity.json(version.toString()));
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -1925,7 +1927,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI))
                 .request().put(Entity.json(version.toString()));
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // GET catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions
@@ -2016,7 +2018,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(ERROR_IRI) + "/distributions")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -2027,7 +2029,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // POST catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions
@@ -2059,7 +2061,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Distribution title is required");
     }
 
     @Test
@@ -2071,7 +2073,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(401, response.getStatus());
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -2083,7 +2085,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(ERROR_IRI) + "/distributions")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -2095,7 +2097,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // GET catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}
@@ -2118,7 +2120,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions/" + encode(ERROR_IRI))
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -2129,7 +2131,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions/" + encode(ERROR_IRI))
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -2140,7 +2142,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions/" + encode(DISTRIBUTION_IRI))
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // DELETE catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}
@@ -2162,7 +2164,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions/" + encode(ERROR_IRI))
                 .request().delete();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -2173,7 +2175,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions/" + encode(DISTRIBUTION_IRI))
                 .request().delete();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // PUT catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}
@@ -2208,7 +2210,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions/" + encode(DISTRIBUTION_IRI))
                 .request().put(Entity.json(distribution.toString()));
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -2220,7 +2222,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(ERROR_IRI) + "/distributions/" + encode(DISTRIBUTION_IRI))
                 .request().put(Entity.json(distribution.toString()));
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -2232,7 +2234,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions/" + encode(DISTRIBUTION_IRI))
                 .request().put(Entity.json(distribution.toString()));
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // GET catalogs/{catalogId}/records/{recordId}/versions/{versionId}/commit
@@ -2265,7 +2267,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(ERROR_IRI) + "/commit")
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -2276,13 +2278,13 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/commit")
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
 
         doThrow(new IllegalStateException()).when(commitManager).getTaggedCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(VERSION_IRI), conn);
         response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/commit")
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     // GET catalogs/{catalogId}/records/{recordId}/branches
@@ -2403,7 +2405,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/branches")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -2413,7 +2415,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // POST catalogs/{catalogId}/records/{recordId}/branches
@@ -2435,7 +2437,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Branch title is required");
     }
 
     @Test
@@ -2448,7 +2450,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Commit not in Record");
     }
 
     @Test
@@ -2460,7 +2462,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Commit ID is required");
     }
 
     @Test
@@ -2474,7 +2476,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(401, response.getStatus());
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -2487,7 +2489,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/branches")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -2496,12 +2498,13 @@ public class CatalogRestTest extends MobiRestTestCXF {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("type", Branch.TYPE);
         fd.field("title", "Title");
+        fd.field("description", "Description");
         fd.field("commitId", COMMIT_IRIS[0]);
         doThrow(new MobiException()).when(branchManager).addBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Branch.class), any(RepositoryConnection.class));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // GET catalogs/{catalogId}/records/{recordId}/branches/master
@@ -2522,7 +2525,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/branches/master")
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -2532,12 +2535,12 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches/master")
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
 
         doThrow(new IllegalStateException()).when(branchManager).getMasterBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(RepositoryConnection.class));
         response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches/master")
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     // GET catalogs/{catalogId}/records/{recordId}/branches/{branchId}
@@ -2570,7 +2573,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(ERROR_IRI))
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -2581,7 +2584,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(ERROR_IRI))
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -2591,7 +2594,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI)).request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // DELETE catalogs/{catalogId}/records/{recordId}/branches/{branchId}
@@ -2620,7 +2623,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                         + "/branches/" + MASTER)
                 .request().delete();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
         verify(branchManager).removeBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(MASTER_BRANCH_IRI)), any(RepositoryConnection.class));
     }
 
@@ -2632,7 +2635,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(ERROR_IRI))
                 .request().delete();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -2643,7 +2646,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI))
                 .request().delete();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // PUT catalogs/{catalogId}/records/{recordId}/branches/{branchId}
@@ -2672,7 +2675,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                         + "/branches/" + MASTER)
                 .request().put(Entity.json(branch.toString()));
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
         verify(branchManager).updateBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Branch.class), any(RepositoryConnection.class));
         verify(bNodeService).deskolemize(any(Model.class));
     }
@@ -2693,7 +2696,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI))
                 .request().put(Entity.json(branch.toString()));
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -2705,7 +2708,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI)
                 + "/branches/" + encode(BRANCH_IRI))
                 .request().put(Entity.json(branch.toString()));
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -2717,7 +2720,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI))
                 .request().put(Entity.json(branch.toString()));
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // GET catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits
@@ -2823,7 +2826,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(ERROR_IRI) + "/commits")
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -2834,13 +2837,13 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits")
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
 
         doThrow(new IllegalStateException()).when(commitManager).getCommitChain(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), conn);
         response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits")
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     @Test
@@ -2896,7 +2899,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits")
                 .queryParam("message", "Message").request().post(Entity.entity("", MediaType.TEXT_PLAIN));
-        assertEquals(401, response.getStatus());
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -2907,7 +2910,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(ERROR_IRI) + "/commits")
                 .queryParam("message", "Message").request().post(Entity.entity("", MediaType.TEXT_PLAIN));
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -2918,13 +2921,13 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits")
                 .queryParam("message", "Message").request().post(Entity.entity("", MediaType.TEXT_PLAIN));
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
 
         doThrow(new IllegalStateException()).when(versioningManager).commit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), eq("Message"), any(RepositoryConnection.class));
         response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits")
                 .queryParam("message", "Message").request().post(Entity.entity("", MediaType.TEXT_PLAIN));
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     // GET catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/head
@@ -2977,7 +2980,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(ERROR_IRI) + "/commits/head")
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -2988,13 +2991,13 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/head")
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
 
         doThrow(new IllegalStateException()).when(commitManager).getHeadCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), conn);
         response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/head")
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     // GET catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}
@@ -3027,7 +3030,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(ERROR_IRI))
                 .request().get();
-        assertEquals(404, response.getStatus());
+        assertErrorResponse(response, 404, "MobiNotFoundException", "Commit " + ERROR_IRI + " could not be found");
     }
 
     @Test
@@ -3038,7 +3041,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(ERROR_IRI))
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -3049,13 +3052,13 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[1]))
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
 
         doThrow(new IllegalStateException()).when(commitManager).getCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), vf.createIRI(COMMIT_IRIS[1]), conn);
         response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[1]))
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     // GET catalogs/{catalogId}/records/{recordId}/branches/{branchId}/difference
@@ -3117,7 +3120,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
     public void getDifferenceWithoutTargetTest() {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/difference").request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Target branch is required");
     }
 
     @Test
@@ -3128,7 +3131,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(ERROR_IRI) + "/difference")
                 .queryParam("targetId", BRANCH_IRI).request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -3139,13 +3142,13 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/difference")
                 .queryParam("targetId", BRANCH_IRI).request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
 
         doThrow(new IllegalStateException()).when(differenceManager).getDifference(eq(vf.createIRI(HEAD_IRI)), eq(vf.createIRI(HEAD_IRI)), any(RepositoryConnection.class));
         response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/difference")
                 .queryParam("targetId", BRANCH_IRI).request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     // GET catalogs/{catalogId}/records/{recordId}/branches/{branchId}/conflicts
@@ -3231,7 +3234,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
     public void getConflictsWithoutTargetTest() {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/conflicts").request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Target branch is required");
     }
 
     @Test
@@ -3242,7 +3245,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(ERROR_IRI) + "/conflicts")
                 .queryParam("targetId", BRANCH_IRI).request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -3253,13 +3256,13 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/conflicts")
                 .queryParam("targetId", BRANCH_IRI).request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
 
         doThrow(new IllegalStateException()).when(differenceManager).getConflicts(eq(vf.createIRI(HEAD_IRI)), eq(vf.createIRI(HEAD_IRI)), any(RepositoryConnection.class));
         response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/conflicts")
                 .queryParam("targetId", BRANCH_IRI).request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     // POST catalogs/{catalogId}/records/{recordId}/branches/{branchId}/conflicts/resolution
@@ -3295,7 +3298,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(ERROR_IRI) + "/conflicts/resolution")
                 .queryParam("targetId", BRANCH_IRI).request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -3310,7 +3313,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/conflicts/resolution")
                 .queryParam("targetId", BRANCH_IRI).request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(401, response.getStatus());
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -3325,13 +3328,13 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/conflicts/resolution")
                 .queryParam("targetId", BRANCH_IRI).request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
 
         doThrow(new IllegalStateException()).when(versioningManager).merge(any(), any(), any(), any(), any(), any(), any(), any(), any(RepositoryConnection.class));
         response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/conflicts/resolution")
                 .queryParam("targetId", BRANCH_IRI).request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     // GET catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/resource
@@ -3426,7 +3429,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
                 .queryParam("applyInProgressCommit", "true").request().get();
-        assertEquals(401, response.getStatus());
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -3437,7 +3440,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(ERROR_IRI) + "/resource")
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -3448,13 +3451,13 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
 
         doThrow(new IllegalStateException()).when(commitManager).getCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), vf.createIRI(COMMIT_IRIS[0]), conn);
         response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     // GET (download) catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/resource
@@ -3545,7 +3548,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
                 .queryParam("applyInProgressCommit", "true").request().accept(MediaType.APPLICATION_OCTET_STREAM).get();
-        assertEquals(401, response.getStatus());
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -3556,7 +3559,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(ERROR_IRI) + "/resource")
                 .request().accept(MediaType.APPLICATION_OCTET_STREAM).get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -3567,13 +3570,13 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
                 .request().accept(MediaType.APPLICATION_OCTET_STREAM).get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
 
         doThrow(new IllegalStateException()).when(commitManager).getCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), vf.createIRI(COMMIT_IRIS[0]), conn);
         response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
                 .request().accept(MediaType.APPLICATION_OCTET_STREAM).get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     // POST catalogs/{catalogId}/records/{recordId}/in-progress-commit
@@ -3594,7 +3597,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/in-progress-commit")
                 .request().post(Entity.json(""));
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -3604,7 +3607,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().post(Entity.json(""));
-        assertEquals(401, response.getStatus());
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -3614,7 +3617,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().post(Entity.json(""));
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
     }
 
     // GET catalogs/{catalogId}/records/{recordId}/in-progress-commit
@@ -3680,7 +3683,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/in-progress-commit")
                 .request().get();
-        assertEquals(404, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "InProgressCommit could not be found");
     }
 
     @Test
@@ -3690,7 +3693,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/in-progress-commit")
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -3700,7 +3703,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().get();
-        assertEquals(401, response.getStatus());
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -3710,12 +3713,12 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
 
         doThrow(new IllegalStateException()).when(commitManager).getInProgressCommitOpt(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(User.class), any(RepositoryConnection.class));
         response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     // DELETE catalogs/{catalogId}/records/{recordId}/in-progress-commit
@@ -3735,7 +3738,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/in-progress-commit")
                 .request().delete();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -3745,7 +3748,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().delete();
-        assertEquals(401, response.getStatus());
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -3755,12 +3758,12 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().delete();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
 
         doThrow(new IllegalStateException()).when(commitManager).removeInProgressCommit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(User.class), any(RepositoryConnection.class));
         response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().delete();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     // PUT catalogs/{catalogId}/records/{recordId}/in-progress-commit
@@ -3794,7 +3797,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/in-progress-commit")
                 .request().put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -3808,7 +3811,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(401, response.getStatus());
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -3822,12 +3825,12 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "MobiException");
 
         doThrow(new IllegalStateException()).when(commitManager).updateInProgressCommit(any(), any(), (User) any(), any(), any(), any(RepositoryConnection.class));
         response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     /* GET record-types */
@@ -3980,4 +3983,5 @@ public class CatalogRestTest extends MobiRestTestCXF {
         });
         return set;
     }
+
 }

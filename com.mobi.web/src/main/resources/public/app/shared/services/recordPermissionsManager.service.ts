@@ -28,7 +28,7 @@ import { catchError, map } from 'rxjs/operators';
 import { REST_PREFIX } from '../../constants';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { RecordPermissions } from '../models/recordPermissions.interface';
-import { handleError } from '../utility';
+import { handleErrorObject } from '../utility';
 
 /**
  * @class shared.RecordPermissionsManagerService
@@ -52,7 +52,7 @@ export class RecordPermissionsManagerService {
      */
     getRecordPolicy(recordId: string): Observable<RecordPermissions> {
         return this.spinnerSvc.track(this.http.get<RecordPermissions>(`${this.prefix}/${encodeURIComponent(recordId)}`))
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
 
     /**
@@ -66,6 +66,6 @@ export class RecordPermissionsManagerService {
      */
     updateRecordPolicy(recordId: string, newPolicy: RecordPermissions): Observable<void> {
         return this.spinnerSvc.track(this.http.put(`${this.prefix}/${encodeURIComponent(recordId)}`, newPolicy))
-            .pipe(catchError(handleError), map(() => {}));
+            .pipe(catchError(handleErrorObject), map(() => {}));
     }
 }

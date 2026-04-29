@@ -36,6 +36,7 @@ import {
   cleanStylesFromDOM,
 } from '../../../../../public/test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { RestErrorDisplayComponent } from '../../../shared/components/restErrorDisplay/restErrorDisplay.component';
 import { FileInputComponent } from '../../../shared/components/fileInput/fileInput.component';
 import { Dataset } from '../../../shared/models/dataset.interface';
 import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
@@ -71,6 +72,7 @@ describe('Upload Data Overlay component', function () {
       declarations: [
         UploadDataOverlayComponent,
         MockComponent(ErrorDisplayComponent),
+        MockComponent(RestErrorDisplayComponent),
         MockComponent(FileInputComponent)
       ],
       providers: [
@@ -164,10 +166,10 @@ describe('Upload Data Overlay component', function () {
       expect(element.queryAll(By.css('file-input')).length).toBe(1);
     });
     it('depending on whether there is an error', function () {
-      expect(element.queryAll(By.css('error-display')).length).toEqual(0);
+      expect(element.queryAll(By.css('rest-error-display')).length).toEqual(0);
       component.error = {error: 'Error', errorMessage: 'Error message', errorDetails: []};
       fixture.detectChanges();
-      expect(element.queryAll(By.css('error-display')).length).toEqual(1);
+      expect(element.queryAll(By.css('rest-error-display')).length).toEqual(1);
     });
     it('depending on whether data is uploading', function () {
       fixture.detectChanges();

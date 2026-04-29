@@ -46,6 +46,7 @@ describe('Download Query Overlay component', function() {
     let matDialogRef: jasmine.SpyObj<MatDialogRef<DownloadQueryOverlayComponent>>;
     let sparqlManagerStub: jasmine.SpyObj<SparqlManagerService>;
     const error = 'error';
+    const errorObj = {error: '', errorMessage: error, errorDetails: []};
     let data;
 
     beforeEach(async () => {
@@ -141,11 +142,11 @@ describe('Download Query Overlay component', function() {
             });
             describe('when it is not an ontology', function() {
                 it('unless an error occurs', fakeAsync(function() {
-                    sparqlManagerStub.downloadResultsPost.and.returnValue(throwError(error));
+                    sparqlManagerStub.downloadResultsPost.and.returnValue(throwError(errorObj));
                     component.download();
                     tick();
                     expect(sparqlManagerStub.downloadResultsPost).toHaveBeenCalledWith(data.query, 'csv', 'name', data.resourceId, REPOSITORY_STORE_TYPE, '', data.commitId, data.includeImports, true);
-                    expect(matDialogRef.close).toHaveBeenCalledWith(error);
+                    expect(matDialogRef.close).toHaveBeenCalledWith(errorObj);
                 }));
                 it('successfully', fakeAsync(function() {
                     sparqlManagerStub.downloadResultsPost.and.returnValue(of(null));
@@ -162,11 +163,11 @@ describe('Download Query Overlay component', function() {
                     data.storeType = ONTOLOGY_STORE_TYPE;
                 });
                 it('unless an error occurs', fakeAsync(function() {
-                    sparqlManagerStub.downloadResultsPost.and.returnValue(throwError(error));
+                    sparqlManagerStub.downloadResultsPost.and.returnValue(throwError(errorObj));
                     component.download();
                     tick();
                     expect(sparqlManagerStub.downloadResultsPost).toHaveBeenCalledWith(data.query, 'csv', 'name', data.resourceId, ONTOLOGY_STORE_TYPE, '', data.commitId, data.includeImports, true);
-                    expect(matDialogRef.close).toHaveBeenCalledWith(error);
+                    expect(matDialogRef.close).toHaveBeenCalledWith(errorObj);
                 }));
                 it('successfully', fakeAsync(function() {
                     sparqlManagerStub.downloadResultsPost.and.returnValue(of(null));

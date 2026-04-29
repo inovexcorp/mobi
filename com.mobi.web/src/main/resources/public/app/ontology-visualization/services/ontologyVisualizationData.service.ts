@@ -36,7 +36,7 @@ import {
 } from '../interfaces/visualization.interfaces';
 import { ControlRecordI } from '../classes/controlRecords';
 import { EntityNames } from '../../shared/models/entityNames.interface';
-import { getBeautifulIRI, handleError } from '../../shared/utility';
+import { getBeautifulIRI, handleErrorObject } from '../../shared/utility';
 import { GraphState, StateEdge, StateNode } from '../classes';
 import { Hierarchy } from '../../shared/models/hierarchy.interface';
 import { HierarchyResponse } from '../../shared/models/hierarchyResponse.interface';
@@ -135,7 +135,7 @@ export class OntologyVisualizationDataService {
           ranges: ranges
         };
       })
-    )).pipe(catchError(handleError));
+    )).pipe(catchError(handleErrorObject));
   }
 
   /**
@@ -174,7 +174,7 @@ export class OntologyVisualizationDataService {
           ranges: cloneDeep(ranges)
         };
       })
-    )).pipe(catchError(handleError));
+    )).pipe(catchError(handleErrorObject));
   }
 
   /**

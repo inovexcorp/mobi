@@ -29,8 +29,6 @@ import static com.mobi.rest.util.RestUtils.getActiveUser;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
 import static java.nio.file.FileVisitResult.CONTINUE;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -54,7 +52,7 @@ import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.CharsetUtils;
-import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.MobiNotFoundException;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import com.opencsv.CSVParser;
@@ -64,7 +62,6 @@ import com.opencsv.CSVReaderBuilder;
 import com.opencsv.exceptions.CsvException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
@@ -214,37 +211,33 @@ public class DelimitedRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided delimited file data or parameters are invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to perform this action",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while uploading the delimited file",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -263,9 +256,9 @@ public class DelimitedRest {
                 throw new IllegalStateException("Error occurred reading temporary file", ex);
             }
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         } catch (IllegalArgumentException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(e);
         }
     }
 
@@ -304,37 +297,33 @@ public class DelimitedRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided delimited file data or parameters are invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to perform this action",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while replacing the delimited file",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -353,9 +342,9 @@ public class DelimitedRest {
                 throw new IllegalStateException("Error occurred reading temporary file", ex);
             }
         } catch (IllegalStateException | IOException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         } catch (IllegalArgumentException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(e);
         }
     }
 
@@ -395,37 +384,30 @@ public class DelimitedRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided delimited file data or parameters are invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to perform this action",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while transforming the delimited document",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -454,9 +436,9 @@ public class DelimitedRest {
 
             return Response.ok(Files.readString(data.toPath())).build();
         } catch (IllegalStateException | MobiException | IOException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         } catch (IllegalArgumentException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(e);
         } finally {
             if (data != null) {
                 try {
@@ -495,37 +477,33 @@ public class DelimitedRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided delimited file data or parameters are invalid",
-                    headers = @Header(
-                        name = "HTTP Status",
-                        description = "Reason Phrase contains error message",
-                        schema = @Schema(type = "string")
-                )
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to perform this action",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while downloading the transformed document",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -585,7 +563,7 @@ public class DelimitedRest {
                     logger.warn("Failed to delete file {}", data.getAbsolutePath(), e);
                 }
             }
-            throw ErrorUtils.sendError(ex, ex.getMessage(), INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -615,37 +593,30 @@ public class DelimitedRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided delimited file data or parameters are invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to perform this action",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while loading data into the Dataset",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             )
     })
@@ -681,7 +652,8 @@ public class DelimitedRest {
             try {
                 rdfImportService.importFile(config, data);
             } catch (RepositoryException | IOException ex) {
-                throw ErrorUtils.sendError("Error in repository connection", INTERNAL_SERVER_ERROR);
+                throw RestUtils.getErrorObjInternalServerError(
+                        new MobiException("Error in repository connection", ex));
             }
 
             // Remove temp file
@@ -689,9 +661,9 @@ public class DelimitedRest {
 
             return Response.ok().build();
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         } catch (IllegalArgumentException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(e);
         } finally {
             if (data != null) {
                 try {
@@ -747,19 +719,14 @@ public class DelimitedRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to perform this action",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
@@ -849,9 +816,8 @@ public class DelimitedRest {
     private File etlFileToResult(String fileName, SupplierWithException<Model> mappingSupplier,
                                  boolean containsHeaders, String separator, boolean limit, RDFFormat format) {
         // Collect the delimited file and its extension
-        // TODO: Should be NOT_FOUND (404) — missing resource is not a bad request
         File delimitedFile = getUploadedFile(fileName).orElseThrow(() ->
-                ErrorUtils.sendError("Document not found", BAD_REQUEST));
+                RestUtils.getErrorObjNotFound(new MobiNotFoundException("Document not found")));
         String extension = FilenameUtils.getExtension(delimitedFile.getName());
 
         // Collect the delimited file charset
@@ -859,7 +825,7 @@ public class DelimitedRest {
         try (InputStream data = getDocumentInputStream(delimitedFile)) {
             charset = CharsetUtils.getEncoding(data).orElse(Charset.defaultCharset());
         } catch (IOException e) {
-            throw ErrorUtils.sendError(e, "Exception reading ETL file", BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Exception reading ETL file", e));
         }
 
         // Collect the mapping model
@@ -867,7 +833,7 @@ public class DelimitedRest {
         try {
             mappingModel = mappingSupplier.get();
         } catch (IOException e) {
-            throw ErrorUtils.sendError("Error converting mapping JSON-LD", BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Error converting mapping JSON-LD", e));
         }
 
         // Run the mapping against the delimited data
@@ -894,7 +860,7 @@ public class DelimitedRest {
             logger.info("File mapped: {}", delimitedFile.getPath());
             return result.toFile();
         } catch (IOException e) {
-            throw ErrorUtils.sendError(e, "Exception reading ETL file", BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Exception reading ETL file", e));
         }
     }
 
@@ -926,38 +892,22 @@ public class DelimitedRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided delimited file data or parameters are invalid",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "404",
                     description = "Delimited file with the provided name does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving rows from the delimited document",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response getRows(
@@ -984,17 +934,17 @@ public class DelimitedRest {
                         json = convertCSVRows(file, numRows, separatorChar);
                     }
                 } catch (Exception e) {
-                    throw ErrorUtils.sendError("Error loading document", BAD_REQUEST);
+                    throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Error loading document", e));
                 }
 
                 return Response.ok(json).build();
             } else {
-                throw ErrorUtils.sendError("Document not found", Response.Status.NOT_FOUND);
+                throw RestUtils.getErrorObjNotFound(new MobiNotFoundException("Document not found"));
             }
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         } catch (IllegalArgumentException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(e);
         }
     }
 
@@ -1098,7 +1048,8 @@ public class DelimitedRest {
         if (optCharset.isPresent()) {
             charset = optCharset.get();
         } else {
-            throw ErrorUtils.sendError("Delimited file is not in a supported encoding", BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(
+                    new IllegalArgumentException("Delimited file is not in a supported encoding"));
         }
 
         return charset;
@@ -1117,7 +1068,8 @@ public class DelimitedRest {
                         logger.debug("File {} was not fully deleted", file.getAbsolutePath());
                     }
                 }
-                throw ErrorUtils.sendError("Delimited file is not in a supported encoding", BAD_REQUEST);
+                throw RestUtils.getErrorObjBadRequest(
+                        new IllegalArgumentException("Delimited file is not in a supported encoding"));
             }
             return charset;
         }
@@ -1135,12 +1087,12 @@ public class DelimitedRest {
         try {
             mappingOpt = mappingManager.retrieveMapping(vf.createIRI(mappingRecordIRI));
         } catch (IllegalArgumentException e) {
-            // TODO: Should be NOT_FOUND (404) — missing resource is not a bad request
-            throw ErrorUtils.sendError("Mapping " + mappingRecordIRI + " does not exist", BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(
+                    new IllegalArgumentException("Mapping " + mappingRecordIRI + " does not exist", e));
         }
         MappingWrapper mapping = mappingOpt.orElseThrow(() ->
-                ErrorUtils.sendError("Mapping " + mappingRecordIRI + " could not be retrieved",
-                        BAD_REQUEST));
+                RestUtils.getErrorObjBadRequest(
+                        new IllegalArgumentException("Mapping " + mappingRecordIRI + " could not be retrieved")));
         return mapping.getModel();
     }
 
@@ -1148,7 +1100,7 @@ public class DelimitedRest {
         try {
             Files.deleteIfExists(Paths.get(TEMP_DIR + "/" + fileName));
         } catch (IOException e) {
-            throw ErrorUtils.sendError(e, "Error deleting delimited file", BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Error deleting delimited file", e));
         }
     }
 
@@ -1178,8 +1130,7 @@ public class DelimitedRest {
         try {
             data = new FileInputStream(delimited);
         } catch (FileNotFoundException e) {
-            // TODO: Should be NOT_FOUND (404) — missing resource is not a bad request
-            throw ErrorUtils.sendError("Document not found", BAD_REQUEST);
+            throw RestUtils.getErrorObjNotFound(new MobiNotFoundException("Document not found"));
         }
         return data;
     }

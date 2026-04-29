@@ -296,7 +296,7 @@ describe('Open Record Button component', function () {
             expect(toastStub.createErrorToast).not.toHaveBeenCalled();
           }));
           it('unless an error occurs', fakeAsync(function() {
-            ontologyStateStub.open.and.returnValue(throwError('error'));
+            ontologyStateStub.open.and.returnValue(throwError({error: '', errorMessage: 'error', errorDetails: []}));
             component.openOntology();
             tick();
             expect(router.navigate).toHaveBeenCalledWith(['/ontology-editor']);
@@ -416,7 +416,7 @@ describe('Open Record Button component', function () {
             expect(toastStub.createErrorToast).not.toHaveBeenCalled();
           }));
           it('unless an error occurs', fakeAsync(function() {
-            shapesGraphStateStub.open.and.returnValue(throwError('error'));
+            shapesGraphStateStub.open.and.returnValue(throwError({error: '', errorMessage: 'error', errorDetails: []}));
             component.openShapesGraph();
             tick();
             expect(router.navigate).toHaveBeenCalledWith(['/shapes-graph-editor']);
@@ -519,7 +519,7 @@ describe('Open Record Button component', function () {
         spyOn(component, 'navigateToRecord');
       });
       it('unless an error occurs', fakeAsync(function() {
-        catalogManagerStub.getRecord.and.returnValue(throwError(error));
+        catalogManagerStub.getRecord.and.returnValue(throwError({error: '', errorMessage: error, errorDetails: []}));
         component.updateEntityRecord();
         tick();
         expect(catalogManagerStub.getRecord).toHaveBeenCalledWith(entityRecord['@id'], catalogId);

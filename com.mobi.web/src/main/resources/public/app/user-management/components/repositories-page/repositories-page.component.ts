@@ -51,7 +51,7 @@ export class RepositoriesPageComponent implements OnInit {
         capacityPercentage: this.getCapacityPercentage(repo)
       }));
     }, error => {
-      this._toast.createErrorToast(`Failed to load repositories ${error}`);
+      this._toast.createErrorToast(`Failed to load repositories ${error.errorMessage}`);
     });
   }
 

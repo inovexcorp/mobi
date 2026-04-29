@@ -87,7 +87,7 @@ export class RequestRecordSelectComponent implements OnInit {
             .subscribe((response: HttpResponse<JSONLDObject[]>) => this._setPagination(response), error => {
                 this.mergeRequestRecords = [];
                 this.totalSize = 0;
-                this.toast.createErrorToast(error);
+                this.toast.createErrorToast(error.errorMessage);
                 this.spinnerSvc.finishLoadingForComponent(this.mrRecords);
             });
     }

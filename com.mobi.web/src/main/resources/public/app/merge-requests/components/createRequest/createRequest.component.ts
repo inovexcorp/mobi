@@ -64,7 +64,7 @@ export class CreateRequestComponent implements OnInit, OnDestroy {
             .subscribe(() => {
                 this.toast.createSuccessToast('Successfully created request');
                 this.state.createRequest = false;
-            }, error => this.toast.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error.errorMessage));
     }
     resetBranchSelect(): void  {
         this.state.requestConfig.sourceBranchId = '';

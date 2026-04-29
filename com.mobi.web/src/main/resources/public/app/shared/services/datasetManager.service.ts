@@ -35,7 +35,7 @@ import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { PaginatedConfig } from '../models/paginatedConfig.interface';
 import { CatalogManagerService } from './catalogManager.service';
 import { DiscoverStateService } from './discoverState.service';
-import { createHttpParams, handleError, handleErrorObject, paginatedConfigToHttpParams } from '../utility';
+import { createHttpParams, handleErrorObject, paginatedConfigToHttpParams } from '../utility';
 
 /**
  * @class shared.DatasetManagerService
@@ -74,7 +74,7 @@ export class DatasetManagerService {
     }
     const request = this.http.get<JSONLDObject[][]>(this.prefix, { params, observe: 'response' });
     return this._trackedRequest(request, isTracked)
-      .pipe(catchError(handleError));
+      .pipe(catchError(handleErrorObject));
   }
   /**
    * Calls the GET /mobirest/datasets/{datasetRecordIRI} endpoint to get the DatasetRecord associated
@@ -85,7 +85,7 @@ export class DatasetManagerService {
    */
   getDatasetRecord(datasetRecordIRI: string): Observable<JSONLDObject[]> {
     return this.spinnerSvc.track(this.http.get<JSONLDObject[]>(`${this.prefix}/${encodeURIComponent(datasetRecordIRI)}`))
-      .pipe(catchError(handleError));
+      .pipe(catchError(handleErrorObject));
   }
   /**
    * Calls POST /mobirest/datasets endpoint with the passed metadata and creates a new DatasetRecord and
@@ -110,7 +110,7 @@ export class DatasetManagerService {
     forEach(get(recordConfig, 'ontologies', []), id => fd.append('ontologies', id));
     return this.spinnerSvc.track(this.http.post(this.prefix, fd, { responseType: 'text' }))
       .pipe(
-        catchError(handleError),
+        catchError(handleErrorObject),
         switchMap((datasetRecordId: string) => {
           this.initialize().subscribe();
           return of(datasetRecordId);
@@ -133,7 +133,7 @@ export class DatasetManagerService {
     return this.spinnerSvc.track(this.http.delete(`${this.prefix}/${encodeURIComponent(datasetRecordIRI)}`,
       { params: createHttpParams(params) }))
       .pipe(
-        catchError(handleError),
+        catchError(handleErrorObject),
         switchMap(() => {
           this.ds.cleanUpOnDatasetDelete(datasetRecordIRI);
           this._removeDataset(datasetRecordIRI);
@@ -157,7 +157,7 @@ export class DatasetManagerService {
     return this.spinnerSvc.track(this.http.delete(`${this.prefix}/${encodeURIComponent(datasetRecordIRI)}/data`,
       { params: createHttpParams(params) }))
       .pipe(
-        catchError(handleError),
+        catchError(handleErrorObject),
         switchMap(() => {
           this.ds.cleanUpOnDatasetClear(datasetRecordIRI);
           return of(null);

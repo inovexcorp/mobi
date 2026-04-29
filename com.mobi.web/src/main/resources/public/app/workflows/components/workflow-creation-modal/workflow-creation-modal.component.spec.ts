@@ -40,6 +40,7 @@ import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { DCTERMS, RDFS, WORKFLOWS } from '../../../prefixes';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { RestErrorDisplayComponent } from '../../../shared/components/restErrorDisplay/restErrorDisplay.component';
 import { KeywordSelectComponent } from '../../../shared/components/keywordSelect/keywordSelect.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { RESTError } from '../../../shared/models/RESTError.interface';
@@ -89,6 +90,7 @@ describe('WorkflowCreationModalComponent', () => {
         WorkflowCreationModalComponent,
         MockComponent(KeywordSelectComponent),
         MockComponent(ErrorDisplayComponent),
+        MockComponent(RestErrorDisplayComponent),
       ],
       providers: [
         MockProvider(WorkflowsManagerService),
@@ -144,11 +146,11 @@ describe('WorkflowCreationModalComponent', () => {
       expect(['Cancel', 'Submit']).toContain(buttons[1].nativeElement.textContent.trim());
     });
     it('depending on whether an error occurred', function () {
-      expect(element.queryAll(By.css('error-display')).length).toEqual(0);
+      expect(element.queryAll(By.css('rest-error-display')).length).toEqual(0);
 
       component.error = error;
       fixture.detectChanges();
-      expect(element.queryAll(By.css('error-display')).length).toEqual(1);
+      expect(element.queryAll(By.css('rest-error-display')).length).toEqual(1);
     });
     it('depending on whether the ontology iri is valid', function () {
       fixture.detectChanges();

@@ -23,10 +23,13 @@ package com.mobi.setting.rest;
  * #L%
  */
 
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorResponse;
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorType;
 import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -240,7 +243,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/" + encode("http://example.com/MyComplexPreference"))
                 .queryParam("type", Preference.TYPE)
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Setting with id http://example.com/MyComplexPreference does not exist.");
     }
 
     @Test
@@ -249,7 +252,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/" + encode("http://example.com/MyComplexPreference"))
                 .queryParam("type", Preference.TYPE)
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -258,7 +261,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/" + encode("http://example.com/MyComplexPreference"))
                 .queryParam("type", Preference.TYPE)
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     // GET /settings/{settingId}
@@ -284,7 +287,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/" + encode("http://example.com/MyComplexApplicationSetting"))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Setting with id http://example.com/MyComplexApplicationSetting does not exist.");
     }
 
     @Test
@@ -293,7 +296,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/" + encode("http://example.com/MySimpleApplicationSetting"))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -302,7 +305,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/" + encode("http://example.com/MySimpleApplicationSetting"))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     // POST /settings
@@ -357,7 +360,7 @@ public class SettingRestTest extends MobiRestTestCXF {
                 .queryParam("type", Preference.TYPE)
                 .queryParam("subType", TestSimplePreference.TYPE)
                 .request().post(Entity.json(entity.toString()));
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
         verify(engineManager, never()).getUserRoles(anyString());
     }
 
@@ -369,7 +372,7 @@ public class SettingRestTest extends MobiRestTestCXF {
                 .queryParam("type", Preference.TYPE)
                 .queryParam("subType", TestSimplePreference.TYPE)
                 .request().post(Entity.json(entity.toString()));
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
         verify(engineManager, never()).getUserRoles(anyString());
     }
 
@@ -383,7 +386,7 @@ public class SettingRestTest extends MobiRestTestCXF {
                 .queryParam("type", ApplicationSetting.TYPE)
                 .queryParam("subType", TestSimpleApplicationSetting.TYPE)
                 .request().post(Entity.json(entity.toString()));
-        assertEquals(401, response.getStatus());
+        assertErrorResponse(response, 401, "IllegalAccessException", "User must have Admin role to perform this action.");
         verify(engineManager).getUserRoles(UsernameTestFilter.USERNAME);
     }
 
@@ -439,7 +442,7 @@ public class SettingRestTest extends MobiRestTestCXF {
                 .queryParam("type", ApplicationSetting.TYPE)
                 .queryParam("subType", TestSimplePreference.TYPE)
                 .request().post(Entity.json(entity.toString()));
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
         verify(engineManager).getUserRoles(UsernameTestFilter.ADMIN_USER);
     }
 
@@ -452,7 +455,7 @@ public class SettingRestTest extends MobiRestTestCXF {
                 .queryParam("type", ApplicationSetting.TYPE)
                 .queryParam("subType", TestSimplePreference.TYPE)
                 .request().post(Entity.json(entity.toString()));
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
         verify(engineManager).getUserRoles(UsernameTestFilter.ADMIN_USER);
     }
 
@@ -508,7 +511,7 @@ public class SettingRestTest extends MobiRestTestCXF {
                 .queryParam("type", Preference.TYPE)
                 .queryParam("subType", TestSimplePreference.TYPE)
                 .request().put(Entity.json(entity.toString()));
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
         verify(engineManager, never()).getUserRoles(anyString());
     }
 
@@ -520,7 +523,7 @@ public class SettingRestTest extends MobiRestTestCXF {
                 .queryParam("type", Preference.TYPE)
                 .queryParam("subType", TestSimplePreference.TYPE)
                 .request().put(Entity.json(entity.toString()));
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
         verify(engineManager, never()).getUserRoles(anyString());
     }
 
@@ -534,7 +537,7 @@ public class SettingRestTest extends MobiRestTestCXF {
                 .queryParam("type", ApplicationSetting.TYPE)
                 .queryParam("subType", TestSimpleApplicationSetting.TYPE)
                 .request().put(Entity.json(entity.toString()));
-        assertEquals(401, response.getStatus());
+        assertErrorResponse(response, 401, "IllegalAccessException", "User must have Admin role to perform this action.");
         verify(engineManager).getUserRoles(UsernameTestFilter.USERNAME);
     }
 
@@ -590,7 +593,7 @@ public class SettingRestTest extends MobiRestTestCXF {
                 .queryParam("type", ApplicationSetting.TYPE)
                 .queryParam("subType", TestSimpleApplicationSetting.TYPE)
                 .request().put(Entity.json(entity.toString()));
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
         verify(engineManager).getUserRoles(UsernameTestFilter.ADMIN_USER);
     }
 
@@ -603,7 +606,7 @@ public class SettingRestTest extends MobiRestTestCXF {
                 .queryParam("type", ApplicationSetting.TYPE)
                 .queryParam("subType", TestSimpleApplicationSetting.TYPE)
                 .request().put(Entity.json(entity.toString()));
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
         verify(engineManager).getUserRoles(UsernameTestFilter.ADMIN_USER);
     }
 
@@ -634,7 +637,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/" + encode("http://example.com/MySimplePreference"))
                 .queryParam("type", Preference.TYPE)
                 .request().delete();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
         verify(engineManager, never()).getUserRoles(anyString());
     }
 
@@ -644,7 +647,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/" + encode("http://example.com/MySimplePreference"))
                 .queryParam("type", Preference.TYPE)
                 .request().delete();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
         verify(engineManager, never()).getUserRoles(anyString());
     }
 
@@ -656,7 +659,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/" + encode("http://example.com/MySimpleApplicationSetting"))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .request().delete();
-        assertEquals(401, response.getStatus());
+        assertErrorResponse(response, 401, "IllegalAccessException", "User must have Admin role to perform this action.");
         verify(engineManager).getUserRoles(UsernameTestFilter.USERNAME);
     }
 
@@ -686,7 +689,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/" + encode("http://example.com/MySimpleApplicationSetting"))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .request().delete();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
         verify(engineManager).getUserRoles(UsernameTestFilter.ADMIN_USER);
     }
 
@@ -697,7 +700,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/" + encode("http://example.com/MySimpleApplicationSetting"))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .request().delete();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
         verify(engineManager).getUserRoles(UsernameTestFilter.ADMIN_USER);
     }
 
@@ -724,7 +727,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/types/" + encode(TestSimplePreference.TYPE))
                 .queryParam("type", Preference.TYPE)
                 .request().get();
-        assertEquals(404, response.getStatus());
+        assertErrorResponse(response, 404, "IllegalArgumentException", "Setting with type " + TestSimplePreference.TYPE + " does not exist.");
     }
 
     @Test
@@ -733,7 +736,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/types/" + encode(TestSimplePreference.TYPE))
                 .queryParam("type", Preference.TYPE)
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -742,7 +745,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/types/" + encode(TestSimplePreference.TYPE))
                 .queryParam("type", Preference.TYPE)
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     // GET /settings/types/{settingType}
@@ -768,7 +771,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/types/" + encode(TestSimpleApplicationSetting.TYPE))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .request().get();
-        assertEquals(404, response.getStatus());
+        assertErrorResponse(response, 404, "IllegalArgumentException", "Setting with type " + TestSimpleApplicationSetting.TYPE + " does not exist.");
     }
 
     @Test
@@ -777,7 +780,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/types/" + encode(TestSimpleApplicationSetting.TYPE))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -786,7 +789,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/types/" + encode(TestSimpleApplicationSetting.TYPE))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     // DELETE /settings/{settingId}
@@ -816,7 +819,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/types/" + encode(TestSimplePreference.TYPE))
                 .queryParam("type", Preference.TYPE)
                 .request().delete();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
         verify(engineManager, never()).getUserRoles(anyString());
     }
 
@@ -826,7 +829,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/types/" + encode(TestSimplePreference.TYPE))
                 .queryParam("type", Preference.TYPE)
                 .request().delete();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
         verify(engineManager, never()).getUserRoles(anyString());
     }
 
@@ -838,7 +841,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/types/" + encode(TestSimpleApplicationSetting.TYPE))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .request().delete();
-        assertEquals(401, response.getStatus());
+        assertErrorResponse(response, 401, "IllegalAccessException", "User must have Admin role to perform this action.");
         verify(engineManager).getUserRoles(UsernameTestFilter.USERNAME);
     }
 
@@ -868,7 +871,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/types/" + encode(TestSimpleApplicationSetting.TYPE))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .request().delete();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
         verify(engineManager).getUserRoles(UsernameTestFilter.ADMIN_USER);
     }
 
@@ -879,7 +882,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/types/" + encode(TestSimpleApplicationSetting.TYPE))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .request().delete();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
         verify(engineManager).getUserRoles(UsernameTestFilter.ADMIN_USER);
     }
 
@@ -913,7 +916,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/groups/")
                 .queryParam("type", Preference.TYPE)
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -922,7 +925,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/groups/")
                 .queryParam("type", Preference.TYPE)
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     // GET /settings/groups
@@ -955,7 +958,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/groups/")
                 .queryParam("type", ApplicationSetting.TYPE)
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -964,7 +967,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/groups/")
                 .queryParam("type", ApplicationSetting.TYPE)
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     // GET /settings/groups/{groupId}/definitions
@@ -998,7 +1001,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/groups/" + encode("http://example.com/SomeOtherPreferenceGroup") + "/definitions")
                 .queryParam("type", Preference.TYPE)
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -1007,7 +1010,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/groups/" + encode("http://example.com/SomeOtherPreferenceGroup") + "/definitions")
                 .queryParam("type", Preference.TYPE)
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     // GET /settings/groups/{groupId}/definitions
@@ -1034,7 +1037,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/groups/" + encode("http://example.com/SomeOtherPreferenceGroup") + "/definitions")
                 .queryParam("type", ApplicationSetting.TYPE)
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertErrorType(response, 400, "IllegalArgumentException");
     }
 
     @Test
@@ -1043,7 +1046,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/groups/" + encode("http://example.com/SomeOtherPreferenceGroup") + "/definitions")
                 .queryParam("type", ApplicationSetting.TYPE)
                 .request().get();
-        assertEquals(500, response.getStatus());
+        assertErrorType(response, 500, "IllegalStateException");
     }
 
     private interface TestComplexPreference extends Thing, Preference {

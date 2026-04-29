@@ -113,7 +113,7 @@ export class CommitInfoOverlayComponent implements OnInit {
                 }, 
                 error: (error) => {
                     nextCalled = true;
-                    this.toast.createErrorToast(error);
+                    this.toast.createErrorToast(error.errorMessage);
                 },
                 complete: () => {
                     if (!nextCalled) {

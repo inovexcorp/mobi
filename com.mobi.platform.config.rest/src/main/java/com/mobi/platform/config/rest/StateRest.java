@@ -29,12 +29,12 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.exception.MobiException;
 import com.mobi.platform.config.api.state.StateManager;
-import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.MobiNotFoundException;
 import com.mobi.rest.util.RestUtils;
+import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import com.mobi.rest.util.swagger.JsonLdObject;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -116,29 +116,17 @@ public class StateRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                        )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to view states",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving user states",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                        )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response getStates(
@@ -168,8 +156,10 @@ public class StateRest {
                 array.add(state);
             });
             return Response.ok(array.toString()).build();
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -195,48 +185,35 @@ public class StateRest {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Invalid JSON-LD or empty state model",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                        )
+                    description = "Invalid JSON-LD, empty state model, or Application with the provided ID does not exist",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                        )
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to create states",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Application with the provided ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                        )
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while creating the state",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                        )
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
             )
     })
     public Response createState(
@@ -250,17 +227,17 @@ public class StateRest {
             Model newState = Rio.parse(IOUtils.toInputStream(stateJson, StandardCharsets.UTF_8),
                     "", RDFFormat.JSONLD);
             if (newState.isEmpty()) {
-                throw ErrorUtils.sendError("Empty state model", Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Empty state model"));
             }
             Resource stateId = (applicationId == null) ? stateManager.storeState(newState, username)
                     : stateManager.storeState(newState, username, applicationId);
             return Response.status(201).entity(stateId.stringValue()).build();
         } catch (IOException ex) {
-            throw ErrorUtils.sendError(ex, "Invalid JSON-LD", Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.NOT_FOUND);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -287,38 +264,22 @@ public class StateRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "State does not belong to the requesting user",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                        )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to view states",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "404",
                     description = "State with the provided ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                        )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving the state",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                        )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response getState(
@@ -328,14 +289,14 @@ public class StateRest {
         String username = RestUtils.getActiveUsername(servletRequest);
         try {
             if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
-                throw ErrorUtils.sendError(NOT_ALLOWED, Response.Status.UNAUTHORIZED);
+                throw RestUtils.getErrorObjUnauthorized(new IllegalAccessException(NOT_ALLOWED));
             }
             Model state = stateManager.getState(factory.createIRI(stateId));
             return Response.ok(convertModel(state)).build();
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.NOT_FOUND);
+            throw RestUtils.getErrorObjNotFound(new MobiNotFoundException(ex.getMessage()));
         } catch (MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -363,47 +324,39 @@ public class StateRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Invalid JSON-LD or empty state model",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                        )
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "State does not belong to the requesting user",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                        )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to update states",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "404",
                     description = "State with the provided ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                        )
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while updating the state",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                        )
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
             )
     })
     public Response updateState(
@@ -416,20 +369,20 @@ public class StateRest {
         String username = RestUtils.getActiveUsername(servletRequest);
         try {
             if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
-                throw ErrorUtils.sendError(NOT_ALLOWED, Response.Status.UNAUTHORIZED);
+                throw RestUtils.getErrorObjUnauthorized(new IllegalAccessException(NOT_ALLOWED));
             }
             Model newState = Rio.parse(
                     IOUtils.toInputStream(newStateJson, StandardCharsets.UTF_8), "", RDFFormat.JSONLD);
             if (newState.isEmpty()) {
-                throw ErrorUtils.sendError("Empty state model", Response.Status.BAD_REQUEST);
+                throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Empty state model"));
             }
             stateManager.updateState(factory.createIRI(stateId), newState);
         } catch (IOException ex) {
-            throw ErrorUtils.sendError(ex, "Invalid JSON-LD", Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.NOT_FOUND);
+            throw RestUtils.getErrorObjNotFound(new MobiNotFoundException(ex.getMessage()));
         } catch (MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
         return Response.ok().build();
     }
@@ -456,38 +409,31 @@ public class StateRest {
             @ApiResponse(
                     responseCode = "401",
                     description = "State does not belong to the requesting user",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                        )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to delete states",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "404",
                     description = "State with the provided ID does not exist",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                        )
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while deleting the state",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                        )
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = ErrorObjectSchema.class)
+                    )
             )
     })
     public Response deleteState(
@@ -497,13 +443,13 @@ public class StateRest {
         String username = RestUtils.getActiveUsername(servletRequest);
         try {
             if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
-                throw ErrorUtils.sendError(NOT_ALLOWED, Response.Status.UNAUTHORIZED);
+                throw RestUtils.getErrorObjUnauthorized(new IllegalAccessException(NOT_ALLOWED));
             }
             stateManager.deleteState(factory.createIRI(stateId));
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.NOT_FOUND);
+            throw RestUtils.getErrorObjNotFound(new MobiNotFoundException(ex.getMessage()));
         } catch (MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
         return Response.ok().build();
     }

@@ -38,6 +38,7 @@ import { cloneDeep } from 'lodash';
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { CATALOG, DCTERMS } from '../../../prefixes';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { RestErrorDisplayComponent } from '../../../shared/components/restErrorDisplay/restErrorDisplay.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { EditBranchModalComponent } from './edit-branch-modal.component';
@@ -49,7 +50,7 @@ describe('Edit Branch Modal component', () => {
   let matDialogRef: jasmine.SpyObj<MatDialogRef<EditBranchModalComponent>>;
   let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
 
-  const error = 'Error Message';
+  const error = {error: '', errorMessage: 'Error Message', errorDetails: []};
   const catalogId = 'catalogId';
   const recordId = 'recordId';
   const branchId = 'branchId';
@@ -75,6 +76,7 @@ describe('Edit Branch Modal component', () => {
       declarations: [
         EditBranchModalComponent,
         MockComponent(ErrorDisplayComponent),
+        MockComponent(RestErrorDisplayComponent),
       ],
       providers: [
         MockProvider(CatalogManagerService),
@@ -129,7 +131,7 @@ describe('Edit Branch Modal component', () => {
         component.edit();
         tick();
         expect(catalogManagerStub.updateRecordBranch).toHaveBeenCalledWith(branchId, recordId, catalogId, component.data.branch);
-        expect(component.errorMessage).toEqual('');
+        expect(component.error).toBeFalsy();
         expect(matDialogRef.close).toHaveBeenCalledWith(true);
       }));
       it('when rejected', fakeAsync(() => {
@@ -137,7 +139,7 @@ describe('Edit Branch Modal component', () => {
         component.edit();
         tick();
         expect(catalogManagerStub.updateRecordBranch).toHaveBeenCalledWith(branchId, recordId, catalogId, component.data.branch);
-        expect(component.errorMessage).toEqual(error);
+        expect(component.error).toEqual(error);
         expect(matDialogRef.close).not.toHaveBeenCalled();
       }));
     });
@@ -154,11 +156,11 @@ describe('Edit Branch Modal component', () => {
       });
     });
     it('depending on whether an error occurred', () => {
-      expect(element.queryAll(By.css('error-display')).length).toEqual(0);
+      expect(element.queryAll(By.css('rest-error-display')).length).toEqual(0);
 
-      component.errorMessage = error;
+      component.error = error;
       fixture.detectChanges();
-      expect(element.queryAll(By.css('error-display')).length).toEqual(1);
+      expect(element.queryAll(By.css('rest-error-display')).length).toEqual(1);
     });
     it('with buttons to cancel and submit', () => {
       const buttons = element.queryAll(By.css('.mat-dialog-actions button'));

@@ -188,7 +188,7 @@ describe('Instances Display component', function() {
             });
             it('when user has read permission to dataset record and getClassInstanceDetails has error', async () => {
                 policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
-                exploreServiceStub.getClassInstanceDetails.and.returnValue(throwError('Error'));
+                exploreServiceStub.getClassInstanceDetails.and.returnValue(throwError({error: '', errorMessage: 'Error', errorDetails: []}));
                 component.ngOnInit();
                 component.setPage(page);
                 fixture.detectChanges();

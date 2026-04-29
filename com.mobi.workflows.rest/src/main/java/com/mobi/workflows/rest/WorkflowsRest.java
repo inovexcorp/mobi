@@ -71,9 +71,9 @@ import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.Value;
 import com.mobi.rest.security.annotations.ValueType;
-import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.FileUpload;
 import com.mobi.rest.util.MobiNotFoundException;
+import com.mobi.rest.util.MobiWebException;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import com.mobi.rest.util.swagger.JsonLdObject;
@@ -266,36 +266,22 @@ public class WorkflowsRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided Workflow data or parameters are invalid",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = ErrorObjectSchema.class)
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to perform this action",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving WorkflowRecords",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = ErrorObjectSchema.class)
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response findWorkflowRecords(
@@ -395,36 +381,22 @@ public class WorkflowsRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided Workflow data or parameters are invalid",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = ErrorObjectSchema.class)
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "User is not authenticated or session has expired",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "User does not have permission to perform this action",
-                    headers = @Header(
-                            name = "HTTP Status",
-                            description = "Reason Phrase contains error message",
-                            schema = @Schema(type = "string")
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while creating the Workflow",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = ErrorObjectSchema.class)
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ActionAttributes(@AttributeValue(id = RDF.NAMESPACE + "type", value = WorkflowRecord.TYPE))
@@ -514,6 +486,8 @@ public class WorkflowsRest {
             commitId = (Resource) commitStmt.next().getObject();
             commitStmt.close();
             workflowManager.createTriggerService(record);
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException ex) {
             ObjectNode objectNode = createJsonErrorObject(ex);
             Response response = Response
@@ -522,7 +496,8 @@ public class WorkflowsRest {
                     .entity(objectNode.toString())
                     .build();
             String message = "Record created, however " + ex.getMessage();
-            throw ErrorUtils.sendError(ex, message, response);
+            log.error(String.format("%d: %s", response.getStatus(), message), ex);
+            throw new MobiWebException(message, ex, response);
         }
 
         ObjectNode objectNode = mapper.createObjectNode();
@@ -555,10 +530,7 @@ public class WorkflowsRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided Workflow data or parameters are invalid",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = ErrorObjectSchema.class)
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
@@ -571,10 +543,7 @@ public class WorkflowsRest {
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving executing activities",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = ErrorObjectSchema.class)
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response getExecutingActivities() {
@@ -810,10 +779,7 @@ public class WorkflowsRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided Workflow data or parameters are invalid",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = ErrorObjectSchema.class)
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
@@ -826,10 +792,7 @@ public class WorkflowsRest {
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving SHACL definitions",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = ErrorObjectSchema.class)
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     public Response getWorkflowShaclDefinitions() {
@@ -971,10 +934,7 @@ public class WorkflowsRest {
             @ApiResponse(
                     responseCode = "400",
                     description = "Provided Workflow data or parameters are invalid",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = ErrorObjectSchema.class)
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             ),
             @ApiResponse(
                     responseCode = "401",
@@ -983,10 +943,7 @@ public class WorkflowsRest {
             @ApiResponse(
                     responseCode = "500",
                     description = "An error occurred while retrieving execution activities",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = ErrorObjectSchema.class)
-                    )
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
             )
     })
     @ActionId(Read.TYPE)

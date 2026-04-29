@@ -115,7 +115,7 @@ describe('Mapping Commits Tab component', function() {
                 mapperStateStub.newMapping = false;
             });
             it('unless an error occurs', fakeAsync(function() {
-                mapperStateStub.setMasterBranch.and.returnValue(throwError(error));
+                mapperStateStub.setMasterBranch.and.returnValue(throwError({error: '', errorMessage: error, errorDetails: []}));
                 component.ngOnInit();
                 tick();
                 expect(mapperStateStub.setMasterBranch).toHaveBeenCalledWith();

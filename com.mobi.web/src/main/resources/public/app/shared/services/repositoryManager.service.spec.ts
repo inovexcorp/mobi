@@ -27,6 +27,7 @@ import { MockProvider } from 'ng-mocks';
 
 import { cleanStylesFromDOM } from '../../../test/ts/Shared';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { RESTError } from '../models/RESTError.interface';
 import { Repository } from '../models/repository.interface';
 import { RepositoryManagerService } from './repositoryManager.service';
 
@@ -36,6 +37,7 @@ describe('Repository Manager service', function() {
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
 
     const error = 'Error Message';
+    const errorObj: RESTError = {error: '', errorMessage: error, errorDetails: []};
     const repo1: Repository = {
         id: 'repo1',
         title: 'Repository 1',
@@ -77,9 +79,12 @@ describe('Repository Manager service', function() {
     describe('should retrieve the list of repositories', function() {
         it('unless an error occurs', function() {
             service.getRepositories()
-                .subscribe(() => fail('Promise should have rejected'), (response) => expect(response).toEqual(error));
+                .subscribe(() => fail('Promise should have rejected'), (response) => expect(response).toEqual(errorObj));
             const request = httpMock.expectOne({url: service.prefix, method: 'GET'});
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(
+              {error: '', errorMessage: error, errorDetails: []},
+              { status: 400, statusText: error }
+            );
         });
         it('successfully', function() {
             service.getRepositories()
@@ -91,10 +96,13 @@ describe('Repository Manager service', function() {
     describe('should retrieve a single repository', function() {
         it('unless an error occurs', function() {
             service.getRepository(repo1.id)
-                .subscribe(() => fail('Promise should have rejected'), (response) => expect(response).toEqual(error));
+                .subscribe(() => fail('Promise should have rejected'), (response) => expect(response).toEqual(errorObj));
 
             const request = httpMock.expectOne({url: `${service.prefix}/${repo1.id}`, method: 'GET'});
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(
+              {error: '', errorMessage: error, errorDetails: []},
+              { status: 400, statusText: error }
+            );
         });
         it('when resolved', function() {
             service.getRepository(repo1.id)

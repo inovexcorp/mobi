@@ -35,7 +35,7 @@ import { MergeRequestPaginatedConfig } from '../models/mergeRequestPaginatedConf
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { REST_PREFIX } from '../../constants';
 import { SortOption } from '../models/sortOption.interface';
-import { createHttpParams, handleError, paginatedConfigToHttpParams } from '../utility';
+import { createHttpParams, handleErrorObject, paginatedConfigToHttpParams } from '../utility';
 import { MergeRequest } from '../models/mergeRequest.interface';
 
 import { UserCount } from '../models/user-count.interface';
@@ -115,7 +115,7 @@ export class MergeRequestManagerService {
             });
         }
         return this.spinnerSvc.track(this.http.get<JSONLDObject[]>(this.prefix, {params, observe: 'response'}))
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
     /**
      * Calls the POST /mobirest/merge-requests endpoint with the passed metadata and creates a new
@@ -140,7 +140,7 @@ export class MergeRequestManagerService {
             fd.append('removeSource', `${requestConfig.removeSource}`);
         }
         return this.spinnerSvc.track(this.http.post(this.prefix, fd, {responseType: 'text'}))
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
     /**
      * Calls the GET /mobirest/merge-requests/{requestId} endpoint to retrieve a single Merge Request
@@ -152,7 +152,7 @@ export class MergeRequestManagerService {
      */
     getRequest(requestId: string): Observable<JSONLDObject> {
         return this.spinnerSvc.track(this.http.get<JSONLDObject>(`${this.prefix}/${encodeURIComponent(requestId)}`))
-           .pipe(catchError(handleError));
+           .pipe(catchError(handleErrorObject));
     }
     /**
      * Calls the DELETE /mobirest/merge-requests/{requestId} endpoint to remove a single Merge Request
@@ -164,7 +164,7 @@ export class MergeRequestManagerService {
      */
     deleteRequest(requestId: string): Observable<void> {
         return this.spinnerSvc.track(this.http.delete(`${this.prefix}/${encodeURIComponent(requestId)}`))
-           .pipe(catchError(handleError), map(() => {}));
+           .pipe(catchError(handleErrorObject), map(() => {}));
     }
     /**
      * Calls the POST /mobirest/merge-requests/{requestId} endpoint to accept a Merge Request
@@ -183,7 +183,7 @@ export class MergeRequestManagerService {
         };
         return this.spinnerSvc.track(this.http.post(`${this.prefix}/${encodeURIComponent(mergeRequestId)}/status`,
             null, {params: createHttpParams(params)})).pipe(
-                catchError(handleError),
+                catchError(handleErrorObject),
                 map(() => {}),
                 tap(() => {
                     this._requestAccepted(requestClone, action);
@@ -219,7 +219,7 @@ export class MergeRequestManagerService {
      */
     getComments(requestId: string): Observable<JSONLDObject[][]> {
         return this.spinnerSvc.track(this.http.get<JSONLDObject[][]>(`${this.prefix}/${encodeURIComponent(requestId)}/comments`))
-           .pipe(catchError(handleError));
+           .pipe(catchError(handleErrorObject));
     }
     /**
      * Calls the DELETE /mobirest/merge-requests/{requestId}/comments/{commentId} endpoint to delete a comment
@@ -232,7 +232,7 @@ export class MergeRequestManagerService {
      */
     deleteComment(requestId: string, commentId: string): Observable<void> {
         return this.spinnerSvc.track(this.http.delete(`${this.prefix}/${encodeURIComponent(requestId)}/comments/${encodeURIComponent(commentId)}`))
-           .pipe(catchError(handleError), map(() => {}));
+           .pipe(catchError(handleErrorObject), map(() => {}));
     }
     /**
      * Calls the POST /mobirest/merge-requests/{requestId}/comments endpoint to create a comment on the Merge
@@ -254,7 +254,7 @@ export class MergeRequestManagerService {
         }
         return this.spinnerSvc.track(this.http.post(`${this.prefix}/${encodeURIComponent(requestId)}/comments`, 
           commentStr, {params: createHttpParams(params), responseType: 'text'}))
-           .pipe(catchError(handleError));
+           .pipe(catchError(handleErrorObject));
     }
     /**
      * Calls the PUT /mobirest/merge-requests/{requestId}/comments/{commentId} endpoint to edit a comment on the Merge
@@ -267,7 +267,7 @@ export class MergeRequestManagerService {
      */
     updateComment(requestId: string, commentId: string, commentStr: string): Observable<void> {
         return this.spinnerSvc.track(this.http.put(`${this.prefix}/${encodeURIComponent(requestId)}/comments/${encodeURIComponent(commentId)}`, 
-          commentStr)).pipe(catchError(handleError), map(() => {}));
+          commentStr)).pipe(catchError(handleErrorObject), map(() => {}));
     }
     /**
      * Calls the PUT /mobirest/merge-requests/{requestId} endpoint to update a Merge Request
@@ -281,7 +281,7 @@ export class MergeRequestManagerService {
     updateRequest(requestId: string, jsonld: JSONLDObject): Observable<string> {
         return this.spinnerSvc.track(this.http.put(`${this.prefix}/${encodeURIComponent(requestId)}`, jsonld, 
           { responseType: 'text' }))
-           .pipe(catchError(handleError));
+           .pipe(catchError(handleErrorObject));
     }
     /**
      * Retrieves the list of creators of merge requests throughout the application using the provided pagination
@@ -300,7 +300,7 @@ export class MergeRequestManagerService {
         }
         const url = `${this.prefix}/creators`;
         const request =  this.http.get<UserCount[]>(url, { params, observe: 'response' });  
-        return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
+        return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleErrorObject));
     }
     /**
      * Retrieves the list of assignees of merge requests throughout the application using the provided pagination
@@ -319,7 +319,7 @@ export class MergeRequestManagerService {
       }
       const url = `${this.prefix}/assignees`;
       const request =  this.http.get<UserCount[]>(url, { params, observe: 'response' });
-      return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
+      return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleErrorObject));
     }
     /**
      * Retrieves the list of records of merge requests throughout the application using the provided pagination
@@ -338,7 +338,7 @@ export class MergeRequestManagerService {
         }
         const url = `${this.prefix}/records`;
         const request =  this.http.get<RecordCount[]>(url, { params, observe: 'response' });
-        return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
+        return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleErrorObject));
     }
     /**
      * Returns the current status of the passed Merge Request.

@@ -136,7 +136,7 @@ export class ImportsBlockComponent implements OnChanges {
         this.setImports();
         this.setIndirectImports();
         this._toast.createSuccessToast('Refreshed Imports');
-    }, error => this._toast.createErrorToast(error));
+    }, error => this._toast.createErrorToast(error.errorMessage));
   }
   setImports(): void {
     this.imports = sortBy(this.listItem.selected[`${OWL}imports`], '@id');

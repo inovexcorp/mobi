@@ -63,7 +63,7 @@ describe('Request Details Form component', function() {
       [`${CATALOG}head`]: [{ '@id': commitId }]
     };
     const branches = [branch];
-    const error = 'error';
+    const error = {error: '', errorMessage: 'error', errorDetails: []};
   
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -172,7 +172,7 @@ describe('Request Details Form component', function() {
             expect(catalogManagerStub.getRecordBranches).toHaveBeenCalledWith(recordId, catalogId);
             expect(mergeRequestsStateStub.updateRequestConfigBranch).not.toHaveBeenCalled();
             expect(mergeRequestsStateStub.updateRequestConfigBranch).not.toHaveBeenCalled();
-            expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
+            expect(toastStub.createErrorToast).toHaveBeenCalledWith(error.errorMessage);
         }));
     });
     it('cleans up on destroy', function() {

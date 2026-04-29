@@ -36,6 +36,7 @@ import { ToastService } from '../../../shared/services/toast.service';
 import { getDctermsValue } from '../../../shared/utility';
 import { HttpResponse } from '@angular/common/http';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { RESTError } from '../../../shared/models/RESTError.interface';
 
 interface DatasetPreview {
     id: string,
@@ -59,7 +60,7 @@ export class RunMappingDatasetOverlayComponent implements OnInit {
     private readonly DEBOUNCE_TIME = 500;
     private readonly LIMIT = 100;
 
-    errorMessage = '';
+    error: RESTError;
     datasetRecordIRI = '';
     runMappingDatasetForm = this.fb.group({
         datasetSelect: ['', Validators.required]
@@ -150,9 +151,9 @@ export class RunMappingDatasetOverlayComponent implements OnInit {
                 this.dialogRef.close();
                 isDialogClosed = true;
             }),
-            catchError(errorMessage => {
+            catchError((error: RESTError) => {
                 requestErrorFlag = true;
-                this.errorMessage = errorMessage;
+                this.error = error;
                 return EMPTY;
             }),
             finalize(() => {
@@ -161,7 +162,7 @@ export class RunMappingDatasetOverlayComponent implements OnInit {
                     isDialogClosed = true;
                 }
             })
-        ).subscribe();
+        ).subscribe({ error: error => console.error('Mapping error:', error.errorMessage) });
     }
 
     private _runMapping(id: string): Observable<void> {
@@ -171,7 +172,7 @@ export class RunMappingDatasetOverlayComponent implements OnInit {
     }
     
     private _reset(): void {
-        this.errorMessage = '';
+        this.error = undefined;
         this.state.step = this.state.selectMappingStep;
         this.state.initialize();
         this.state.resetEdit();

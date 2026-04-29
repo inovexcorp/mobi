@@ -24,7 +24,7 @@
     <div class="col-6 offset-3">
         <h1>{{currentUser.username}}</h1>
         <form [formGroup]="profileForm" (ngSubmit)="save()">
-            <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
+            <rest-error-display *ngIf="error" [error]="error"></rest-error-display>
             <p *ngIf="success && profileForm.pristine" class="text-success">
                 <i class="fa fa-check fa-fw"></i><span>Profile successfully saved</span>
             </p>

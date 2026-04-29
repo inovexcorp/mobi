@@ -26,7 +26,7 @@
             <h3 class="mapping-title text-truncate">{{state.selected.record ? state.selected.record.title : state.selected.config.title}}</h3>
             <div class="flex-1 remove-min-height d-flex flex-column">
                 <div class="editor-form flex-1 remove-min-height vertical-scroll">
-                    <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
+                    <rest-error-display *ngIf="error" [error]="error"></rest-error-display>
                     <div class="mapping-config">
                         <div class="field-label">Ontology</div>
                         <p>

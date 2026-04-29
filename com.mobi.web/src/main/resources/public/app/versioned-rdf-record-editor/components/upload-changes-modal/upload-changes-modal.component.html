@@ -22,14 +22,7 @@
   -->
 <div class="upload-record-changes-modal">
   <h1 mat-dialog-title>Upload Changes</h1>
-  <error-display *ngIf="error && error.errorMessage && error.errorDetails">
-    {{error.errorMessage}}
-    <ul>
-      <li class="text-danger m-0" *ngFor="let detailError of error.errorDetails">
-        {{ detailError }}
-      </li>
-    </ul>
-  </error-display>
+  <rest-error-display *ngIf="error" [error]="error"></rest-error-display>
   <div mat-dialog-content class="pb-1">
     <file-input 
       [displayText]="'Select a file'"

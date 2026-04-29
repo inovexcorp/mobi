@@ -106,11 +106,11 @@ describe('Setting Edit Page Component', function() {
     describe('controller methods', function() {
         describe('should populate the sidebar', function() {
             it('unless an error occurs', fakeAsync(function() {
-                settingManagerStub.getSettingGroups.and.returnValue(throwError('Error message'));
+                settingManagerStub.getSettingGroups.and.returnValue(throwError({error: '', errorMessage: 'Error message', errorDetails: []}));
                 component.setSettingTabs();
                 tick();
                 expect(component.tabs.length).toEqual(0);
-                expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error message');
             }));
             it('with new values', fakeAsync(function() {
                 settingManagerStub.getSettingGroups.and.returnValue(of(testGroups));

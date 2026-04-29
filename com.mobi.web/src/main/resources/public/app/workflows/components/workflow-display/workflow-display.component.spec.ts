@@ -36,6 +36,7 @@ import { Difference } from '../../../shared/models/difference.class';
 import { Element, EntityType } from '../../models/workflow-display.interface';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { ModalType } from '../../models/modal-config.interface';
+import { RESTError } from '../../../shared/models/RESTError.interface';
 import { SettingManagerService } from '../../../shared/services/settingManager.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { WorkflowAddConfigurationComponent } from '../workflow-add-configuration/workflow-add-configuration.component';
@@ -56,6 +57,11 @@ describe('WorkflowDisplayComponent', () => {
   let cyChartSpy;
 
   const recordId = 'recordId';
+  const error: RESTError = {
+    error: '',
+    errorMessage: 'Error',
+    errorDetails: []
+  };
   const nodeData: Element[] = [
     {
       'grabbable': false,
@@ -609,10 +615,10 @@ describe('WorkflowDisplayComponent', () => {
           tick();
         }));
         it('unless an error occurs', fakeAsync(() => {
-          workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(throwError('Error'));
+          workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(throwError(error));
           component.getDeleteEntityDifference((<any> component)._TRIGGER_NODE_ID)
-            .subscribe(() => fail('Observable should have failed'), error => {
-              expect(error).toEqual('Error');
+            .subscribe(() => fail('Observable should have failed'), response => {
+              expect(response).toEqual(error);
               expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), recordId);
             });
           tick();
@@ -635,10 +641,10 @@ describe('WorkflowDisplayComponent', () => {
           tick();
         }));
         it('unless an error occurs', fakeAsync(() => {
-          workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(throwError('Error'));
+          workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(throwError(error));
           component.getDeleteEntityDifference('http://example.com/workflows/LEDControl/action/b')
-            .subscribe(() => fail('Observable should have failed'), error => {
-              expect(error).toEqual('Error');
+            .subscribe(() => fail('Observable should have failed'), response => {
+              expect(response).toEqual(error);
               expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), recordId);
             });
           tick();
@@ -665,10 +671,10 @@ describe('WorkflowDisplayComponent', () => {
           tick();
         }));
         it('unless an error occurs', fakeAsync(() => {
-          workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(throwError('Error'));
+          workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(throwError(error));
           component.getDeleteEdgeDifference((<any> component)._TRIGGER_NODE_ID, 'http://example.com/workflows/LEDControl/action')
-            .subscribe(() => fail('Observable should have failed'), error => {
-              expect(error).toEqual('Error');
+            .subscribe(() => fail('Observable should have failed'), response => {
+              expect(response).toEqual(error);
               expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), recordId);
             });
           tick();
@@ -690,10 +696,10 @@ describe('WorkflowDisplayComponent', () => {
           tick();
         }));
         it('unless an error occurs', fakeAsync(() => {
-          workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(throwError('Error'));
+          workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(throwError(error));
           component.getDeleteEdgeDifference('http://example.com/workflows/LEDControl/action', 'http://example.com/workflows/LEDControl/action/a')
-            .subscribe(() => fail('Observable should have failed'), error => {
-              expect(error).toEqual('Error');
+            .subscribe(() => fail('Observable should have failed'), response => {
+              expect(response).toEqual(error);
               expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), recordId);
             });
           tick();
@@ -780,7 +786,7 @@ describe('WorkflowDisplayComponent', () => {
           expect(workflowsStateStub.hasChanges).toBeTruthy();
         }));
         it('unless an error occurs', fakeAsync(() => {
-          workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(throwError('Error'));
+          workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(throwError(error));
           const workflowDef = (<any> component)._editedResource.find(obj => obj['@type'].includes(`${WORKFLOWS}Workflow`));
           expect(workflowDef[`${WORKFLOWS}hasAction`].length).toEqual(2);
           component.addNewEdge(sourceNode, targetNode, addedEdge);
@@ -794,7 +800,7 @@ describe('WorkflowDisplayComponent', () => {
           });
           expect((diff.deletions as JSONLDObject[]).length).toEqual(0);
           expect(addedEdge.remove).toHaveBeenCalledWith();
-          expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.stringContaining('Error'));
+          expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.stringContaining(error.errorMessage));
           expect(workflowDef[`${WORKFLOWS}hasAction`].length).toEqual(2);
           expect(workflowsStateStub.hasChanges).toBeFalsy();
         }));
@@ -826,7 +832,7 @@ describe('WorkflowDisplayComponent', () => {
           expect(workflowsStateStub.hasChanges).toBeTruthy();
         }));
         it('unless an error occurs', fakeAsync(() => {
-          workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(throwError('Error'));
+          workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(throwError(error));
           const actionDef = (<any> component)._editedResource.find(obj => obj['@id'] === sourceNodeData.id);
           expect(actionDef[`${WORKFLOWS}hasChildAction`]).toBeUndefined();
           component.addNewEdge(sourceNode, targetNode, addedEdge);
@@ -840,7 +846,7 @@ describe('WorkflowDisplayComponent', () => {
           });
           expect((diff.deletions as JSONLDObject[]).length).toEqual(0);
           expect(addedEdge.remove).toHaveBeenCalledWith();
-          expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.stringContaining('Error'));
+          expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.stringContaining(error.errorMessage));
           expect(actionDef[`${WORKFLOWS}hasChildAction`]).toBeUndefined();
           expect(workflowsStateStub.hasChanges).toBeFalsy();
         }));

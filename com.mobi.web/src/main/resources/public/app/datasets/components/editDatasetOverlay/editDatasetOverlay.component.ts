@@ -30,6 +30,7 @@ import { catchError, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { CATALOG, DATASET } from '../../../prefixes';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { Repository } from '../../../shared/models/repository.interface';
+import { RESTError } from '../../../shared/models/RESTError.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
 import { DatasetStateService } from '../../../shared/services/datasetState.service';
@@ -57,7 +58,7 @@ export class EditDatasetOverlayComponent implements OnInit {
   // Flag is used to let child components that component finished init phase
   readyFlag = false;
   catalogId = '';
-  error = '';
+  error?: RESTError;
   datasetIRI = '';
   repositoryId = '';
   repository: Repository;

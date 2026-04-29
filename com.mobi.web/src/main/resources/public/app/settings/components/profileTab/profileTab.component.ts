@@ -27,6 +27,7 @@ import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { User } from '../../../shared/models/user.class';
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
+import { RESTError } from '../../../shared/models/RESTError.interface';
 
 /**
  * @name settings.ProfileTabComponent
@@ -40,7 +41,7 @@ import { LoginManagerService } from '../../../shared/services/loginManager.servi
 })
 export class ProfileTabComponent implements OnInit {
     currentUser: User = undefined;
-    errorMessage: string;
+    error: RESTError;
     success: boolean;
     profileForm = this.fb.group({
         firstName: [''],
@@ -53,7 +54,7 @@ export class ProfileTabComponent implements OnInit {
 
     ngOnInit(): void {
         this.currentUser = new User(this.um.users.find(user => user.username === this.lm.currentUser).jsonld);
-        this.errorMessage = '';
+        this.error = undefined;
         this.profileForm.setValue({
             firstName: this.currentUser.firstName,
             lastName: this.currentUser.lastName,
@@ -76,11 +77,11 @@ export class ProfileTabComponent implements OnInit {
         this.currentUser.email = this.profileForm.controls.email.value;
         this.um.updateUser(this.currentUser.username, this.currentUser)
             .subscribe(() => {
-                this.errorMessage = '';
+                this.error = undefined;
                 this.success = true;
                 this.reset();
-            }, error => {
-                this.errorMessage = error;
+            }, (error: RESTError) => {
+                this.error = error;
                 this.success = false;
             });
     }

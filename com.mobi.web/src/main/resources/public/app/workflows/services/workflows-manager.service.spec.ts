@@ -628,7 +628,7 @@ describe('WorkflowsManagerService', () => {
       catalogManagerStub.getInProgressCommit.and.returnValue(throwError(new HttpErrorResponse({status: 500, statusText: error.errorMessage})));
       service.updateWorkflowConfiguration(diff, recordId)
         .subscribe(() => fail('Observable should have failed'), result => {
-          expect(result).toEqual(error.errorMessage);
+          expect(result).toEqual(error);
         });
       tick();
       expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
@@ -643,7 +643,7 @@ describe('WorkflowsManagerService', () => {
         catalogManagerStub.updateInProgressCommit.and.returnValue(throwError(new HttpErrorResponse({status: 500, statusText: error.errorMessage})));
         service.updateWorkflowConfiguration(diff, recordId)
           .subscribe(() => fail('Observable should have failed'), result => {
-            expect(result).toEqual(error.errorMessage);
+            expect(result).toEqual(error);
           });
         tick();
         expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
@@ -670,7 +670,7 @@ describe('WorkflowsManagerService', () => {
         catalogManagerStub.createInProgressCommit.and.returnValue(throwError(new HttpErrorResponse({status: 500, statusText: error.errorMessage})));
         service.updateWorkflowConfiguration(diff, recordId)
           .subscribe(() => fail('Observable should have failed'), result => {
-            expect(result).toEqual(error.errorMessage);
+            expect(result).toEqual(error);
           });
         tick();
         expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);

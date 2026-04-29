@@ -81,8 +81,8 @@ export class PreviewBlockComponent implements OnInit, OnChanges {
             .subscribe(ontology => {
                 this.activePage.preview = typeof ontology === 'string' ? ontology : JSON.stringify(ontology, null, 2);
                 this.activePageChange.emit(this.activePage);
-            }, response => {
-                this.activePage.preview = response;
+            }, error => {
+                this.activePage.preview = error.errorMessage;
                 this.activePageChange.emit(this.activePage);
             });
     }

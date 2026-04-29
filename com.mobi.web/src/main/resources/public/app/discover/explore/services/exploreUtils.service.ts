@@ -47,6 +47,7 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { JSONLDValue } from '../../../shared/models/JSONLDValue.interface';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { PropertyDetails } from '../../models/propertyDetails.interface';
+import { RESTError } from '../../../shared/models/RESTError.interface';
 import { SparqlManagerService } from '../../../shared/services/sparqlManager.service';
 import { SPARQLSelectResults } from '../../../shared/models/sparqlSelectResults.interface';
 
@@ -198,7 +199,7 @@ export class ExploreUtilsService {
     getClasses(datasetId: string): Observable<{id: string, title: string, deprecated: boolean}[]> {
         const datasetArr = find(this.dm.datasetRecords, arr => some(arr, {'@id': datasetId}));
         if (!datasetArr) {
-            return throwError('Dataset could not be found');
+            return throwError({error: '', errorMessage: 'Dataset could not be found', errorDetails: []} as RESTError);
         }
         const ontologies = this.dm.getOntologyIdentifiers(datasetArr).map(identifier => ({
             recordId: getPropertyId(identifier, `${DATASET}linksToRecord`),
@@ -207,11 +208,11 @@ export class ExploreUtilsService {
         }));
         return forkJoin(ontologies.map(ontology => this.om.getOntologyClasses(ontology.recordId, ontology.branchId, ontology.commitId, false)))
             .pipe(
-                catchError(() => throwError('The Dataset ontologies could not be found')),
+                catchError(() => throwError({error: '', errorMessage: 'The Dataset ontologies could not be found', errorDetails: []} as RESTError)),
                 switchMap((response: JSONLDObject[][]) => {
                     const allClasses = flattenDeep(response);
                     if (isEmpty(allClasses)) {
-                        return throwError('The Dataset classes could not be retrieved');
+                        return throwError({error: '', errorMessage: 'The Dataset classes could not be retrieved', errorDetails: []} as RESTError);
                     }
                     return of(allClasses.map(clazz => {
                         const deprecated = includes(['true', true, '1', 1], getPropertyValue(clazz, `${OWL}deprecated`));

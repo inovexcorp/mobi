@@ -92,10 +92,10 @@ public class LinksUtils {
      */
     public static void validateParams(int limit, int offset) {
         if (offset < 0) {
-            throw ErrorUtils.sendError("Offset cannot be negative.", Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Offset cannot be negative."));
         }
         if (limit < 0) {
-            throw ErrorUtils.sendError("Limit cannot be negative", Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Limit cannot be negative"));
         }
     }
 }

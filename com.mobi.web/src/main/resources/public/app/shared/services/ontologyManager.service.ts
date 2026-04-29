@@ -44,7 +44,6 @@ import {
     getDctermsValue,
     getErrorDataObject,
     getPropertyValue,
-    handleError,
     handleErrorObject,
     isBlankNode
 } from '../utility';
@@ -215,7 +214,7 @@ export class OntologyManagerService {
             headers,
             params: createHttpParams(params)
         })).pipe(
-            catchError(handleError),
+            catchError(handleErrorObject),
             map((response: HttpResponse<string>) => {
                 const contentType = response.headers.get('Content-Type');
                 if (contentType === 'application/json') {
@@ -268,7 +267,7 @@ export class OntologyManagerService {
     clearCache(recordId: string, commitId: string): Observable<void> {
       const params = createHttpParams({ commitId });
       return this._spinnerSrv.track(this._http.delete(`${this.prefix}/${encodeURIComponent(recordId)}/cache`, { params }))
-        .pipe(catchError(handleError), map(() => {}));
+        .pipe(catchError(handleErrorObject), map(() => {}));
     }
     /**
      * Calls the DELETE /mobirest/ontologies/{recordId}/branches/{branchId} endpoint which deletes the provided
@@ -280,7 +279,7 @@ export class OntologyManagerService {
      */
     deleteOntologyBranch(recordId: string, branchId: string): Observable<void> {
         return this._spinnerSrv.track(this._http.delete(`${this.prefix}/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}`))
-            .pipe(catchError(handleError), map(() => {}));
+            .pipe(catchError(handleErrorObject), map(() => {}));
     }
     /**
      * Calls the GET /mobirest/ontologies/{recordId}/vocabulary-stuff endpoint and retrieves a VocabularyStuff object.
@@ -296,7 +295,7 @@ export class OntologyManagerService {
         const params = { branchId, commitId };
         const url = `${this.prefix}/${encodeURIComponent(recordId)}/vocabulary-stuff`;
         const request = this._http.get<VocabularyStuff>(url, {params: createHttpParams(params)});
-        return this._spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleError));
+        return this._spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleErrorObject));
     }
     /**
      * Calls the GET /mobirest/ontologies/{recordId}/ontology-stuff endpoint and retrieves an OntologyStuff object 
@@ -314,7 +313,7 @@ export class OntologyManagerService {
         const params = { branchId, commitId, clearCache };
         const url = `${this.prefix}/${encodeURIComponent(recordId)}/ontology-stuff`;
         const request = this._http.get<OntologyStuff>(url, {params: createHttpParams(params)});
-        return this._spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleError));
+        return this._spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleErrorObject));
     }
     /**
      * Calls the GET /mobirest/ontologies/{recordId}/property-range endpoint and retrieves a PropertyToRanges object 
@@ -332,7 +331,7 @@ export class OntologyManagerService {
         const params = { branchId, commitId, applyInProgressCommit };
         const url = `${this.prefix}/${encodeURIComponent(recordId)}/property-ranges`;
         const request = this._http.get<PropertyToRanges>(url, {params: createHttpParams(params)});
-        return this._spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleError));
+        return this._spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleErrorObject));
     }
     /**
      * Calls the GET /mobirest/ontologies/{recordId}/iris endpoint and retrieves an IriList object with all the IRIs
@@ -346,12 +345,12 @@ export class OntologyManagerService {
      */
     getIris(recordId: string, branchId: string, commitId: string): Observable<IriList> {
         if (!recordId) {
-            return throwError('RecordId is empty');
+            return throwError({error: '', errorMessage: 'RecordId is empty', errorDetails: []} as RESTError);
         }
         const params = { branchId, commitId };
         return this._spinnerSrv.track(this._http.get<IriList>(`${this.prefix}/${encodeURIComponent(recordId)}/iris`,
           {params: createHttpParams(params)}))
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
     /**
      * Calls the GET /mobirest/ontologies/{recordId}/imported-iris endpoint and retrieves an array of IriList objects
@@ -369,12 +368,12 @@ export class OntologyManagerService {
     getImportedIris(recordId: string, branchId: string, commitId: string, applyInProgressCommit = true, 
       isTracked = false): Observable<IriList[]> {
         if (!recordId) {
-            return throwError('RecordId is empty');
+            return throwError({error: '', errorMessage: 'RecordId is empty', errorDetails: []} as RESTError);
         }
         const params = { branchId, commitId, applyInProgressCommit };
         const url = `${this.prefix}/${encodeURIComponent(recordId)}/imported-iris`;
         const request = this._http.get<IriList[]>(url, {params: createHttpParams(params)});
-        return this._spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleError));
+        return this._spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleErrorObject));
     }
     /**
      * Calls the GET /mobirest/ontologies/{recordId}/class-hierarchies endpoint and retrieves a HierarchyResponse 
@@ -391,7 +390,7 @@ export class OntologyManagerService {
         const params = { branchId, commitId, applyInProgressCommit };
         return this._spinnerSrv.track(this._http.get<HierarchyResponse>(`${this.prefix}/${encodeURIComponent(recordId)}/class-hierarchies`,
           {params: createHttpParams(params)}))
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
     /**
      * Calls the GET /mobirest/ontologies/{recordId}/classes endpoint and retrieves an array of the classes
@@ -409,7 +408,7 @@ export class OntologyManagerService {
         const params = { branchId, commitId, applyInProgressCommit};
         return this._spinnerSrv.track(this._http.get<JSONLDObject[]>(`${this.prefix}/${encodeURIComponent(recordId)}/classes`,
           {params: createHttpParams(params)}))
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
     /**
      * Calls the GET /mobirest/ontologies/{recordId}/data-properties endpoint and retrieves an array of data properties
@@ -424,7 +423,7 @@ export class OntologyManagerService {
         const params = { branchId, commitId };
         return this._spinnerSrv.track(this._http.get<JSONLDObject[]>(`${this.prefix}/${encodeURIComponent(recordId)}/data-properties`,
           {params: createHttpParams(params)}))
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
     /**
      * Calls the GET /mobirest/ontologies/{recordId}/object-properties endpoint and retrieves an array of object 
@@ -439,7 +438,7 @@ export class OntologyManagerService {
         const params = { branchId, commitId };
         return this._spinnerSrv.track(this._http.get<JSONLDObject[]>(`${this.prefix}/${encodeURIComponent(recordId)}/object-properties`,
           {params: createHttpParams(params)}))
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
     /**
      * Calls the GET /mobirest/ontologies/{recordId}/classes-with-individuals endpoint and retrieves an object
@@ -456,7 +455,7 @@ export class OntologyManagerService {
         const params = { branchId, commitId };
         return this._spinnerSrv.track(this._http.get<JSONLDObject>(`${this.prefix}/${encodeURIComponent(recordId)}/classes-with-individuals`,
           {params: createHttpParams(params)}))
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
     /**
      * Calls the GET /mobirest/ontologies/{recordId}/data-property-hierarchies endpoint and retrieves a
@@ -473,7 +472,7 @@ export class OntologyManagerService {
         const params = { branchId, commitId };
         return this._spinnerSrv.track(this._http.get<HierarchyResponse>(`${this.prefix}/${encodeURIComponent(recordId)}/data-property-hierarchies`,
           {params: createHttpParams(params)}))
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
     /**
      * Calls the GET /mobirest/ontologies/{recordId}/object-property-hierarchies endpoint and retrieves a Hierarchy 
@@ -490,7 +489,7 @@ export class OntologyManagerService {
         const params = { branchId, commitId };
         return this._spinnerSrv.track(this._http.get<HierarchyResponse>(`${this.prefix}/${encodeURIComponent(recordId)}/object-property-hierarchies`,
           {params: createHttpParams(params)}))
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
     /**
      * Calls the GET /mobirest/ontologies/{recordId}/annotation-property-hierarchies endpoint and retrieves a 
@@ -508,7 +507,7 @@ export class OntologyManagerService {
         const params = { branchId, commitId };
         return this._spinnerSrv.track(this._http.get<HierarchyResponse>(`${this.prefix}/${encodeURIComponent(recordId)}/annotation-property-hierarchies`,
           {params: createHttpParams(params)}))
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
     /**
      * Calls the POST /mobirest/ontologies/{recordId}/annotations endpoint and creates a new AnnotationProperty
@@ -528,7 +527,7 @@ export class OntologyManagerService {
             return this._spinnerSrv.track(this._http.post(`${this.prefix}/${encodeURIComponent(recordId)}/annotations`,
               null, {params: createHttpParams(params), observe: 'response'}))
                 .pipe(
-                    catchError(handleError),
+                    catchError(handleErrorObject),
                     map((response: HttpResponse<null>) => {
                         if (response.status === 200) {
                             return annotationJSON;
@@ -538,7 +537,7 @@ export class OntologyManagerService {
                     })
                 );
         } else {
-            return throwError('This ontology already has an OWL Annotation declared with that IRI.');
+            return throwError({error: '', errorMessage: 'This ontology already has an OWL Annotation declared with that IRI.', errorDetails: []} as RESTError);
         }
     }
     /**
@@ -556,7 +555,7 @@ export class OntologyManagerService {
         const params = { branchId, commitId };
         return this._spinnerSrv.track(this._http.get<HierarchyResponse>(`${this.prefix}/${encodeURIComponent(recordId)}/concept-hierarchies`,
           {params: createHttpParams(params)}))
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
     /**
      * Calls the GET /mobirest/ontologies/{recordId}/concept-scheme-hierarchies endpoint and retrieves a 
@@ -573,7 +572,7 @@ export class OntologyManagerService {
         const params = { branchId, commitId };
         return this._spinnerSrv.track(this._http.get<HierarchyResponse>(`${this.prefix}/${encodeURIComponent(recordId)}/concept-scheme-hierarchies`,
           {params: createHttpParams(params)}))
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
     /**
      * Calls the GET /mobirest/ontologies/{recordId}/imported-ontologies endpoint which gets the list of
@@ -592,7 +591,7 @@ export class OntologyManagerService {
         return this._http.get<OntologyDocument[]>(`${this.prefix}/${encodeURIComponent(recordId)}/imported-ontologies`,
           { observe: 'response', params: createHttpParams(params)})
             .pipe(
-                catchError(handleError),
+                catchError(handleErrorObject),
                 map((response: HttpResponse<OntologyDocument[]>) => {
                     if (get(response, 'status') === 200) {
                         return response.body;
@@ -624,7 +623,7 @@ export class OntologyManagerService {
         const request = this._http.get(url, {params: createHttpParams(params)});
         return this._spinnerSrv.trackedRequest(request, isTracked)
             .pipe(
-                catchError(handleError),
+                catchError(handleErrorObject),
                 map((response: JSONLDObject[] | SPARQLSelectResults) => {
                     if (queryType === 'construct') {
                         return response as JSONLDObject[];
@@ -655,7 +654,7 @@ export class OntologyManagerService {
         const url = `${this.prefix}/${encodeURIComponent(recordId)}/entity-names`;
         const data = { filterResources };
         const request = this._http.post<EntityNames>(url, data, {params: createHttpParams(params), headers});
-        return this._spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleError));
+        return this._spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleErrorObject));
     }
     /**
      * Gets the search results for literals that contain the requested search text.
@@ -675,7 +674,7 @@ export class OntologyManagerService {
         return this._spinnerSrv.trackedRequest(this._http.get(`${this.prefix}/${encodeURIComponent(recordId)}/search-results`,
           {observe: 'response', params: createHttpParams(params)}), isTracked)
             .pipe(
-                catchError(handleError),
+                catchError(handleErrorObject),
                 map((response: HttpResponse<{[key: string]: string[]}>) => {
                     if (response.status === 200) {
                         return response.body;
@@ -700,7 +699,7 @@ export class OntologyManagerService {
         const params = { branchId, commitId };
         return this._http.get<string[]>(`${this.prefix}/${encodeURIComponent(recordId)}/failed-imports`,
           {params: createHttpParams(params)})
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
     /**
      * Calls the GET /mobirest/ontologies/{recordId}/entities/{entityIRI} endpoint which gets the RDF of the entity with
@@ -722,7 +721,7 @@ export class OntologyManagerService {
         const params = { branchId, commitId, format, includeImports, applyInProgressCommit };
         const url = `${this.prefix}/${encodeURIComponent(recordId)}/entities/${encodeURIComponent(entityId)}`;
         const request = this._http.get<JSONLDObject[]>(url, {params: createHttpParams(params)});
-        return this._spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleError));
+        return this._spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleErrorObject));
     }
     /**
      * Checks if the provided entity is deprecated by looking for the owl:deprecated annotation.

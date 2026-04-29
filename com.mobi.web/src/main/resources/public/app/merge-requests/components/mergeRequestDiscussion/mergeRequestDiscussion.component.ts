@@ -76,7 +76,7 @@ export class MergeRequestDiscussionComponent {
             .subscribe(comments => {
                 this.request.comments = comments;
                 this.requestChange.emit(this.request);
-            }, error => this.toast.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error.errorMessage));
     }
     deleteComment(commentId: string): void {
         this.mm.deleteComment(this.request.jsonld['@id'], commentId)
@@ -88,7 +88,7 @@ export class MergeRequestDiscussionComponent {
             .subscribe(comments => {
                 this.request.comments = comments;
                 this.requestChange.emit(this.request);
-            }, error => this.toast.createErrorToast(error));
+            }, error => this.toast.createErrorToast(error.errorMessage));
     }
 
     /**
@@ -105,6 +105,6 @@ export class MergeRequestDiscussionComponent {
         ).subscribe(comments => {
                 this.request.comments = comments;
                 this.requestChange.emit(this.request);
-        }, error => this.toast.createErrorToast(error));
+        }, error => this.toast.createErrorToast(error.errorMessage));
     }
 }

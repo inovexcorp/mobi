@@ -29,6 +29,7 @@ import { Group } from '../../../shared/models/group.interface';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { UserStateService } from '../../../shared/services/userState.service';
 import { updateDctermsValue } from '../../../shared/utility';
+import { RESTError } from '../../../shared/models/RESTError.interface';
 
 /**
  * @class user-management.EditGroupInfoOverlayComponent
@@ -43,7 +44,7 @@ import { updateDctermsValue } from '../../../shared/utility';
 })
 export class EditGroupInfoOverlayComponent {
     editGroupInfoForm: UntypedFormGroup;
-    errorMessage = '';
+    error: RESTError;
 
     constructor(private dialogRef: MatDialogRef<EditGroupInfoOverlayComponent>, 
         private fb: UntypedFormBuilder,
@@ -62,14 +63,14 @@ export class EditGroupInfoOverlayComponent {
         updateDctermsValue(newGroup.jsonld, 'description', newGroup.description);
         this.um.updateGroup(this.state.selectedGroup.title, newGroup).subscribe({
             next: () => {
-                this.errorMessage = '';
+                this.error = undefined;
                 this.state.selectedGroup = find(this.um.groups, {title: newGroup.title});
                 this.dialogRef.close();
                 isDialogClosed = true;
-            }, 
-            error: (error) => {
+            },
+            error: (error: RESTError) => {
                 requestErrorFlag = true;
-                this.errorMessage = error;
+                this.error = error;
             },
             complete: () => {
                 if (!isDialogClosed && !requestErrorFlag) {

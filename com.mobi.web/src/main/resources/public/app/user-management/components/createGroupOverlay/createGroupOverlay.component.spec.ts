@@ -37,6 +37,7 @@ import {
     cleanStylesFromDOM,
 } from '../../../../../public/test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { RestErrorDisplayComponent } from '../../../shared/components/restErrorDisplay/restErrorDisplay.component';
 import { AddMemberButtonComponent } from '../addMemberButton/addMemberButton.component';
 import { MemberTableComponent } from '../memberTable/memberTable.component';
 import { UserManagerService } from '../../../shared/services/userManager.service';
@@ -71,6 +72,7 @@ describe('Create Group Overlay component', function() {
             declarations: [
                 CreateGroupOverlayComponent,
                 MockComponent(ErrorDisplayComponent),
+                MockComponent(RestErrorDisplayComponent),
                 MockComponent(AddMemberButtonComponent),
                 MockComponent(MemberTableComponent)
             ],
@@ -150,11 +152,11 @@ describe('Create Group Overlay component', function() {
                 component.members.push(user.username);
             });
             it('unless an error occurs', fakeAsync(function() {
-                userManagerStub.addGroup.and.returnValue(throwError('Error Message'));
+                userManagerStub.addGroup.and.returnValue(throwError({error: '', errorMessage: 'Error Message', errorDetails: []}));
                 component.add();
                 tick();
                 expect(userManagerStub.addGroup).toHaveBeenCalledWith(newGroup);
-                expect(component.errorMessage).toEqual('Error Message');
+                expect(component.error).toEqual({error: '', errorMessage: 'Error Message', errorDetails: []});
                 expect(matDialogRef.close).not.toHaveBeenCalled();
             }));
             it('successfully', fakeAsync(function() {
@@ -162,7 +164,7 @@ describe('Create Group Overlay component', function() {
                 component.add();
                 tick();
                 expect(userManagerStub.addGroup).toHaveBeenCalledWith(newGroup);
-                expect(component.errorMessage).toEqual('');
+                expect(component.error).toBeFalsy();
                 expect(matDialogRef.close).toHaveBeenCalledWith();
             }));
         });
@@ -214,10 +216,10 @@ describe('Create Group Overlay component', function() {
             expect(button.properties['disabled']).toBeFalsy();
         });
         it('depending on whether there is an error', function() {
-            expect(element.queryAll(By.css('error-display')).length).toEqual(0);
-            component.errorMessage = 'Error message';
+            expect(element.queryAll(By.css('rest-error-display')).length).toEqual(0);
+            component.error = {error: '', errorMessage: 'Error message', errorDetails: []};
             fixture.detectChanges();
-            expect(element.queryAll(By.css('error-display')).length).toEqual(1);
+            expect(element.queryAll(By.css('rest-error-display')).length).toEqual(1);
         });
         it('with buttons to cancel and submit', function() {
             const buttons = element.queryAll(By.css('.mat-dialog-actions button'));

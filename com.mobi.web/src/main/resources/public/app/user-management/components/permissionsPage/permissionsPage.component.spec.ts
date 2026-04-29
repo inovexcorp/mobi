@@ -228,7 +228,7 @@ describe('Permissions Page component', function() {
             }));
         });
         it('rejects', fakeAsync(function() {
-            policyManagerStub.getPolicies.and.returnValue(throwError('Error message'));
+            policyManagerStub.getPolicies.and.returnValue(throwError({error: '', errorMessage: 'Error message', errorDetails: []}));
             component.ngOnInit();
             tick();
             expect(policyManagerStub.getPolicies).toHaveBeenCalledWith(undefined, undefined, undefined, true);
@@ -269,7 +269,7 @@ describe('Permissions Page component', function() {
             }));
             it('unless an error occurs', fakeAsync(function() {
                 component.policies = [this.policy];
-                policyManagerStub.updatePolicy.and.returnValue(throwError('Error'));
+                policyManagerStub.updatePolicy.and.returnValue(throwError({error: '', errorMessage: 'Error', errorDetails: []}));
                 component.saveChanges();
                 tick();
                 expect(policyManagerStub.updatePolicy).toHaveBeenCalledWith({});

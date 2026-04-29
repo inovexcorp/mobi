@@ -219,7 +219,7 @@ describe('Ontology Editor Page component', function () {
           queryParamsSubject.next({ id: recordIRI });
 
           expect(toastStub.createErrorToast)
-            .toHaveBeenCalledWith(jasmine.objectContaining({ message: 'Record not found' }));
+            .toHaveBeenCalledWith('Record not found');
           expect(routerStub.navigate).toHaveBeenCalledWith(['/ontology-editor']);
           expect(ontologyStateStub.listItem).toBeUndefined();
         });
@@ -239,7 +239,7 @@ describe('Ontology Editor Page component', function () {
           queryParamsSubject.next({ id: recordIRI });
 
           expect(toastStub.createErrorToast)
-            .toHaveBeenCalledWith(jasmine.objectContaining({ message: 'Could not open record as it is not an ontology.' }));
+            .toHaveBeenCalledWith('Could not open record as it is not an ontology.');
           expect(routerStub.navigate).toHaveBeenCalledWith(['/ontology-editor']);
           expect(ontologyStateStub.listItem).toBeUndefined();
         });
@@ -253,7 +253,7 @@ describe('Ontology Editor Page component', function () {
           ontologyStateStub.list = [];
           ontologyStateStub.listItem = undefined;
           ontologyStateStub.getIdentifierIRI = jasmine.createSpy('getIdentifierIRI').and.returnValue('identifierIRI');
-          ontologyStateStub.open = jasmine.createSpy('open').and.returnValue(throwError('Open failed'));
+          ontologyStateStub.open = jasmine.createSpy('open').and.returnValue(throwError({error: '', errorMessage: 'Open failed', errorDetails: []}));
           catalogManagerStub.getRecord = jasmine.createSpy('getRecord').and.returnValue(of(recordData));
           toastStub.createErrorToast = jasmine.createSpy('createErrorToast');
           routerStub.navigate = jasmine.createSpy('navigate').and.resolveTo(true);

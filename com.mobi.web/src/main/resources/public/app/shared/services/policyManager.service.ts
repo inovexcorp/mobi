@@ -28,7 +28,7 @@ import { CATALOG, POLICY } from '../../prefixes';
 import { Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
-import { createHttpParams, handleError } from '../utility';
+import { createHttpParams, handleErrorObject } from '../utility';
 
 /**
  * @class shared.PolicyManagerService
@@ -78,7 +78,7 @@ export class PolicyManagerService {
             })
         };
         return this.spinnerSvc.track(this.http.get<any[]>(this.prefix, config))
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
 
     /**
@@ -90,7 +90,7 @@ export class PolicyManagerService {
      */
     getPolicy(policyId: string): Observable<any> {
         return this.spinnerSvc.track(this.http.get(`${this.prefix}/${encodeURIComponent(policyId)}`))
-            .pipe(catchError(handleError));
+            .pipe(catchError(handleErrorObject));
     }
 
     /**
@@ -103,6 +103,6 @@ export class PolicyManagerService {
      */
     updatePolicy(newPolicy: any): Observable<void> {
         return this.spinnerSvc.track(this.http.put(`${this.prefix}/${encodeURIComponent(newPolicy.PolicyId)}`, newPolicy, {responseType: 'text'}))
-            .pipe(catchError(handleError), map(() => {}));
+            .pipe(catchError(handleErrorObject), map(() => {}));
     }
 }

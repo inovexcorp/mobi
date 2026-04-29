@@ -146,7 +146,7 @@ describe('Merge Page component', function() {
                 expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless an error occurs', fakeAsync(function() {
-                catalogManagerStub.getRecordBranches.and.returnValue(throwError('Error'));
+                catalogManagerStub.getRecordBranches.and.returnValue(throwError({error: '', errorMessage: 'Error', errorDetails: []}));
                 component.ngOnInit();
                 tick();
                 expect(catalogManagerStub.getRecordBranches).toHaveBeenCalledWith('record1', 'catalog');
@@ -167,7 +167,7 @@ describe('Merge Page component', function() {
             it('unless an error occurs', fakeAsync(function() {
                 policyEnforcementStub.evaluateRequest.and.returnValue(of('Deny'));
                 catalogManagerStub.getRecordBranch.and.returnValue(of(branch2));
-                stateStub.getMergeDifferences.and.returnValue(throwError('Error'));
+                stateStub.getMergeDifferences.and.returnValue(throwError({error: '', errorMessage: 'Error', errorDetails: []}));
                 component.changeTarget(branch2);
                 tick();
 
@@ -203,7 +203,7 @@ describe('Merge Page component', function() {
                 expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless an error occurs', fakeAsync(function() {
-                stateStub.getMergeDifferences.and.returnValue(throwError('Error'));
+                stateStub.getMergeDifferences.and.returnValue(throwError({error: '', errorMessage: 'Error', errorDetails: []}));
                 component.targetHeadCommitId = 'targetCommitId';
                 component.retrieveMoreResults({limit: 100, offset: 100});
                 tick();
