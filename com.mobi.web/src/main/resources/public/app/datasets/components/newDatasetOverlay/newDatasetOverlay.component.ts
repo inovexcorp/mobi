@@ -66,7 +66,7 @@ export class NewDatasetOverlayComponent implements OnInit {
 
   ngOnInit(): void {
     let nextCalled = false;
-    this.rm.getRepositories().subscribe({
+    this.rm.getRepositories(false).subscribe({
       next: (repos: Repository[]) => {
         nextCalled = true;
         this.readyFlag = true;
