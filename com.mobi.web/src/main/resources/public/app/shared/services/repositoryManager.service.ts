@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -41,8 +41,9 @@ export class RepositoryManagerService {
      * 
      * @returns {Observable<Repository[]>} An Observable with the REST response of an array of {@link Repository} objects
      */
-    getRepositories(): Observable<Repository[]> {
-        return this.spinnerSvc.track(this.http.get<Repository[]>(this.prefix))
+    getRepositories(includeTripleCount = true): Observable<Repository[]> {
+        const params = new HttpParams().set('includeTripleCount', includeTripleCount);
+        return this.spinnerSvc.track(this.http.get<Repository[]>(this.prefix, { params }))
             .pipe(catchError(handleErrorObject));
     }
 

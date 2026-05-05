@@ -80,7 +80,7 @@ describe('Repository Manager service', function() {
         it('unless an error occurs', function() {
             service.getRepositories()
                 .subscribe(() => fail('Promise should have rejected'), (response) => expect(response).toEqual(errorObj));
-            const request = httpMock.expectOne({url: service.prefix, method: 'GET'});
+            const request = httpMock.expectOne({url: `${service.prefix}?includeTripleCount=true`, method: 'GET'});
             request.flush(
               {error: '', errorMessage: error, errorDetails: []},
               { status: 400, statusText: error }
@@ -89,7 +89,13 @@ describe('Repository Manager service', function() {
         it('successfully', function() {
             service.getRepositories()
                 .subscribe((response) => expect(response).toEqual([repo1, repo2]), () => fail('Promise should have resolved'));
-            const request = httpMock.expectOne({url: service.prefix, method: 'GET'});
+            const request = httpMock.expectOne({url: `${service.prefix}?includeTripleCount=true`, method: 'GET'});
+            request.flush([repo1, repo2]);
+        });
+        it('successfully without triple count', function() {
+            service.getRepositories(false)
+                .subscribe((response) => expect(response).toEqual([repo1, repo2]), () => fail('Promise should have resolved'));
+            const request = httpMock.expectOne({url: `${service.prefix}?includeTripleCount=false`, method: 'GET'});
             request.flush([repo1, repo2]);
         });
     });

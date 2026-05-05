@@ -87,7 +87,7 @@ export class DatasetsListComponent implements OnInit {
     this.setResults();
     this.searchText = this.state.paginationConfig.searchText;
     this.state.submittedSearch = !!this.state.paginationConfig.searchText;
-    this.rm.getRepositories().subscribe(repos => {
+    this.rm.getRepositories(false).subscribe(repos => {
       repos.forEach(repo => {
         this.repositoryMap[repo.id] = repo;
       });
