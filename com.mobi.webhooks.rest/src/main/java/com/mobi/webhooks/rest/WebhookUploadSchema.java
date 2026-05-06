@@ -26,6 +26,7 @@ package com.mobi.webhooks.rest;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.io.InputStream;
 import java.util.List;
 
 /**
@@ -45,4 +46,12 @@ public class WebhookUploadSchema {
             + "WebhookRecord"), schema = @Schema(implementation = String.class, description = "keyword")
     )
     public List<String> keywords;
+
+    @Schema(type = "string", format = "binary",
+            description = "Optional RDF file (Turtle, RDF/XML, or JSON-LD) representing the WebhookConfiguration")
+    public InputStream file;
+
+    @Schema(type = "string",
+            description = "Optional JSON-LD string representing the WebhookConfiguration")
+    public String jsonld;
 }

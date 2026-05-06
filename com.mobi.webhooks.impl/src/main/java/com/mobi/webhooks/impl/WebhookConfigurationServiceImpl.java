@@ -33,29 +33,38 @@ import com.mobi.webhooks.api.ontology.webhooks.WebhookConfiguration;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookConfigurationFactory;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookRecord;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.common.exception.ValidationException;
 import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.model.vocabulary.RDF4J;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryException;
+import org.eclipse.rdf4j.repository.sail.SailRepository;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.eclipse.rdf4j.sail.shacl.ShaclSail;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * implementation of WebhookConfigurationService for managing webhook configurations.
@@ -106,8 +115,31 @@ public class WebhookConfigurationServiceImpl implements WebhookConfigurationServ
     }
 
     @Override
-    public void validateConfiguration(WebhookConfiguration configuration) {
-        LOG.info(PLACEHOLDER);
+    public void validateConfiguration(Model configModel) {
+        IRI webhookConfigType = vf.createIRI(WebhookConfiguration.TYPE);
+        long configCount = configModel.filter(null, RDF.TYPE, webhookConfigType).size();
+        if (configCount != 1) {
+            throw new IllegalArgumentException(
+                    "Model must contain exactly one WebhookConfiguration, found: " + configCount);
+        }
+        Repository validationRepo = new SailRepository(new ShaclSail(new MemoryStore()));
+        try (RepositoryConnection conn = validationRepo.getConnection()) {
+            conn.begin();
+            conn.add(configModel);
+            conn.add(WebhookConfigurationService.class.getResource("/webhooks.ttl"), RDFFormat.TURTLE,
+                    RDF4J.SHACL_SHAPE_GRAPH);
+            conn.commit();
+        } catch (IOException ex) {
+            throw new MobiException("Could not read webhooks ontology for SHACL validation", ex);
+        } catch (RepositoryException ex) {
+            Throwable cause = ex.getCause();
+            if (cause instanceof ValidationException) {
+                throw new IllegalArgumentException("WebhookConfiguration failed SHACL validation", ex);
+            }
+            throw ex;
+        } finally {
+            validationRepo.shutDown();
+        }
     }
 
     @Override
@@ -129,15 +161,21 @@ public class WebhookConfigurationServiceImpl implements WebhookConfigurationServ
     }
 
     @Override
-    public void createConfiguration(WebhookRecord webhookRecord) {
-        IRI configIRI = vf.createIRI("http://mobi.solutions/webhooks/configurations/" + UUID.randomUUID());
-        WebhookConfiguration webhookConfig = webhookConfigurationFactory.createNew(configIRI);
-        webhookConfig.setUrl(DEFAULT_WEBHOOK_URL);
-        webhookConfig.setHttpMethod(DEFAULT_HTTP_METHOD);
+    public void createConfiguration(WebhookRecord webhookRecord, Model configModel) {
+        IRI webhookConfigType = vf.createIRI(WebhookConfiguration.TYPE);
+
+        Resource configIRI = configModel.filter(null, RDF.TYPE, webhookConfigType).subjects().stream()
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("No WebhookConfiguration found in model"));
+
+        assertConfigUniqueness(configIRI);
+        WebhookConfiguration webhookConfig = webhookConfigurationFactory.createNew(configIRI, configModel);
+
         webhookRecord.setHasWebhookConfiguration(webhookConfig);
         webhookRecord.getModel().addAll(webhookConfig.getModel());
-        webhookConfig.getEventFilter().ifPresent(filter ->
-                eventFilters.put(webhookRecord.getResource(), filter));
+        String filter = webhookConfig.getEventFilter()
+                .orElseThrow(() -> new IllegalArgumentException("WebhookConfiguration is missing required eventFilter"));
+        eventFilters.put(webhookRecord.getResource(), filter);
     }
 
     @Override
@@ -153,8 +191,8 @@ public class WebhookConfigurationServiceImpl implements WebhookConfigurationServ
                 .ifPresent(configIRI -> {
                     LOG.debug("Removing WebhookConfiguration: {}", configIRI);
                     conn.remove(configIRI, null, null, webhookRecord.getResource());
-                    LOG.debug("WebhookConfiguration deletion for record: {} complete in {}ms", webhookRecord.getResource(),
-                            System.currentTimeMillis() - startTime);
+                    LOG.debug("WebhookConfiguration deletion for record: {} complete in {}ms",
+                            webhookRecord.getResource(), System.currentTimeMillis() - startTime);
                 });
         eventFilters.remove(webhookRecord.getResource());
     }
@@ -162,5 +200,13 @@ public class WebhookConfigurationServiceImpl implements WebhookConfigurationServ
     @Override
     public Map<Resource, String> retrieveEventFilters() {
         return Collections.unmodifiableMap(eventFilters);
+    }
+
+    private void assertConfigUniqueness(Resource configIRI) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            if (conn.hasStatement(configIRI, null, null, false)) {
+                throw new IllegalArgumentException("Webhook configuration with IRI " + configIRI + " already exists");
+            }
+        }
     }
 }

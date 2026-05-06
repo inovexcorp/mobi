@@ -7,6 +7,7 @@ import com.mobi.webhooks.api.ontology.webhooks.WebhookRecord;
 
 import java.util.Map;
 
+import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 
@@ -43,9 +44,13 @@ public interface WebhookConfigurationService {
     String DEFAULT_HTTP_METHOD = "GET";
 
     /**
-     * Validates the webhook configuration via SHACL to ensure all properties are properly set.
+     * Validates the provided RDF4J Model against the WebhookConfiguration SHACL shapes defined in webhooks.ttl.
+     * Ensures the model contains exactly one WebhookConfiguration and that it conforms to all constraints.
+     *
+     * @param configModel the {@link Model} containing the WebhookConfiguration to validate
+     * @throws IllegalArgumentException if the model fails SHACL validation or does not contain exactly one WebhookConfiguration
      */
-    void validateConfiguration(WebhookConfiguration configuration);
+    void validateConfiguration(Model configModel);
 
     /**
      * Retrieves the webhook configuration associated with the given record IRI.
@@ -75,11 +80,13 @@ public interface WebhookConfigurationService {
     //TODO may need to return to above and update this to be a more specific paginatedSearchParam once further implementation is done.
 
     /**
-     * Creates a new webhook configuration associated with the specified record IRI.
+     * Creates a new webhook configuration from the provided RDF4J Model and links it to the specified record.
+     * Populates the eventFilters cache if an eventFilter is present.
      *
-     * @param webhookRecord The {@link WebhookRecord} for which the webhook configuration is to be created
+     * @param webhookRecord The {@link WebhookRecord} to link the new configuration to
+     * @param configModel   The {@link Model} containing the source WebhookConfiguration data
      */
-    void createConfiguration(WebhookRecord webhookRecord);
+    void createConfiguration(WebhookRecord webhookRecord, Model configModel);
 
     /**
      * Updates the webhook configuration associated with the given record IRI.
