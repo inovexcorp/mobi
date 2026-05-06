@@ -25,6 +25,7 @@ package com.mobi.webhooks.rest;
 
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorResponse;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -58,6 +59,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
@@ -170,7 +173,7 @@ public class WebhookRestTest extends MobiRestTestCXF {
         Response response = target().path("webhooks").request()
                 .post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(500, response.getStatus());
+        assertErrorResponse(response, 500, "MobiException", "User not found");
     }
 
     @Test
@@ -180,11 +183,8 @@ public class WebhookRestTest extends MobiRestTestCXF {
 
         Response response = target().path("webhooks").request()
                 .post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        ObjectNode error = RestUtils.getObjectNodeFromJson(response.readEntity(String.class));
 
-        assertEquals(400, response.getStatus());
-        assertEquals("Title is required", error.get("errorMessage").asText());
-        assertEquals("IllegalArgumentException", error.get("error").asText());
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Title is required");
     }
 
     @Test
@@ -198,11 +198,8 @@ public class WebhookRestTest extends MobiRestTestCXF {
 
         Response response = target().path("webhooks").request()
                 .post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        ObjectNode error = RestUtils.getObjectNodeFromJson(response.readEntity(String.class));
 
-        assertEquals(500, response.getStatus());
-        assertEquals("Record has no linked Webhook Configuration", error.get("errorMessage").asText());
-        assertEquals("IllegalStateException", error.get("error").asText());
+        assertErrorResponse(response, 500, "IllegalStateException", "Record has no linked Webhook Configuration");
     }
 
     @Test
@@ -216,11 +213,67 @@ public class WebhookRestTest extends MobiRestTestCXF {
 
         Response response = target().path("webhooks").request()
                 .post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        ObjectNode error = RestUtils.getObjectNodeFromJson(response.readEntity(String.class));
 
-        assertEquals(500, response.getStatus());
-        assertEquals("Record manager not instantiated", error.get("errorMessage").asText());
-        assertEquals("MobiException", error.get("error").asText());
+        assertErrorResponse(response, 500, "MobiException", "Record manager not instantiated");
+    }
 
+    @Test
+    public void createWebhookRecordWithJsonldTest() {
+        String jsonld = "[{\"@id\":\"http://mobi.solutions/webhooks/config/1\","
+                + "\"@type\":[\"http://mobi.solutions/ontologies/webhooks#WebhookConfiguration\"],"
+                + "\"http://mobi.solutions/ontologies/webhooks#url\":[{\"@value\":\"https://example.com\"}],"
+                + "\"http://mobi.solutions/ontologies/webhooks#httpMethod\":[{\"@value\":\"POST\"}],"
+                + "\"http://mobi.solutions/ontologies/webhooks#eventFilter\":[{\"@value\":\"test\"}],"
+                + "\"http://mobi.solutions/ontologies/webhooks#active\":[{\"@value\":\"ACTIVE\"}]}]";
+
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("title", "Test Webhook");
+        fd.field("jsonld", jsonld);
+
+        Response response = target().path("webhooks").request()
+                .post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(201, response.getStatus());
+        assertEquals(RECORD_IRI, response.readEntity(String.class));
+        verify(recordManager).createRecord(eq(user), any(RecordOperationConfig.class),
+                eq(WebhookRecord.class), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void createWebhookRecordWithTurtleFileTest() {
+        String turtle = """
+                @prefix : <http://mobi.solutions/ontologies/webhooks#> .
+                <http://mobi.solutions/webhooks/config/1> a :WebhookConfiguration ;
+                  :url "https://example.com" ;
+                  :httpMethod "POST" ;
+                  :eventFilter "test" ;
+                  :active "ACTIVE" .""";
+
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("title", "Test Webhook");
+        fd.bodyPart("file", "config.ttl",
+                new ByteArrayInputStream(turtle.getBytes(StandardCharsets.UTF_8)));
+
+        Response response = target().path("webhooks").request()
+                .post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(201, response.getStatus());
+        assertEquals(RECORD_IRI, response.readEntity(String.class));
+        verify(recordManager).createRecord(eq(user), any(RecordOperationConfig.class),
+                eq(WebhookRecord.class), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void createWebhookRecordWithUnsupportedFileFormatTest() {
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("title", "Test Webhook");
+        fd.bodyPart("file", "config.csv",
+                new ByteArrayInputStream("col1,col2".getBytes(StandardCharsets.UTF_8)));
+
+        Response response = target().path("webhooks").request()
+                .post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
+
+        assertErrorResponse(response, 400, "IllegalArgumentException",
+                "Unsupported file format 'csv'. Supported: Turtle (.ttl), RDF/XML (.xml/.rdf), JSON-LD (.jsonld/.json)");
     }
 }

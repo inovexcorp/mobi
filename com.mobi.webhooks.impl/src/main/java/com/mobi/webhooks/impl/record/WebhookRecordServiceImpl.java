@@ -32,7 +32,9 @@ import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.webhooks.api.WebhookConfigurationService;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookRecord;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookRecordFactory;
+import com.mobi.webhooks.api.record.config.WebhookRecordCreateSettings;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Activate;
@@ -51,6 +53,20 @@ import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 
+/**
+ * Service implementation for handling operations related to {@link WebhookRecord}. This class
+ * is responsible for creating, deleting, and managing the policies associated with webhook
+ * records in the system. It leverages a configuration model to ensure the consistency and
+ * validity of the records it manages.
+ *
+ * This class extends {@link AbstractUnversionedRecordService} and implements the
+ * {@link RecordService} interface, specializing in handling {@link WebhookRecord} entities.
+ *
+ * Key features of this service include:
+ * - Creation of webhook records while validating and applying configurations.
+ * - Deletion of webhook records along with their associated configurations and policies.
+ * - Writing access policies for webhook records.
+ */
 @Component(
         immediate = true,
         service = { RecordService.class, WebhookRecordServiceImpl.class }
@@ -87,14 +103,20 @@ public class WebhookRecordServiceImpl extends AbstractUnversionedRecordService<W
     @Override
     protected WebhookRecord createRecord(User user, RecordOperationConfig config, OffsetDateTime issued,
                                          OffsetDateTime modified, RepositoryConnection conn) {
-        long startTime = System.currentTimeMillis();
-        LOG.debug("Beginning WebhookRecord creation");
+        final long startTime = System.currentTimeMillis();
+        Model configModel = config.get(WebhookRecordCreateSettings.CONFIGURATION_MODEL);
 
         WebhookRecord webhookRecord = createRecordObject(config, issued, modified);
         LOG.debug("WebhookRecord object initialized: {}", webhookRecord.getResource());
 
-        webhookConfigurationService.createConfiguration(webhookRecord);
-        LOG.debug("Default WebhookConfiguration added to record model");
+        if (configModel != null) {
+            LOG.debug("Beginning WebhookRecord creation with provided configuration model");
+            webhookConfigurationService.validateConfiguration(configModel);
+            webhookConfigurationService.createConfiguration(webhookRecord, configModel);
+            LOG.debug("WebhookConfiguration from provided model added to record");
+        } else {
+            throw new IllegalArgumentException("WebhookRecord must be created with a configuration model");
+        }
 
         conn.begin();
         thingManager.addObject(webhookRecord, conn);
@@ -108,7 +130,7 @@ public class WebhookRecordServiceImpl extends AbstractUnversionedRecordService<W
 
     @Override
     protected void deleteRecord(WebhookRecord record, RepositoryConnection conn) {
-        long startTime = System.currentTimeMillis();
+        final long startTime = System.currentTimeMillis();
         LOG.debug("Deleting WebhookRecord: {}", record.getResource());
 
         webhookConfigurationService.deleteConfiguration(record, conn);
@@ -120,7 +142,7 @@ public class WebhookRecordServiceImpl extends AbstractUnversionedRecordService<W
 
     @Override
     protected Optional<Resource> writeRecordPolicy(Resource user, Resource recordId) {
-        long startTime = System.currentTimeMillis();
+        final long startTime = System.currentTimeMillis();
         LOG.debug("Now attempting to write policies for record: {}", recordId);
         try {
             Path recordPolicyPath = Paths.get(System.getProperty("karaf.etc") + File.separator + "policies"

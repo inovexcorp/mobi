@@ -33,12 +33,16 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.ThingManager;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.webhooks.api.record.config.WebhookRecordCreateSettings;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
@@ -119,7 +123,8 @@ public class WebhookRecordServiceImplTest extends OrmEnabledTestCase {
         when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
         when(provUtils.startCreateActivity(any(User.class))).thenReturn(createActivity);
         when(xacmlPolicyManager.addPolicy(any(XACMLPolicy.class))).thenReturn(recordPolicyIRI);
-        doNothing().when(webhookConfigurationService).createConfiguration(any(WebhookRecord.class));
+        doNothing().when(webhookConfigurationService).createConfiguration(any(WebhookRecord.class), any(Model.class));
+        doNothing().when(webhookConfigurationService).validateConfiguration(any(Model.class));
         doNothing().when(webhookConfigurationService).deleteConfiguration(any(WebhookRecord.class), any(RepositoryConnection.class));
 
         injectOrmFactoryReferencesIntoService(recordService);
@@ -156,54 +161,81 @@ public class WebhookRecordServiceImplTest extends OrmEnabledTestCase {
     /* create Record Tests */
 
     @Test
-    public void createRecordTest() {
+    public void createRecordNoConfigTest() {
         RecordOperationConfig config = new OperationConfig();
         config.set(RecordCreateSettings.CATALOG_ID, catalogIRI.stringValue());
         config.set(RecordCreateSettings.RECORD_TITLE, "Test Webhook Record");
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, Collections.singleton(user));
+        config.set(WebhookRecordCreateSettings.CONFIGURATION_MODEL, null);
 
         try (RepositoryConnection connection = repository.getConnection()) {
-            WebhookRecord record = recordService.create(user, config, connection);
-            record.getResource();
-        }
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> recordService.create(user, config, connection));
 
-        verify(webhookConfigurationService).createConfiguration(any(WebhookRecord.class));
-        verify(thingManager).addObject(any(WebhookRecord.class), any(RepositoryConnection.class));
-        verify(xacmlPolicyManager, times(2)).addPolicy(any(XACMLPolicy.class));
-        verify(provUtils).startCreateActivity(eq(user));
-        verify(provUtils).endCreateActivity(eq(createActivity), any(IRI.class));
+            assertEquals("WebhookRecord must be created with a configuration model", exception.getMessage());
+            verify(webhookConfigurationService, times(0)).createConfiguration(any(WebhookRecord.class), any(Model.class));
+            verify(thingManager, times(0)).addObject(any(WebhookRecord.class), any(RepositoryConnection.class));
+            verify(xacmlPolicyManager, times(0)).addPolicy(any(XACMLPolicy.class));
+            verify(provUtils).startCreateActivity(eq(user));
+            verify(provUtils, times(0)).endCreateActivity(eq(createActivity), any(IRI.class));
+        }
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
+    public void createRecordWithConfigModelTest() {
+        RecordOperationConfig config = new OperationConfig();
+        config.set(RecordCreateSettings.CATALOG_ID, catalogIRI.stringValue());
+        config.set(RecordCreateSettings.RECORD_TITLE, "Test Webhook Record");
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, Collections.singleton(user));
+        config.set(WebhookRecordCreateSettings.CONFIGURATION_MODEL, MODEL_FACTORY.createEmptyModel());
+
+        try (RepositoryConnection connection = repository.getConnection()) {
+            recordService.create(user, config, connection);
+            verify(webhookConfigurationService).validateConfiguration(any(Model.class));
+            verify(webhookConfigurationService).createConfiguration(any(WebhookRecord.class), any(Model.class));
+            verify(thingManager).addObject(any(WebhookRecord.class), any(RepositoryConnection.class));
+            verify(xacmlPolicyManager, times(2)).addPolicy(any(XACMLPolicy.class));
+            verify(provUtils).startCreateActivity(eq(user));
+            verify(provUtils).endCreateActivity(eq(createActivity), any(IRI.class));
+        }
+    }
+
+    @Test
     public void createWithoutCatalogIdTest() {
         RecordOperationConfig config = new OperationConfig();
         config.set(RecordCreateSettings.RECORD_TITLE, "Test Webhook Record");
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, Collections.singleton(user));
 
         try (RepositoryConnection connection = repository.getConnection()) {
-            recordService.create(user, config, connection);
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> recordService.create(user,
+                    config, connection));
+            assertEquals("Config parameter com.mobi.catalog.operation.create.catalogId is required.", ex.getMessage());
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void createWithoutTitleTest() {
         RecordOperationConfig config = new OperationConfig();
         config.set(RecordCreateSettings.CATALOG_ID, catalogIRI.stringValue());
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, Collections.singleton(user));
 
         try (RepositoryConnection connection = repository.getConnection()) {
-            recordService.create(user, config, connection);
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> recordService.create(user,
+                    config, connection));
+            assertEquals("Config parameter com.mobi.catalog.operation.create.recordtitle is required.", ex.getMessage());
+
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void createWithoutPublisherTest() {
         RecordOperationConfig config = new OperationConfig();
         config.set(RecordCreateSettings.CATALOG_ID, catalogIRI.stringValue());
         config.set(RecordCreateSettings.RECORD_TITLE, "Test Webhook Record");
 
         try (RepositoryConnection connection = repository.getConnection()) {
-            recordService.create(user, config, connection);
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> recordService.create(user,
+                    config, connection));
+            assertEquals("Config parameter com.mobi.catalog.operation.create.recordpublishers is required.", ex.getMessage());
         }
     }
 
@@ -223,13 +255,15 @@ public class WebhookRecordServiceImplTest extends OrmEnabledTestCase {
         verify(provUtils).endDeleteActivity(eq(deleteActivity), eq(testRecord));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void deleteRecordDoesNotExistTest() {
         when(thingManager.optObject(eq(recordIRI), eq(recordFactory), any(RepositoryConnection.class)))
                 .thenReturn(Optional.empty());
 
         try (RepositoryConnection connection = repository.getConnection()) {
-            recordService.delete(recordIRI, user, connection);
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> recordService.delete(recordIRI,
+                    user, connection));
+            assertEquals("Record http://mobi.com/test/records#webhook-record does not exist", ex.getMessage());
         }
     }
 

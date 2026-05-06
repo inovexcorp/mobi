@@ -5,6 +5,7 @@
 @prefix foaf: <http://xmlns.com/foaf/0.1/>.
 @prefix dct: <http://purl.org/dc/terms/>.
 @prefix mcat: <http://mobi.com/ontologies/catalog#>.
+@prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix : <http://mobi.solutions/ontologies/webhooks#>.
 @base <http://mobi.solutions/ontologies/webhooks>.
 
@@ -32,9 +33,41 @@
 
 # Webhook Configuration
 
-:WebhookConfiguration a owl:Class;
+:WebhookConfiguration a owl:Class, rdfs:Class, sh:NodeShape;
     rdfs:label "Webhook Configuration"@en;
-    rdfs:comment "Configuration details for a webhook including URL, authentication, and event triggers."@en.
+    rdfs:comment "Configuration details for a webhook including URL, authentication, and event triggers."@en;
+    sh:targetClass :WebhookConfiguration;
+    sh:property :WebhookConfigurationUrlShape;
+    sh:property :WebhookConfigurationHttpMethodShape;
+    sh:property :WebhookConfigurationEventFilterShape;
+    sh:property :WebhookConfigurationActiveShape;
+    sh:property :WebhookConfigurationSecretTokenShape.
+
+:WebhookConfigurationUrlShape a sh:PropertyShape;
+    sh:path :url;
+    sh:minCount 1;
+    sh:maxCount 1.
+
+:WebhookConfigurationHttpMethodShape a sh:PropertyShape;
+    sh:path :httpMethod;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:in ("GET" "POST").
+
+:WebhookConfigurationEventFilterShape a sh:PropertyShape;
+    sh:path :eventFilter;
+    sh:minCount 1;
+    sh:maxCount 1.
+
+:WebhookConfigurationActiveShape a sh:PropertyShape;
+    sh:path :active;
+    sh:minCount 1;
+    sh:maxCount 1;
+    sh:in ("ACTIVE" "INACTIVE").
+
+:WebhookConfigurationSecretTokenShape a sh:PropertyShape;
+    sh:path :secretToken;
+    sh:maxCount 1.
 
 :url a owl:DatatypeProperty, owl:FunctionalProperty;
     rdfs:label "url"@en;
@@ -56,9 +89,9 @@
 
 :active a owl:DatatypeProperty, owl:FunctionalProperty;
     rdfs:label "active"@en;
-    rdfs:comment "Indicates whether the webhook is currently active and enabled."@en;
+    rdfs:comment "Indicates whether the webhook is currently active (ACTIVE or INACTIVE)."@en;
     rdfs:domain :WebhookConfiguration;
-    rdfs:range xsd:boolean.
+    rdfs:range xsd:string.
 
 :secretToken a owl:DatatypeProperty, owl:FunctionalProperty;
     rdfs:label "secret token"@en;
@@ -89,4 +122,3 @@
     rdfs:comment "The value of the HTTP header."@en;
     rdfs:domain :RequestHeader;
     rdfs:range xsd:string.
-

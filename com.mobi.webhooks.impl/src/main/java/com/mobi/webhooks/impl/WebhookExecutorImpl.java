@@ -28,12 +28,6 @@ import com.mobi.webhooks.api.WebhookConfigurationService;
 import com.mobi.webhooks.api.WebhookExecutor;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookConfiguration;
 
-import java.util.Arrays;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 import org.eclipse.rdf4j.model.Resource;
 import org.osgi.framework.Filter;
 import org.osgi.framework.FrameworkUtil;
@@ -45,6 +39,12 @@ import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Simple implementation of WebhookExecutor for executing webhook HTTP requests.
@@ -87,8 +87,8 @@ public class WebhookExecutorImpl implements WebhookExecutor, EventHandler {
 
             if (!matchedRecordIRIs.isEmpty()) {
                 // MP-3549 not yet merged — log instead of executing
-                LOG.info("Execution Logic not complete. {} webhook record(s) with IRI(s): {} Should be executed", matchedRecordIRIs.size(),
-                        matchedRecordIRIs);
+                LOG.info("Execution Logic not complete. {} webhook record(s) with IRI(s): {} Should be executed",
+                        matchedRecordIRIs.size(), matchedRecordIRIs);
             } else {
                 LOG.info("No matching Webhook records found for event:");
             }
