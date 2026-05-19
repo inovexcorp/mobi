@@ -48,10 +48,12 @@ public class WebhookUploadSchema {
     public List<String> keywords;
 
     @Schema(type = "string", format = "binary",
-            description = "Optional RDF file (Turtle, RDF/XML, or JSON-LD) representing the WebhookConfiguration")
+            description = "RDF file (Turtle, RDF/XML, or JSON-LD) representing the WebhookConfiguration."
+                    + " Required if jsonld is not provided.")
     public InputStream file;
 
     @Schema(type = "string",
-            description = "Optional JSON-LD string representing the WebhookConfiguration")
+            description = "JSON-LD string representing the WebhookConfiguration."
+                    + " Required if file is not provided.")
     public String jsonld;
 }

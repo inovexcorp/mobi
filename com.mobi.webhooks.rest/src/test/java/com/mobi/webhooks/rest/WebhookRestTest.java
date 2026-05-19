@@ -30,27 +30,35 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.mobi.catalog.api.PaginatedSearchParams;
+import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.RecordManager;
+import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.rest.test.util.FormDataMultiPart;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.UsernameTestFilter;
-import com.mobi.rest.util.RestUtils;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookRecord;
 import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
@@ -61,6 +69,7 @@ import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Optional;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
@@ -68,6 +77,7 @@ import javax.ws.rs.core.Response;
 
 public class WebhookRestTest extends MobiRestTestCXF {
 
+    private static final ObjectMapper mapper = new ObjectMapper();
     private static final String RECORD_IRI = "http://mobi.com/webhookRecord1";
     private static final String CATALOG_IRI = "http://mobi.com/catalog-local";
 
@@ -75,11 +85,16 @@ public class WebhookRestTest extends MobiRestTestCXF {
     private static RecordManager recordManager;
     private static EngineManager engineManager;
     private static CatalogConfigProvider configProvider;
+    private static BNodeService bNodeService;
     private static OrmFactory<WebhookRecord> recordFactory;
+
+    @SuppressWarnings("unchecked")
+    private static final PaginatedSearchResults<Record> searchResults = mock(PaginatedSearchResults.class);
 
     private static User user;
     private static IRI recordId;
     private static IRI catalogId;
+    private static WebhookRecord webhookRecord1;
 
     @BeforeClass
     public static void startServer() {
@@ -92,6 +107,7 @@ public class WebhookRestTest extends MobiRestTestCXF {
         recordManager = mock(RecordManager.class);
         engineManager = mock(EngineManager.class);
         configProvider = mock(CatalogConfigProvider.class);
+        bNodeService = mock(BNodeService.class);
 
         OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
         recordFactory = getRequiredOrmFactory(WebhookRecord.class);
@@ -100,11 +116,13 @@ public class WebhookRestTest extends MobiRestTestCXF {
         recordId = vf.createIRI(RECORD_IRI);
         catalogId = vf.createIRI(CATALOG_IRI);
         user = userFactory.createNew(userIRI);
+        webhookRecord1 = recordFactory.createNew(recordId);
 
         WebhookRest rest = new WebhookRest();
         rest.recordManager = recordManager;
         rest.engineManager = engineManager;
         rest.configProvider = configProvider;
+        rest.bNodeService = bNodeService;
 
         configureServer(rest, new UsernameTestFilter());
     }
@@ -113,18 +131,25 @@ public class WebhookRestTest extends MobiRestTestCXF {
     public void setupMocks() {
         WebhookRecord record = recordFactory.createNew(recordId);
 
-        reset(recordManager, engineManager, configProvider);
+        reset(recordManager, engineManager, configProvider, bNodeService, searchResults);
 
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogId);
         when(configProvider.getRepository()).thenReturn(repo);
         when(recordManager.createRecord(any(User.class), any(RecordOperationConfig.class),
                 eq(WebhookRecord.class), any(RepositoryConnection.class))).thenReturn(record);
+        when(bNodeService.skolemize(any(Statement.class))).thenAnswer(i -> i.getArgument(0, Statement.class));
+        when(searchResults.page()).thenReturn(List.of(webhookRecord1));
+        when(searchResults.totalSize()).thenReturn(1);
+        when(searchResults.pageSize()).thenReturn(10);
+        when(searchResults.pageNumber()).thenReturn(1);
+        when(recordManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(searchResults);
     }
 
     @After
     public void resetMocks() {
-        reset(recordManager, engineManager, configProvider);
+        reset(recordManager, engineManager, configProvider, bNodeService, searchResults);
     }
 
     /* Webhook Record Creation */
@@ -275,5 +300,80 @@ public class WebhookRestTest extends MobiRestTestCXF {
 
         assertErrorResponse(response, 400, "IllegalArgumentException",
                 "Unsupported file format 'csv'. Supported: Turtle (.ttl), RDF/XML (.xml/.rdf), JSON-LD (.jsonld/.json)");
+    }
+
+    /* Webhook Record List */
+
+    /* Success Test Cases */
+    @Test
+    public void findWebhookRecordsTest() throws Exception {
+        Response response = target().path("webhooks").queryParam("offset", 0).queryParam("limit", 10)
+                .request().get();
+
+        assertEquals(200, response.getStatus());
+        verify(recordManager).findRecord(any(Resource.class), any(PaginatedSearchParams.class),
+                any(User.class), any(RepositoryConnection.class));
+        verify(bNodeService, atLeastOnce()).skolemize(any(Statement.class));
+        ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    public void findWebhookRecordsWithSearchTextTest() {
+        Response response = target().path("webhooks").queryParam("offset", 0).queryParam("limit", 10)
+                .queryParam("searchText", "test").request().get();
+
+        assertEquals(200, response.getStatus());
+        verify(recordManager).findRecord(any(Resource.class), any(PaginatedSearchParams.class),
+                any(User.class), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void findWebhookRecordsWithSortTest() {
+        Response response = target().path("webhooks").queryParam("offset", 0).queryParam("limit", 10)
+                .queryParam("sort", DCTERMS.TITLE.stringValue()).request().get();
+
+        assertEquals(200, response.getStatus());
+        verify(recordManager).findRecord(any(Resource.class), any(PaginatedSearchParams.class),
+                any(User.class), any(RepositoryConnection.class));
+    }
+
+    /* Failure Test Cases */
+    @Test
+    public void findWebhookRecordsInvalidSortTest() {
+        Response response = target().path("webhooks").queryParam("offset", 0).queryParam("limit", 10)
+                .queryParam("sort", "urn:not-a-valid-sort-field").request().get();
+
+        assertErrorResponse(response, 400, "IllegalArgumentException", "Invalid sort property IRI");
+    }
+
+    @Test
+    public void findWebhookRecordsNegativeOffsetTest() {
+        Response response = target().path("webhooks").queryParam("offset", -1).queryParam("limit", 10)
+                .request().get();
+
+        assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    public void findWebhookRecordsUserNotFoundTest() {
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
+
+        Response response = target().path("webhooks").queryParam("offset", 0).queryParam("limit", 10)
+                .request().get();
+
+        assertErrorResponse(response, 500, "MobiException", "User not found");
+    }
+
+    @Test
+    public void findWebhookRecordsMobiExceptionTest() {
+        when(recordManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class),
+                any(User.class), any(RepositoryConnection.class)))
+                .thenThrow(new MobiException("Repository unavailable"));
+
+        Response response = target().path("webhooks").queryParam("offset", 0).queryParam("limit", 10)
+                .request().get();
+
+        assertErrorResponse(response, 500, "MobiException", "Repository unavailable");
     }
 }
