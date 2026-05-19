@@ -24,9 +24,14 @@ package com.mobi.webhooks.rest;
  */
 
 import static com.mobi.rest.util.RestUtils.checkStringParam;
+import static com.mobi.rest.util.RestUtils.createPaginatedResponse;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
+import static com.mobi.rest.util.RestUtils.validatePaginationParams;
 
+import com.mobi.catalog.api.PaginatedSearchParams;
+import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.RecordManager;
+import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
@@ -34,15 +39,19 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.rest.security.annotations.ActionAttributes;
 import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.util.FileUpload;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.rest.util.swagger.ErrorObjectSchema;
+import com.mobi.rest.util.swagger.JsonLdObject;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookRecord;
 import com.mobi.webhooks.api.record.config.WebhookRecordCreateSettings;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
@@ -51,7 +60,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.io.FilenameUtils;
 import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -67,21 +79,27 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 @Component(service = WebhookRest.class, immediate = true)
 @JaxrsResource
@@ -90,6 +108,17 @@ public class WebhookRest {
     private static final Logger LOG = LoggerFactory.getLogger(WebhookRest.class);
     private static final String TAG = "Webhooks";
     private static final String DESCRIPTION = "Operations for managing WebhookRecords";
+    private static final Set<String> SORT_RESOURCES;
+
+    static {
+        Set<String> sortResources = new HashSet<>();
+        sortResources.add(DCTERMS.MODIFIED.stringValue());
+        sortResources.add(DCTERMS.ISSUED.stringValue());
+        sortResources.add(DCTERMS.TITLE.stringValue());
+        SORT_RESOURCES = Collections.unmodifiableSet(sortResources);
+    }
+
+    private final ValueFactory vf = new ValidatingValueFactory();
 
     @Reference
     RecordManager recordManager;
@@ -99,6 +128,107 @@ public class WebhookRest {
 
     @Reference
     CatalogConfigProvider configProvider;
+
+    @Reference
+    BNodeService bNodeService;
+
+    /**
+     * Retrieves a paginated list of WebhookRecords accessible to the requesting user. Filters results by view
+     * permissions granted to the requesting user.
+     *
+     * @param servletRequest HttpServletRequest
+     * @param uriInfo        UriInfo
+     * @param offset         Offset for the page
+     * @param limit          Number of Records to return in one page
+     * @param sort           IRI of the property to sort by
+     * @param asc            Whether the list should be sorted ascending or descending
+     * @param searchText     Optional search text to filter WebhookRecords by title or description
+     * @return Response with a JSON-LD array of WebhookRecords visible to the user
+     */
+    @GET
+    @Tag(name = TAG, description = DESCRIPTION)
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @Operation(summary = "Retrieves all WebhookRecords")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A JSON-LD array of WebhookRecords",
+                    content = @Content(
+                            array = @ArraySchema(
+                                    schema = @Schema(
+                                            implementation = JsonLdObject.class,
+                                            description = "A list of WebhookRecord JSON-LD objects")
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid pagination parameters or sort IRI",
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving WebhookRecords",
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
+            )
+    })
+    public Response findWebhookRecords(
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
+            @Parameter(hidden = true) @Context UriInfo uriInfo,
+            @Parameter(description = "Offset for a page of WebhookRecords", required = true)
+            @QueryParam("offset") int offset,
+            @Parameter(description = "Number of WebhookRecords to return in one page", required = true)
+            @QueryParam("limit") int limit,
+            @Parameter(description = "IRI of the property to sort by")
+            @QueryParam("sort") String sort,
+            @Parameter(description = "Whether or not the list should be sorted ascending or descending")
+            @DefaultValue("true") @QueryParam("ascending") boolean asc,
+            @Parameter(description = "Optional search text to filter WebhookRecords")
+            @QueryParam("searchText") String searchText) {
+        long start = System.currentTimeMillis();
+        User activeUser = getActiveUser(servletRequest, engineManager);
+        LOG.debug("GET /webhooks requested by user: {} | offset={} limit={} sort={} ascending={} searchText={}",
+                activeUser.getResource().stringValue(), offset, limit, sort, asc, searchText);
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
+
+            PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder()
+                    .offset(offset)
+                    .ascending(asc)
+                    .typeFilter(List.of(vf.createIRI(WebhookRecord.TYPE)));
+            if (limit > 0) {
+                builder.limit(limit);
+            }
+            if (sort != null) {
+                builder.sortBy(vf.createIRI(sort));
+            }
+            if (searchText != null) {
+                builder.searchText(searchText);
+            }
+
+            PaginatedSearchResults<Record> results = recordManager.findRecord(
+                    configProvider.getLocalCatalogIRI(), builder.build(), activeUser, conn);
+
+            LOG.debug("Returning {} of {} total WebhookRecord(s): [{}] | took {}ms",
+                    results.page().size(), results.totalSize(),
+                    results.page().stream().map(r -> r.getResource().stringValue())
+                            .collect(Collectors.joining(", ")),
+                    System.currentTimeMillis() - start);
+
+            return createPaginatedResponse(uriInfo, results.page(), results.totalSize(),
+                    limit, offset, WebhookRecord.TYPE, bNodeService);
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
+        } catch (IllegalStateException | MobiException ex) {
+            throw RestUtils.getErrorObjInternalServerError(ex);
+        }
+    }
 
     @POST
     @Tag(name = TAG, description = DESCRIPTION)
@@ -158,7 +288,7 @@ public class WebhookRest {
                 config.set(RecordCreateSettings.RECORD_KEYWORDS, new HashSet<>(keywords));
             }
 
-            if (fileStream != null || jsonld != null) {
+            if (fileStream != null || (jsonld != null && !jsonld.isBlank())) {
                 Model configModel = parseConfigModel(fileStream, file.getFilename(), jsonld);
                 config.set(WebhookRecordCreateSettings.CONFIGURATION_MODEL, configModel);
             }
