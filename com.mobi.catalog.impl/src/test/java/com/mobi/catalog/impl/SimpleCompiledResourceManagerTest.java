@@ -31,6 +31,7 @@ import static org.mockito.Mockito.when;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
@@ -47,6 +48,7 @@ import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -115,6 +117,33 @@ public class SimpleCompiledResourceManagerTest extends OrmEnabledTestCase {
         closeable.close();
         repo.shutDown();
         Mockito.reset(configProvider, thingManager, commitManager, revisionManager, branchManager, recordManager);
+    }
+
+    @Test
+    @Ignore("Benchmark only - run manually before and after the fix")
+    public void benchmarkGetCompiledResource() throws Exception {
+        // Setup: Use the existing test infrastructure to create a commit chain
+        // with a realistic number of statements (reuse existing test setup methods)
+        addData(repo, "/testCatalogData/ontologyRecord/language_tags.trig", RDFFormat.TRIG);
+        IRI commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test0");
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Warm up
+            for (int i = 0; i < 10; i++) {
+                manager.getCompiledResource(commitId, conn);
+            }
+
+            // Benchmark
+            int iterations = 100;
+            long start = System.nanoTime();
+            for (int i = 0; i < iterations; i++) {
+                manager.getCompiledResource(commitId, conn);
+            }
+            long elapsed = System.nanoTime() - start;
+            System.out.println("getCompiledResource x" + iterations + ": "
+                    + (elapsed / 1_000_000) + "ms total, "
+                    + (elapsed / 1_000_000 / iterations) + "ms avg");
+        }
     }
     
     /* getCompiledResource - no branch */

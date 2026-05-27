@@ -37,20 +37,21 @@ import java.util.stream.Collectors;
 public class VersionRangeUtils {
 
     /**
-     * Filter Restore Operations
+     * Filter Restore Operations.
      *
      * @param operationList List of Restore Operations, RestoreOperation specify the range for
-     * which it should run with standard maven version range syntax
+     *      which it should run with standard maven version range syntax
      * @param currentMobiVersion Current Version of Mobi Running
      * @return List of Restore Operations that has been filtered and sorted by priority
      */
-    public static List<? extends RestoreOperation> filterRestoreOperations(List<? extends RestoreOperation> operationList, String currentMobiVersion) {
+    public static List<? extends RestoreOperation> filterRestoreOperations(
+            List<? extends RestoreOperation> operationList, String currentMobiVersion) {
         ArtifactVersion version = new DefaultArtifactVersion(currentMobiVersion);
         return operationList.stream()
                 .filter((RestoreOperation op) -> {
                     try {
                         return op.getVersionRange().containsVersion(version);
-                    } catch (InvalidVersionSpecificationException e){
+                    } catch (InvalidVersionSpecificationException e) {
                         return false;
                     }
                 })
@@ -58,6 +59,12 @@ public class VersionRangeUtils {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Determines whether a provided version string is before 4.0 (exclusive)
+     *
+     * @param currentMobiVersion A version string in the form X.X.X
+     * @return True if before 4.0; false otherwise
+     */
     public static boolean isPre4Version(String currentMobiVersion) {
         try {
             return VersionRange.createFromVersionSpec("(,4.0)")

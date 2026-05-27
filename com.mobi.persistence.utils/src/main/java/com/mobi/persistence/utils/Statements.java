@@ -23,9 +23,11 @@ package com.mobi.persistence.utils;
  * #L%
  */
 
+import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
 
 import java.util.Optional;
 
@@ -44,5 +46,34 @@ public class Statements {
         } else {
             return Optional.empty();
         }
+    }
+
+    /**
+     * Normalizes language tags in a Statement's object literal to lowercase. BCP 47 language tags are
+     * case-insensitive, but RDF4J's NativeLiteral.equals() compares by internalID which is assigned from a
+     * byte-level value lookup that is case-sensitive. This can cause HashMap lookups and repository operations to fail
+     * when the same literal exists with different language tag casings (e.g., {@code @en-US} vs {@code @en-us}).
+     * Normalizing to lowercase before comparison ensures consistent matching regardless of the original casing.
+     *
+     * @param statement The Statement to normalize
+     * @param vf The ValueFactory to use for creating normalized literals and statements
+     * @return A new Statement with the language tag lowercased, or the original Statement if no normalization
+     *         was needed (no language tag, or language tag was already lowercase)
+     */
+    public static Statement normalizeLanguageTag(Statement statement, ValueFactory vf) {
+        Value object = statement.getObject();
+        if (object instanceof Literal lit) {
+            Optional<String> lang = lit.getLanguage();
+            if (lang.isPresent()) {
+                String langTag = lang.get();
+                String lower = langTag.toLowerCase();
+                if (!langTag.equals(lower)) {
+                    Literal normalized = vf.createLiteral(lit.getLabel(), lower);
+                    return vf.createStatement(statement.getSubject(), statement.getPredicate(),
+                            normalized, statement.getContext());
+                }
+            }
+        }
+        return statement;
     }
 }
