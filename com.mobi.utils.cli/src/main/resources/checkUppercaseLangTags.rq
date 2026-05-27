@@ -1,0 +1,10 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+
+ASK {
+  GRAPH ?record { ?record a mcat:VersionedRDFRecord ; mcat:masterBranch ?branch }
+  GRAPH ?branch { ?branch mcat:headGraph ?headGraph }
+  GRAPH ?headGraph {
+    ?s ?p ?o .
+    FILTER(isLiteral(?o) && LANG(?o) != "" && LANG(?o) != LCASE(LANG(?o)))
+  }
+}

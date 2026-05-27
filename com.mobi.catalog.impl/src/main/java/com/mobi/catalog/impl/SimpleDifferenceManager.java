@@ -39,6 +39,7 @@ import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.Bindings;
+import com.mobi.persistence.utils.Statements;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
@@ -660,18 +661,19 @@ public class SimpleDifferenceManager implements DifferenceManager {
      */
     private void updateModels(Statement statement, Map<Statement, Integer> mapToAdd, Map<Statement,
             Integer> mapToRemove) {
-        if (mapToRemove.containsKey(statement)) {
-            int count = mapToRemove.get(statement);
+        Statement normalized = Statements.normalizeLanguageTag(statement, vf);
+        if (mapToRemove.containsKey(normalized)) {
+            int count = mapToRemove.get(normalized);
             if (count == 1) {
-                mapToRemove.remove(statement);
+                mapToRemove.remove(normalized);
             } else {
-                mapToRemove.put(statement, count - 1);
+                mapToRemove.put(normalized, count - 1);
             }
-        } else if (mapToAdd.containsKey(statement)) {
-            int count = mapToAdd.get(statement);
-            mapToAdd.put(statement, count + 1);
+        } else if (mapToAdd.containsKey(normalized)) {
+            int count = mapToAdd.get(normalized);
+            mapToAdd.put(normalized, count + 1);
         } else {
-            mapToAdd.put(statement, 1);
+            mapToAdd.put(normalized, 1);
         }
     }
 }

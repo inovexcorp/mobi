@@ -1,0 +1,51 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+# SELECT (not UPDATE) — find stale uppercase-tagged literals in master HEAD graphs that match
+# an intended deletion (same string value, case-insensitively equal language tag) anywhere in
+# the full commit chain. The actual remove is performed in Java via getStatements + conn.remove
+# so it operates on the byte-level identical stored Statement (NativeStore value-IDs persist
+# the original casing under cache eviction; SPARQL UPDATE's DELETE template re-binds literals
+# through the value factory and can resolve to a different value-ID, causing silent failures).
+#
+# Matching is case-insensitive on the language tag AND requires identical string values
+# (STR()=STR()) so legitimate multi-label concepts (e.g. "Kitty"@en-US AND "Cat"@en-us as two
+# distinct labels on the same s+p) are not false-positives.
+#
+# IMPORTANT: the FILTER on ?deleted must live OUTSIDE the UNION — RDF4J does not correctly
+# evaluate filters inside UNION branches that reference variables bound by patterns outside
+# the union (?uppercase in this case), and silently returns zero matches.
+SELECT DISTINCT ?headGraph ?s ?p ?uppercase
+WHERE {
+  GRAPH ?record { ?record a mcat:VersionedRDFRecord ; mcat:masterBranch ?branch }
+  GRAPH ?branch { ?branch mcat:headGraph ?headGraph ; mcat:head ?headCommit }
+  GRAPH ?headGraph { ?s ?p ?uppercase }
+  FILTER(isLiteral(?uppercase) && LANG(?uppercase) != "" && LANG(?uppercase) != LCASE(LANG(?uppercase)))
+
+  ?headCommit (mcat:baseCommit | mcat:auxiliaryCommit | mcat:branchCommit)* ?commit .
+
+  {
+    # Forward-delta commit (mcat:branchCommit): own revision's deletions graph holds intended deletions
+    GRAPH ?commit {
+      ?commit prov:generated ?revision ;
+          mcat:branchCommit ?bc .
+      ?revision mcat:deletions ?deletionsGraph .
+    }
+    GRAPH ?deletionsGraph { ?s ?p ?deleted }
+  }
+  UNION
+  {
+    # Reverse-delta commit (mcat:baseCommit + prov:hadPrimarySource):
+    # intended deletions are stored as parent commit's revision.additions (flipped by updateBaseCommit)
+    GRAPH ?commit {
+      ?commit prov:generated ?revRevision ;
+          mcat:baseCommit ?someCommit .
+      ?revRevision prov:hadPrimarySource ?revision .
+    }
+    GRAPH ?someCommit { ?revision mcat:additions ?deletionsGraph }
+    GRAPH ?deletionsGraph { ?s ?p ?deleted }
+  }
+
+  FILTER(isLiteral(?deleted) && STR(?deleted) = STR(?uppercase)
+      && LCASE(LANG(?deleted)) = LCASE(LANG(?uppercase)))
+}

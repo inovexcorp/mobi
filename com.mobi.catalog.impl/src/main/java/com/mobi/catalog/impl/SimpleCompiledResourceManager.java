@@ -33,6 +33,7 @@ import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.Bindings;
+import com.mobi.persistence.utils.Statements;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.rdf4j.model.Model;
@@ -259,7 +260,7 @@ public class SimpleCompiledResourceManager implements CompiledResourceManager {
                     subjectIds);
             GraphQuery additionsQuery = headGraphConn.prepareGraphQuery(additionInRevisionQuery);
             try (GraphQueryResult result = additionsQuery.evaluate()) {
-                result.forEach(consumer);
+                result.forEach(st -> consumer.accept(Statements.normalizeLanguageTag(st, vf)));
             }
         }
     }
@@ -279,11 +280,13 @@ public class SimpleCompiledResourceManager implements CompiledResourceManager {
         if (subjectIds.length > 0) {
             Arrays.stream(subjectIds).forEach(subjectId -> {
                 headGraphConn.getStatements(subjectId, null, null, tempGraph).forEach(st ->
-                        consumer.accept(vf.createStatement(st.getSubject(), st.getPredicate(), st.getObject())));
+                        consumer.accept(Statements.normalizeLanguageTag(
+                                vf.createStatement(st.getSubject(), st.getPredicate(), st.getObject()), vf)));
             });
         } else {
             headGraphConn.getStatements(null, null, null, tempGraph).forEach(st ->
-                    consumer.accept(vf.createStatement(st.getSubject(), st.getPredicate(), st.getObject())));
+                    consumer.accept(Statements.normalizeLanguageTag(
+                            vf.createStatement(st.getSubject(), st.getPredicate(), st.getObject()), vf)));
         }
     }
 
@@ -336,7 +339,7 @@ public class SimpleCompiledResourceManager implements CompiledResourceManager {
         try (GraphQueryResult result = additionsInRoiQuery.evaluate()) {
             result.forEach(statement -> {
                 if (!deletionSubjects.contains(statement.getSubject())) {
-                    consumer.accept(statement);
+                    consumer.accept(Statements.normalizeLanguageTag(statement, vf));
                 }
             });
         }
@@ -412,8 +415,10 @@ public class SimpleCompiledResourceManager implements CompiledResourceManager {
      */
     private void aggregateDifferences(Resource revisionId, List<Resource> revisions, Resource tempGraph,
                                       RepositoryConnection conn) {
-        conn.add((Iterable<? extends Statement>) getAdditions(revisionId, revisions, conn), tempGraph);
-        conn.remove((Iterable<? extends Statement>) getDeletions(revisionId, revisions, conn), tempGraph);
+        getAdditions(revisionId, revisions, conn)
+                .forEach(st -> conn.add(Statements.normalizeLanguageTag(st, vf), tempGraph));
+        getDeletions(revisionId, revisions, conn)
+                .forEach(st -> conn.remove(Statements.normalizeLanguageTag(st, vf), tempGraph));
     }
 
     /**
@@ -447,7 +452,7 @@ public class SimpleCompiledResourceManager implements CompiledResourceManager {
      */
     private GraphQueryResult getAdditions(Resource revisionId, List<Resource> revisions, RepositoryConnection conn) {
         GraphQuery additionsQuery = conn.prepareGraphQuery(GET_FILTERED_ADDITIONS_SUBQUERY
-                .replace(REVISION_LIST,"<" + StringUtils.join(revisions, "> <") + ">")
+                .replace(REVISION_LIST, "<" + StringUtils.join(revisions, "> <") + ">")
                 .replace("%THISREVISION%", "<" + revisionId.stringValue() + ">"));
         return additionsQuery.evaluate();
     }
@@ -463,7 +468,7 @@ public class SimpleCompiledResourceManager implements CompiledResourceManager {
      */
     private GraphQueryResult getDeletions(Resource revisionId, List<Resource> revisions, RepositoryConnection conn) {
         GraphQuery deletionsQuery = conn.prepareGraphQuery(GET_FILTERED_DELETIONS_SUBQUERY
-                .replace(REVISION_LIST,"<" + StringUtils.join(revisions, "> <") + ">")
+                .replace(REVISION_LIST, "<" + StringUtils.join(revisions, "> <") + ">")
                 .replace("%THISREVISION%", "<" + revisionId.stringValue() + ">"));
         return deletionsQuery.evaluate();
     }
@@ -480,18 +485,19 @@ public class SimpleCompiledResourceManager implements CompiledResourceManager {
      */
     private void updateModels(Statement statement, Map<Statement, Integer> mapToAdd, Map<Statement,
             Integer> mapToRemove) {
-        if (mapToRemove.containsKey(statement)) {
-            int count = mapToRemove.get(statement);
+        Statement normalized = Statements.normalizeLanguageTag(statement, vf);
+        if (mapToRemove.containsKey(normalized)) {
+            int count = mapToRemove.get(normalized);
             if (count == 1) {
-                mapToRemove.remove(statement);
+                mapToRemove.remove(normalized);
             } else {
-                mapToRemove.put(statement, count - 1);
+                mapToRemove.put(normalized, count - 1);
             }
-        } else if (mapToAdd.containsKey(statement)) {
-            int count = mapToAdd.get(statement);
-            mapToAdd.put(statement, count + 1);
+        } else if (mapToAdd.containsKey(normalized)) {
+            int count = mapToAdd.get(normalized);
+            mapToAdd.put(normalized, count + 1);
         } else {
-            mapToAdd.put(statement, 1);
+            mapToAdd.put(normalized, 1);
         }
     }
 }

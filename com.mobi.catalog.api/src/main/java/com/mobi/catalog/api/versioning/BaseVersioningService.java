@@ -46,12 +46,15 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.Bindings;
+import com.mobi.persistence.utils.Statements;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
@@ -70,8 +73,10 @@ import org.osgi.service.event.EventAdmin;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -226,7 +231,7 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
         additions.removeAll(mergeRevisions.duplicateAddsToRemove);
         deletions.removeAll(mergeRevisions.duplicateDelsToRemove);
         conn.add(additions, headGraph);
-        conn.remove(deletions, headGraph);
+        deletions.forEach(del -> removeCaseInsensitive(conn, del, headGraph));
         if (mergeRevisions.display != null) {
             newCommit.setMergeDisplayRevision(mergeRevisions.display);
             newCommit.getModel().addAll(mergeRevisions.display.getModel());
@@ -426,8 +431,10 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
                         commitRevision.getResource());
                 IRI commitRevDelGraph = getDeltaValue(commitRevision.getDeletions(), DELETIONS,
                         commitRevision.getResource());
-                conn.add(conn.getStatements(null, null, null, commitRevAddGraph), headGraph);
-                conn.remove(conn.getStatements(null, null, null, commitRevDelGraph), headGraph);
+                conn.getStatements(null, null, null, commitRevAddGraph).forEach(st ->
+                        conn.add(Statements.normalizeLanguageTag(st, vf), headGraph));
+                conn.getStatements(null, null, null, commitRevDelGraph).forEach(st ->
+                        removeCaseInsensitive(conn, st, headGraph));
             }
         } else if (parentIRI.equals(branchingResource)) {
             addInfluencedRevision(commit, parentCommit, (IRI) addGraph, (IRI) delGraph, commitRevision, conn);
@@ -452,8 +459,10 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
         thingManager.updateObject(commit, conn);
 
         // Update MasterBranch HEAD graph
-        conn.add(conn.getStatements(null, null, null, addGraph), headGraph);
-        conn.remove(conn.getStatements(null, null, null, delGraph), headGraph);
+        conn.getStatements(null, null, null, addGraph).forEach(st ->
+                conn.add(Statements.normalizeLanguageTag(st, vf), headGraph));
+        conn.getStatements(null, null, null, delGraph).forEach(st ->
+                removeCaseInsensitive(conn, st, headGraph));
 
         if (removeGraphs) {
             // Delete forward merge commit revision graphs
@@ -743,9 +752,8 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
                     // Make baseCommit's Revision deletions point to the InProgressCommit's additions (Reverse Delta)
                     conn.add(baseRevisionIRI, deletionsIRI, st.getObject(), baseCommit.getResource());
                     // Apply the statements in the InProgressCommit additions to the state graph
-                    RepositoryResult<Statement> additions = conn.getStatements(null, null, null, (Resource)
-                            st.getObject());
-                    conn.add(additions, headGraph);
+                    conn.getStatements(null, null, null, (Resource) st.getObject()).forEach(add ->
+                            conn.add(Statements.normalizeLanguageTag(add, vf), headGraph));
                 });
         inProgressCommit.getModel()
                 .filter(revisionIRI, deletionsIRI, null)
@@ -753,9 +761,8 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
                     // Make baseCommit's Revision additions point to the InProgressCommit's deletions (Reverse Delta)
                     conn.add(baseRevisionIRI, additionsIRI, st.getObject(), baseCommit.getResource());
                     // Apply the statements in the InProgressCommit deletions to the state graph
-                    RepositoryResult<Statement> deletions = conn.getStatements(null, null, null, (Resource)
-                            st.getObject());
-                    conn.remove(deletions, headGraph);
+                    conn.getStatements(null, null, null, (Resource) st.getObject()).forEach(del ->
+                            removeCaseInsensitive(conn, del, headGraph));
                 });
     }
 
@@ -779,6 +786,46 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
     private IRI getDeltaValue(Optional<IRI> deltaGraphOpt, String type, Resource revisionResource) {
         return deltaGraphOpt.orElseThrow(() -> new IllegalStateException(type + " not set on Revision "
                 + revisionResource.stringValue()));
+    }
+
+    /**
+     * Removes a statement from the specified HEAD graph, handling case-insensitive language tag
+     * matching for language-tagged literals. Plain {@code conn.remove(stmt, graph)} relies on
+     * NativeStore's literal value IDs which compare byte-level. Under cache eviction (large
+     * ontologies past {@code valueIDCacheSize}), {@code "Foo"@en-us} and {@code "Foo"@en-US} are
+     * stored as different value IDs even though they are semantically equal — so a removal of
+     * {@code "Foo"@en-us} silently fails against a stored {@code "Foo"@en-US} (or vice versa),
+     * which is the root cause of MP-3569.
+     *
+     * <p>For language-tagged literal deletions, this helper performs a single SPO index lookup on
+     * HEAD for the subject/predicate, then case-insensitively matches the language tag and string
+     * value to identify the actual stored triple(s) to remove. For non-language-tagged values it
+     * falls through to the standard {@code conn.remove}.</p>
+     *
+     * @param conn      The RepositoryConnection.
+     * @param delStmt   The statement intended to be deleted from HEAD.
+     * @param headGraph The HEAD graph IRI/Resource.
+     */
+    private void removeCaseInsensitive(RepositoryConnection conn, Statement delStmt, Resource headGraph) {
+        Value obj = delStmt.getObject();
+        if (obj instanceof Literal lit && lit.getLanguage().isPresent()) {
+            String label = lit.getLabel();
+            String langLower = lit.getLanguage().get().toLowerCase();
+            List<Statement> toRemove = new ArrayList<>();
+            try (RepositoryResult<Statement> iter = conn.getStatements(
+                    delStmt.getSubject(), delStmt.getPredicate(), null, headGraph)) {
+                iter.forEach(st -> {
+                    if (st.getObject() instanceof Literal l && l.getLanguage().isPresent()
+                            && label.equals(l.getLabel())
+                            && langLower.equals(l.getLanguage().get().toLowerCase())) {
+                        toRemove.add(st);
+                    }
+                });
+            }
+            toRemove.forEach(st -> conn.remove(st, headGraph));
+        } else {
+            conn.remove(delStmt, headGraph);
+        }
     }
 
     /**
