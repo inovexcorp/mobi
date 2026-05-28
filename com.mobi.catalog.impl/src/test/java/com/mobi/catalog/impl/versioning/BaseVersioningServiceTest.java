@@ -57,6 +57,7 @@ import org.eclipse.rdf4j.model.util.Models;
 import org.eclipse.rdf4j.model.vocabulary.PROV;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
+import org.eclipse.rdf4j.model.vocabulary.SKOS;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
@@ -471,6 +472,54 @@ public class BaseVersioningServiceTest extends OrmEnabledTestCase {
         conn.add(initialStatement, inProgressCommitDelGraph);
         conn.add(statement1, inProgressCommitAddGraph);
         conn.add(statement2, inProgressCommitAddGraph);
+    }
+
+    /**
+     * MP-3569 regression test: verifies that a master commit whose deletion's language tag casing
+     * does not match the casing stored in HEAD still successfully removes the HEAD triple. The bug
+     * was that {@code conn.remove("Birds"@en-us)} silently failed against a stored
+     * {@code "Birds"@en-US} once NativeStore's value-ID cache evicted the literal, leaving both
+     * labels visible after the commit. The fix performs case-insensitive matching when applying
+     * deltas to HEAD.
+     */
+    @Test
+    public void addMasterCommitRemovesCaseDifferentLangTagFromHead() throws Exception {
+        IRI subject = VALUE_FACTORY.createIRI("http://example.org/concept#Birds");
+        Statement headStored = VALUE_FACTORY.createStatement(
+                subject, SKOS.PREF_LABEL, VALUE_FACTORY.createLiteral("Birds", "en-US"));
+        Statement intendedDeletion = VALUE_FACTORY.createStatement(
+                subject, SKOS.PREF_LABEL, VALUE_FACTORY.createLiteral("Birds", "en-us"));
+        Statement newAddition = VALUE_FACTORY.createStatement(
+                subject, SKOS.PREF_LABEL, VALUE_FACTORY.createLiteral("Birds_1", "en-us"));
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            addThing(record, conn);
+            addThing(masterBranch, conn);
+            addThing(commit, conn);
+
+            // Seed HEAD with the uppercase-tagged label (the corrupted-restore state).
+            conn.add(headStored, masterHeadGraph);
+
+            // Populate the InProgressCommit with a lowercase-tagged deletion + new addition.
+            conn.add(intendedDeletion, inProgressCommitDelGraph);
+            conn.add(newAddition, inProgressCommitAddGraph);
+            addThing(inProgressCommit, conn);
+
+            service.addMasterCommit(record, masterBranch, user, "Rename Birds", conn);
+
+            Model headGraphState = QueryResults.asModel(
+                    conn.getStatements(null, null, null, masterHeadGraph));
+            assertTrue("New label \"Birds_1\"@en-us must be present in HEAD",
+                    ConnectionUtils.contains(conn, subject, SKOS.PREF_LABEL,
+                            VALUE_FACTORY.createLiteral("Birds_1", "en-us"), masterHeadGraph));
+            // The stale "Birds" label (any casing) must be gone.
+            assertFalse("Stale \"Birds\" prefLabel (any casing) must NOT remain in HEAD: "
+                            + headGraphState,
+                    ConnectionUtils.contains(conn, subject, SKOS.PREF_LABEL,
+                            VALUE_FACTORY.createLiteral("Birds", "en-US"), masterHeadGraph)
+                    || ConnectionUtils.contains(conn, subject, SKOS.PREF_LABEL,
+                            VALUE_FACTORY.createLiteral("Birds", "en-us"), masterHeadGraph));
+        }
     }
 
     private void checkRevisionGraphsEmpty(Set<Statement> revisionsOnCommit, RepositoryConnection conn) {

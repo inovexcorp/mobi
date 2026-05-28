@@ -1,0 +1,131 @@
+# Minimal synthetic test data reproducing the MP-3569 language tag corruption pattern.
+#
+# Scenario: user has the "Amphibians" SKOS concept with prefLabel "Amphibians"@en-US (from
+# initial Turtle import). They edit it on a feature branch to "Amphibians_1"@en-us (lowercase
+# because jsonld-java lowercases on round-trip), then merge into master. Due to RDF4J's
+# case-sensitive byte-level ID comparison, the deletion of "Amphibians"@en-us against the
+# stored "Amphibians"@en-US failed silently, leaving BOTH labels in the HEAD graph.
+#
+# This file simulates a pre-4.4 backup containing:
+#   - A VersionedRDFRecord with one master branch
+#   - The master HEAD graph with the BUG: both "Amphibians"@en-US (stale) and
+#     "Amphibians_1"@en-us (new) on the same concept
+#   - The full commit/revision chain: initial commit -> feature branch commit -> merge commit
+#   - Delta graphs showing the intended deletion of "Amphibians"@en-us (lowercase from jsonld-java)
+#
+# Also includes an untouched concept "Kitty" with "Kitty"@en-US — this should NOT be deleted
+# (no matching deletion in the chain).
+
+@prefix mcat: <http://mobi.com/ontologies/catalog#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+# ----- Record metadata -----
+<https://mobi.com/records#vocab1> {
+  <https://mobi.com/records#vocab1> a mcat:VersionedRDFRecord ;
+    mcat:masterBranch <https://mobi.com/branches#master1> .
+}
+
+# ----- Master branch -----
+<https://mobi.com/branches#master1> {
+  <https://mobi.com/branches#master1> a mcat:MasterBranch, mcat:Branch ;
+    mcat:head <https://mobi.com/commits#merge1> ;
+    mcat:headGraph <https://mobi.com/records#vocab1/HEAD> .
+}
+
+# ----- HEAD graph (corrupted: both old and new labels for Amphibians) -----
+<https://mobi.com/records#vocab1/HEAD> {
+  <http://example.org/ontology#Amphibians> a skos:Concept ;
+    skos:prefLabel "Amphibians"@en-US ,        # STALE — should be deleted
+                   "Amphibiens"@fr ,
+                   "Amphibians_1"@en-us .       # NEW — should remain
+  <http://example.org/ontology#Kitty> a skos:Concept ;
+    skos:prefLabel "Kitty"@en-US .              # never edited, should NOT be deleted
+}
+
+# ----- Initial commit (the "ancestor" / branching point) -----
+<https://mobi.com/commits#initial1> {
+  <https://mobi.com/commits#initial1> a mcat:Commit ;
+    dcterms:title "The initial commit." ;
+    prov:atTime "2026-01-01T00:00:00-04:00"^^xsd:dateTime ;
+    prov:generated <https://mobi.com/revisions#initialRev1> ;
+    mcat:initialRevision <https://mobi.com/revisions#initialRev1Original> ;
+    prov:influenced <https://mobi.com/revisions#influenced1> .
+
+  # Current revision pointer (empty — initial commit has no prior commit to reverse against)
+  <https://mobi.com/revisions#initialRev1> a mcat:Revision ;
+    mcat:additions <https://mobi.com/deltas#empty1-A> ;
+    mcat:deletions <https://mobi.com/deltas#empty1-B> .
+
+  # Original revision: contains the initial Turtle import additions
+  <https://mobi.com/revisions#initialRev1Original> a mcat:Revision ;
+    mcat:additions <https://mobi.com/deltas#initial1-A> ;
+    mcat:deletions <https://mobi.com/deltas#initial1-B> .
+
+  # Influenced revision created by addInfluencedRevision() during the feature branch merge.
+  # Stores the REVERSE delta of the branch commit's changes:
+  #   mcat:additions = what was forward-DELETED by the branch commit
+  #   mcat:deletions = what was forward-ADDED by the branch commit
+  <https://mobi.com/revisions#influenced1> a mcat:Revision ;
+    mcat:additions <https://mobi.com/deltas#branch1-B> ;
+    mcat:deletions <https://mobi.com/deltas#branch1-A> .
+}
+
+# ----- Feature branch commit (after merge, has mcat:baseCommit pointing to initial) -----
+<https://mobi.com/commits#branch1> {
+  <https://mobi.com/commits#branch1> a mcat:Commit ;
+    dcterms:title "Rename Amphibians" ;
+    prov:atTime "2026-02-01T00:00:00-04:00"^^xsd:dateTime ;
+    prov:generated <https://mobi.com/revisions#branchRev1> ;
+    mcat:baseCommit <https://mobi.com/commits#initial1> .
+
+  <https://mobi.com/revisions#branchRev1> a mcat:Revision ;
+    mcat:additions <https://mobi.com/deltas#empty2-A> ;
+    mcat:deletions <https://mobi.com/deltas#empty2-B> ;
+    prov:hadPrimarySource <https://mobi.com/revisions#influenced1> .
+}
+
+# ----- Merge commit (current master HEAD) -----
+<https://mobi.com/commits#merge1> {
+  <https://mobi.com/commits#merge1> a mcat:Commit ;
+    dcterms:title "Merge of test into MASTER" ;
+    prov:atTime "2026-02-02T00:00:00-04:00"^^xsd:dateTime ;
+    prov:generated <https://mobi.com/revisions#mergeRev1> ;
+    mcat:baseCommit <https://mobi.com/commits#initial1> ;
+    mcat:auxiliaryCommit <https://mobi.com/commits#branch1> .
+
+  <https://mobi.com/revisions#mergeRev1> a mcat:Revision ;
+    mcat:additions <https://mobi.com/deltas#merge1-A> ;
+    mcat:deletions <https://mobi.com/deltas#merge1-B> ;
+    prov:hadPrimarySource <https://mobi.com/revisions#initialRev1> ;
+    prov:wasDerivedFrom <https://mobi.com/revisions#branchRev1> .
+}
+
+# ----- Delta graphs -----
+# Influenced revision's "additions" = forward DELETIONS from the branch commit
+# (jsonld-java lowercased the language tag; parser then normalizes during restore — but
+# semantically this represents what was deleted)
+<https://mobi.com/deltas#branch1-B> {
+  <http://example.org/ontology#Amphibians> skos:prefLabel "Amphibians"@en-us .
+}
+
+# Influenced revision's "deletions" = forward ADDITIONS from the branch commit
+<https://mobi.com/deltas#branch1-A> {
+  <http://example.org/ontology#Amphibians> skos:prefLabel "Amphibians_1"@en-us .
+}
+
+# Empty placeholder graphs
+<https://mobi.com/deltas#empty1-A> { }
+<https://mobi.com/deltas#empty1-B> { }
+<https://mobi.com/deltas#empty2-A> { }
+<https://mobi.com/deltas#empty2-B> { }
+<https://mobi.com/deltas#merge1-A> { }
+<https://mobi.com/deltas#merge1-B> { }
+<https://mobi.com/deltas#initial1-A> {
+  # Initial Turtle import contents (truncated — only what's relevant)
+  <http://example.org/ontology#Amphibians> skos:prefLabel "Amphibians"@en-US , "Amphibiens"@fr .
+  <http://example.org/ontology#Kitty> skos:prefLabel "Kitty"@en-US .
+}
+<https://mobi.com/deltas#initial1-B> { }
