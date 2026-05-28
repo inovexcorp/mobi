@@ -54,6 +54,7 @@ import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.BatchExporter;
+import com.mobi.persistence.utils.Statements;
 import com.mobi.persistence.utils.BatchGraphInserter;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.ConnectionUtils;
@@ -68,6 +69,7 @@ import org.eclipse.rdf4j.common.transaction.IsolationLevels;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
@@ -80,6 +82,7 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.util.RDFLoader;
 import org.eclipse.rdf4j.rio.ParserConfig;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.turtle.TurtleParserSettings;
@@ -547,8 +550,18 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
                 RDFFormat format = RDFFiles.getFormatForFileName(additionsFile.getName()).orElseThrow(
                         () -> new IllegalStateException("File does not have valid extension"));
                 IRI headGraph = branchManager.getHeadGraph(masterBranch);
+                // Normalize language tags inline during parsing (before statements hit NativeStore).
+                // At handleStatement() time, all RDF parsers produce SimpleLiteral objects with
+                // O(1) getLanguage() — no NativeLiteral byte-decoding overhead, no extra iteration.
+                // This ensures the HEAD graph always stores lowercase language tags (e.g. @en-us),
+                // so merge removals (which use lowercase from JSON-LD round-trips) work correctly.
                 BatchGraphInserter inserter = new BatchGraphInserter(fileConn,
-                        IsolationLevels.READ_UNCOMMITTED, headGraph, initRevAddGraph);
+                        IsolationLevels.READ_UNCOMMITTED, headGraph, initRevAddGraph) {
+                    @Override
+                    public void handleStatement(Statement st) throws RDFHandlerException {
+                        super.handleStatement(Statements.normalizeLanguageTag(st, vf));
+                    }
+                };
                 ParserConfig config = new ParserConfig();
                 config.set(TurtleParserSettings.ACCEPT_TURTLESTAR, false);
                 RDFLoader loader = new RDFLoader(config, vf);
