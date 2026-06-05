@@ -49,6 +49,7 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.eclipse.rdf4j.sail.shacl.ShaclSail;
 import org.osgi.service.component.annotations.Activate;
@@ -59,10 +60,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -133,8 +137,14 @@ public class WebhookConfigurationServiceImpl implements WebhookConfigurationServ
             throw new MobiException("Could not read webhooks ontology for SHACL validation", ex);
         } catch (RepositoryException ex) {
             Throwable cause = ex.getCause();
-            if (cause instanceof ValidationException) {
-                throw new IllegalArgumentException("WebhookConfiguration failed SHACL validation", ex);
+            if (cause instanceof ValidationException ve) {
+                Model report = ve.validationReportAsModel();
+                StringWriter sw = new StringWriter();
+                try {
+                    Rio.write(report, sw, RDFFormat.TURTLE);
+                } catch (Exception ignored) { /* best-effort */ }
+                throw new IllegalArgumentException(
+                        "WebhookConfiguration failed SHACL validation:\n" + sw, ex);
             }
             throw ex;
         } finally {
@@ -179,8 +189,53 @@ public class WebhookConfigurationServiceImpl implements WebhookConfigurationServ
     }
 
     @Override
-    public void updateConfiguration(WebhookRecord webhookRecord) {
-        LOG.info(PLACEHOLDER);
+    public void updateConfiguration(WebhookRecord webhookRecord, Model configModel) {
+        long start = System.currentTimeMillis();
+        Resource recordIri = webhookRecord.getResource();
+        LOG.debug("Updating WebhookConfiguration for WebhookRecord: {}", recordIri);
+
+        validateConfiguration(configModel);
+
+        Resource existingConfigIRI = webhookRecord.getHasWebhookConfiguration_resource()
+                .orElseThrow(() -> new IllegalStateException(
+                        "WebhookRecord " + recordIri + " does not have a linked configuration"));
+
+        IRI webhookConfigType = vf.createIRI(WebhookConfiguration.TYPE);
+        Resource newConfigResource = configModel.filter(null, RDF.TYPE, webhookConfigType)
+                .subjects().iterator().next();
+
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            conn.begin();
+            try {
+                removeConfigHeaders(existingConfigIRI, recordIri, conn);
+                conn.remove(existingConfigIRI, null, null, recordIri);
+
+                IRI hasWebhookConfigIRI = vf.createIRI(WebhookRecord.hasWebhookConfiguration_IRI);
+                conn.remove(recordIri, hasWebhookConfigIRI, existingConfigIRI, recordIri);
+                conn.add(recordIri, hasWebhookConfigIRI, newConfigResource, recordIri);
+                conn.add(configModel, recordIri);
+                conn.commit();
+            } catch (Exception ex) {
+                conn.rollback();
+                throw ex;
+            }
+        }
+
+        // Extract new event filter and update cache
+        WebhookConfiguration newConfig = webhookConfigurationFactory.getExisting(newConfigResource, configModel)
+                .orElseThrow(() -> new MobiException("Could not resolve updated WebhookConfiguration"));
+        String newFilter = newConfig.getEventFilter()
+                .orElseThrow(() -> new IllegalStateException(
+                        "WebhookConfiguration is missing required eventFilter"));
+
+        String oldFilter = eventFilters.put(recordIri, newFilter);
+        if (!newFilter.equals(oldFilter)) {
+            LOG.debug("Event filter cache updated for record {}: was=[{}], now=[{}]", recordIri, oldFilter, newFilter);
+        } else {
+            LOG.debug("Event filter cache unchanged for record {}: [{}]", recordIri, newFilter);
+        }
+        LOG.debug("updateConfiguration for record {} completed in {}ms",
+                recordIri, System.currentTimeMillis() - start);
     }
 
     @Override
@@ -190,6 +245,7 @@ public class WebhookConfigurationServiceImpl implements WebhookConfigurationServ
         webhookRecord.getHasWebhookConfiguration_resource()
                 .ifPresent(configIRI -> {
                     LOG.debug("Removing WebhookConfiguration: {}", configIRI);
+                    removeConfigHeaders(configIRI, webhookRecord.getResource(), conn);
                     conn.remove(configIRI, null, null, webhookRecord.getResource());
                     LOG.debug("WebhookConfiguration deletion for record: {} complete in {}ms",
                             webhookRecord.getResource(), System.currentTimeMillis() - startTime);
@@ -200,6 +256,20 @@ public class WebhookConfigurationServiceImpl implements WebhookConfigurationServ
     @Override
     public Map<Resource, String> retrieveEventFilters() {
         return Collections.unmodifiableMap(eventFilters);
+    }
+
+    private void removeConfigHeaders(Resource configIRI, Resource namedGraph, RepositoryConnection conn) {
+        Set<Resource> headerIRIs = new HashSet<>();
+        IRI hasRequestHeaderIRI = vf.createIRI(WebhookConfiguration.hasRequestHeader_IRI);
+        conn.getStatements(configIRI, hasRequestHeaderIRI, null, namedGraph)
+                .forEach(stmt -> {
+                    if (stmt.getObject() instanceof Resource r) {
+                        headerIRIs.add(r);
+                    }
+                });
+        for (Resource headerIri : headerIRIs) {
+            conn.remove(headerIri, null, null, namedGraph);
+        }
     }
 
     private void assertConfigUniqueness(Resource configIRI) {

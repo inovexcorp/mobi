@@ -31,6 +31,7 @@ import static com.mobi.rest.util.RestUtils.validatePaginationParams;
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.RecordManager;
+import com.mobi.catalog.api.ontologies.mcat.Modify;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
@@ -41,13 +42,18 @@ import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.rest.security.annotations.ActionAttributes;
+import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceId;
+import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.FileUpload;
+import com.mobi.rest.util.MobiNotFoundException;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import com.mobi.rest.util.swagger.JsonLdObject;
+import com.mobi.webhooks.api.WebhookConfigurationService;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookRecord;
+import com.mobi.webhooks.api.ontology.webhooks.WebhookRecordFactory;
 import com.mobi.webhooks.api.record.config.WebhookRecordCreateSettings;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -93,7 +99,9 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
@@ -131,6 +139,12 @@ public class WebhookRest {
 
     @Reference
     BNodeService bNodeService;
+
+    @Reference
+    WebhookConfigurationService webhookConfigurationService;
+
+    @Reference
+    WebhookRecordFactory webhookRecordFactory;
 
     /**
      * Retrieves a paginated list of WebhookRecords accessible to the requesting user. Filters results by view
@@ -306,7 +320,83 @@ public class WebhookRest {
         }
     }
 
-    private Model parseConfigModel(InputStream fileStream, String filename, String jsonld) {
+    @PUT
+    @Tag(name = TAG, description = DESCRIPTION)
+    @Path("{recordId}/configuration")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @Operation(summary = "Updates the WebhookConfiguration associated with an existing WebhookRecord")
+    @RequestBody(description = "Updated WebhookConfiguration as a file or inline JSON-LD",
+            content = @Content(schema = @Schema(implementation = WebhookConfigUpdateSchema.class)))
+    @ApiResponses({
+            @ApiResponse(responseCode = "200",
+                    description = "WebhookConfiguration successfully updated"),
+            @ApiResponse(responseCode = "400",
+                    description = "Invalid or missing configuration model, or SHACL validation failure",
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))),
+            @ApiResponse(responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))),
+            @ApiResponse(responseCode = "403",
+                    description = "User lacks Modify permission on the WebhookRecord",
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))),
+            @ApiResponse(responseCode = "404",
+                    description = "WebhookRecord with the given IRI could not be found",
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))),
+            @ApiResponse(responseCode = "500",
+                    description = "An error occurred while updating the WebhookConfiguration",
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class)))
+    })
+    @ActionId(value = Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    public Response updateWebhookConfiguration(
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
+            @Parameter(description = "IRI of the WebhookRecord to update", required = true,
+                    schema = @Schema(type = "string", format = "uri"))
+            @PathParam("recordId") String recordId) {
+        long start = System.currentTimeMillis();
+        User activeUser = getActiveUser(servletRequest, engineManager);
+        LOG.debug("PUT /webhooks/{}/configuration requested by user: {}",
+                recordId, activeUser.getResource().stringValue());
+
+        Map<String, List<Class<?>>> fields = new HashMap<>();
+        fields.put("jsonld", List.of(String.class));
+        Map<String, Object> formData = RestUtils.getFormData(servletRequest, fields);
+
+        String jsonld = (String) formData.get("jsonld");
+        FileUpload file = (FileUpload) formData.getOrDefault("file", new FileUpload());
+        InputStream fileStream = file.getStream();
+
+        if (fileStream == null && (jsonld == null || jsonld.isBlank())) {
+            throw RestUtils.getErrorObjBadRequest(
+                    new IllegalArgumentException("Must provide either a configuration file or JSON-LD string"));
+        }
+
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Model configModel = parseConfigModel(fileStream, file.getFilename(), jsonld);
+            WebhookRecord webhookRecord = recordManager.getRecordOpt(
+                            configProvider.getLocalCatalogIRI(), vf.createIRI(recordId),
+                            webhookRecordFactory, conn)
+                    .orElseThrow(() -> new MobiNotFoundException(
+                            "WebhookRecord " + recordId + " could not be found"));
+            webhookConfigurationService.updateConfiguration(webhookRecord, configModel);
+            LOG.debug("PUT /webhooks/{}/configuration completed in {}ms",
+                    recordId, System.currentTimeMillis() - start);
+            return Response.ok().build();
+        } catch (IllegalArgumentException | RDFParseException ex) {
+            LOG.debug("Request processing took {}ms", System.currentTimeMillis() - start);
+            throw RestUtils.getErrorObjBadRequest(ex);
+        } catch (MobiNotFoundException ex) {
+            LOG.debug("Request processing took {}ms", System.currentTimeMillis() - start);
+            throw RestUtils.getErrorObjNotFound(ex);
+        } catch (IllegalStateException | MobiException ex) {
+            LOG.debug("Request processing took {}ms", System.currentTimeMillis() - start);
+            throw RestUtils.getErrorObjInternalServerError(ex);
+        }
+    }
+
+    protected Model parseConfigModel(InputStream fileStream, String filename, String jsonld) {
         if (fileStream != null) {
             String extension = FilenameUtils.getExtension(filename).toLowerCase();
             RDFFormat format = switch (extension) {
