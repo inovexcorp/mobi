@@ -303,7 +303,7 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
                 service.validateConfiguration(config.getModel()));
 
-        assertEquals("WebhookConfiguration failed SHACL validation", ex.getMessage());
+        assertTrue(ex.getMessage().startsWith("WebhookConfiguration failed SHACL validation"));
     }
 
     @Test
@@ -315,7 +315,93 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
                 service.validateConfiguration(config.getModel()));
 
-        assertEquals("WebhookConfiguration failed SHACL validation", ex.getMessage());
+        assertTrue(ex.getMessage().startsWith("WebhookConfiguration failed SHACL validation"));
+    }
+
+    /* updateConfiguration() */
+
+    @Test
+    public void updateConfigurationUpdatesRepoTriplesTest() {
+        loadTrigData();
+        service.start();
+
+        String newFilter = "(&(event.topics=com/mobi/catalog/commit))";
+        Model newConfigModel = createTestConfigModel(SECOND_CONFIG_IRI);
+        WebhookConfiguration newConfig = webhookConfigurationFactory.getExisting(SECOND_CONFIG_IRI, newConfigModel).get();
+        newConfig.setEventFilter(newFilter);
+        newConfig.setUrl("https://updated.example.com");
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            WebhookRecord record = webhookRecordFactory.getExisting(FILTERED_RECORD_IRI, testRecord).orElseThrow();
+            service.updateConfiguration(record, newConfig.getModel());
+
+            // New config IRI should now have triples in the record named graph
+            assertTrue(conn.hasStatement(SECOND_CONFIG_IRI, null, null, false, FILTERED_RECORD_IRI));
+        }
+    }
+
+    @Test
+    public void updateConfigurationUpdatesEventFilterCacheTest() {
+        loadTrigData();
+        service.start();
+
+        assertTrue(service.retrieveEventFilters().containsKey(FILTERED_RECORD_IRI));
+        assertEquals(TEST_EVENT_FILTER, service.retrieveEventFilters().get(FILTERED_RECORD_IRI));
+
+        String newFilter = "(&(event.topics=com/mobi/catalog/commit))";
+        Model newConfigModel = createTestConfigModel(SECOND_CONFIG_IRI);
+        WebhookConfiguration newConfig = webhookConfigurationFactory.getExisting(SECOND_CONFIG_IRI, newConfigModel).get();
+        newConfig.setEventFilter(newFilter);
+
+        WebhookRecord record = webhookRecordFactory.getExisting(FILTERED_RECORD_IRI, testRecord).orElseThrow();
+        service.updateConfiguration(record, newConfig.getModel());
+
+        assertEquals(newFilter, service.retrieveEventFilters().get(FILTERED_RECORD_IRI));
+    }
+
+    @Test
+    public void updateConfigurationCacheUnchangedWhenSameFilterTest() {
+        loadTrigData();
+        service.start();
+
+        assertEquals(TEST_EVENT_FILTER, service.retrieveEventFilters().get(FILTERED_RECORD_IRI));
+
+        // Use the same filter string as the existing config
+        Model newConfigModel = createTestConfigModel(SECOND_CONFIG_IRI);
+
+        WebhookRecord record = webhookRecordFactory.getExisting(FILTERED_RECORD_IRI, testRecord).orElseThrow();
+        service.updateConfiguration(record, newConfigModel);
+
+        assertEquals(TEST_EVENT_FILTER, service.retrieveEventFilters().get(FILTERED_RECORD_IRI));
+    }
+
+    @Test
+    public void updateConfigurationThrowsWhenNoLinkedConfigTest() {
+        loadTrigData();
+        IRI noConfigRecordIRI = VALUE_FACTORY.createIRI("https://mobi.com/records#81c30bf3-3e31-42d6-861b-8877b71c242a");
+        WebhookRecord record = webhookRecordFactory.getExisting(noConfigRecordIRI, testRecord).orElseThrow();
+
+        Model newConfigModel = createTestConfigModel(SECOND_CONFIG_IRI);
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
+                service.updateConfiguration(record, newConfigModel));
+
+        assertTrue(ex.getMessage().contains("does not have a linked configuration"));
+    }
+
+    @Test
+    public void updateConfigurationThrowsOnShaclFailureTest() {
+        loadTrigData();
+        service.start();
+
+        Model invalidConfigModel = createTestConfigModel(SECOND_CONFIG_IRI);
+        WebhookConfiguration config = webhookConfigurationFactory.getExisting(SECOND_CONFIG_IRI, invalidConfigModel).get();
+        config.clearUrl();
+
+        WebhookRecord record = webhookRecordFactory.getExisting(FILTERED_RECORD_IRI, testRecord).orElseThrow();
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
+                service.updateConfiguration(record, config.getModel()));
+        assertTrue(ex.getMessage().startsWith("WebhookConfiguration failed SHACL validation"));
     }
 
     /* Helper Methods */

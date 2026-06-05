@@ -89,11 +89,14 @@ public interface WebhookConfigurationService {
     void createConfiguration(WebhookRecord webhookRecord, Model configModel);
 
     /**
-     * Updates the webhook configuration associated with the given record IRI.
+     * Updates the existing WebhookConfiguration for the given WebhookRecord in the repository.
+     * Validates the new configuration model and refreshes the eventFilters cache.
      *
-     * @param webhookRecord The {@link WebhookRecord} for which the webhook configuration is to be updated
+     * @param webhookRecord the {@link WebhookRecord} whose configuration is being updated
+     * @param configModel   the {@link Model} containing the replacement WebhookConfiguration data
+     * @throws IllegalArgumentException if validation fails or the record has no linked configuration
      */
-    void updateConfiguration(WebhookRecord webhookRecord);
+    void updateConfiguration(WebhookRecord webhookRecord, Model configModel);
 
     /**
      * Deletes the webhook configuration associated with the specified record IRI.

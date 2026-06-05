@@ -25,12 +25,14 @@ package com.mobi.webhooks.rest;
 
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
+import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorContains;
 import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorResponse;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
@@ -47,13 +49,16 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.rest.test.util.FormDataMultiPart;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.UsernameTestFilter;
+import com.mobi.webhooks.api.WebhookConfigurationService;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookRecord;
+import com.mobi.webhooks.api.ontology.webhooks.WebhookRecordFactory;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
@@ -86,6 +91,7 @@ public class WebhookRestTest extends MobiRestTestCXF {
     private static EngineManager engineManager;
     private static CatalogConfigProvider configProvider;
     private static BNodeService bNodeService;
+    private static WebhookConfigurationService webhookConfigurationService;
     private static OrmFactory<WebhookRecord> recordFactory;
 
     @SuppressWarnings("unchecked")
@@ -108,6 +114,7 @@ public class WebhookRestTest extends MobiRestTestCXF {
         engineManager = mock(EngineManager.class);
         configProvider = mock(CatalogConfigProvider.class);
         bNodeService = mock(BNodeService.class);
+        webhookConfigurationService = mock(WebhookConfigurationService.class);
 
         OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
         recordFactory = getRequiredOrmFactory(WebhookRecord.class);
@@ -123,6 +130,8 @@ public class WebhookRestTest extends MobiRestTestCXF {
         rest.engineManager = engineManager;
         rest.configProvider = configProvider;
         rest.bNodeService = bNodeService;
+        rest.webhookConfigurationService = webhookConfigurationService;
+        rest.webhookRecordFactory = (WebhookRecordFactory) recordFactory;
 
         configureServer(rest, new UsernameTestFilter());
     }
@@ -131,7 +140,8 @@ public class WebhookRestTest extends MobiRestTestCXF {
     public void setupMocks() {
         WebhookRecord record = recordFactory.createNew(recordId);
 
-        reset(recordManager, engineManager, configProvider, bNodeService, searchResults);
+        reset(recordManager, engineManager, configProvider, bNodeService, searchResults,
+                webhookConfigurationService);
 
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogId);
@@ -145,11 +155,14 @@ public class WebhookRestTest extends MobiRestTestCXF {
         when(searchResults.pageNumber()).thenReturn(1);
         when(recordManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class),
                 any(User.class), any(RepositoryConnection.class))).thenReturn(searchResults);
+        when(recordManager.getRecordOpt(any(Resource.class), any(Resource.class),
+                any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(Optional.of(webhookRecord1));
     }
 
     @After
     public void resetMocks() {
-        reset(recordManager, engineManager, configProvider, bNodeService, searchResults);
+        reset(recordManager, engineManager, configProvider, bNodeService, searchResults,
+                webhookConfigurationService);
     }
 
     /* Webhook Record Creation */
@@ -375,5 +388,159 @@ public class WebhookRestTest extends MobiRestTestCXF {
                 .request().get();
 
         assertErrorResponse(response, 500, "MobiException", "Repository unavailable");
+    }
+
+    /* Webhook Configuration Update */
+
+    /* Success Test Cases */
+    @Test
+    public void updateWebhookConfigurationWithJsonldTest() {
+        String jsonld = "[{\"@id\":\"http://mobi.solutions/webhooks/config/1\","
+                + "\"@type\":[\"http://mobi.solutions/ontologies/webhooks#WebhookConfiguration\"],"
+                + "\"http://mobi.solutions/ontologies/webhooks#url\":[{\"@value\":\"https://example.com\"}],"
+                + "\"http://mobi.solutions/ontologies/webhooks#httpMethod\":[{\"@value\":\"POST\"}],"
+                + "\"http://mobi.solutions/ontologies/webhooks#eventFilter\":[{\"@value\":\"test\"}],"
+                + "\"http://mobi.solutions/ontologies/webhooks#active\":[{\"@value\":\"ACTIVE\"}]}]";
+
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("jsonld", jsonld);
+
+        Response response = target().path("webhooks/" + ResourceUtils.encode(RECORD_IRI) + "/configuration")
+                .request().put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(200, response.getStatus());
+        verify(webhookConfigurationService).updateConfiguration(eq(webhookRecord1), any());
+    }
+
+    @Test
+    public void updateWebhookConfigurationWithTurtleFileTest() {
+        String turtle = """
+                @prefix : <http://mobi.solutions/ontologies/webhooks#> .
+                <http://mobi.solutions/webhooks/config/1> a :WebhookConfiguration ;
+                  :url "https://example.com" ;
+                  :httpMethod "POST" ;
+                  :eventFilter "test" ;
+                  :active "ACTIVE" .""";
+
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.bodyPart("file", "config.ttl",
+                new ByteArrayInputStream(turtle.getBytes(StandardCharsets.UTF_8)));
+
+        Response response = target().path("webhooks/" + ResourceUtils.encode(RECORD_IRI) + "/configuration")
+                .request().put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(200, response.getStatus());
+        verify(webhookConfigurationService).updateConfiguration(eq(webhookRecord1), any());
+    }
+
+    /* Failure Test Cases */
+    @Test
+    public void updateWebhookConfigurationRecordNotFoundTest() {
+        when(recordManager.getRecordOpt(any(Resource.class), any(Resource.class),
+                any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
+
+        String jsonld = "[{\"@id\":\"http://mobi.solutions/webhooks/config/1\","
+                + "\"@type\":[\"http://mobi.solutions/ontologies/webhooks#WebhookConfiguration\"],"
+                + "\"http://mobi.solutions/ontologies/webhooks#url\":[{\"@value\":\"https://example.com\"}],"
+                + "\"http://mobi.solutions/ontologies/webhooks#httpMethod\":[{\"@value\":\"POST\"}],"
+                + "\"http://mobi.solutions/ontologies/webhooks#eventFilter\":[{\"@value\":\"test\"}],"
+                + "\"http://mobi.solutions/ontologies/webhooks#active\":[{\"@value\":\"ACTIVE\"}]}]";
+
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("jsonld", jsonld);
+
+        Response response = target().path("webhooks/" + ResourceUtils.encode(RECORD_IRI) + "/configuration")
+                .request().put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
+
+        assertErrorResponse(response, 404, "MobiNotFoundException",
+                "WebhookRecord " + RECORD_IRI + " could not be found");
+    }
+
+    @Test
+    public void updateWebhookConfigurationUserNotFoundTest() {
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
+
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("jsonld", "[]");
+
+        Response response = target().path("webhooks/" + ResourceUtils.encode(RECORD_IRI) + "/configuration")
+                .request().put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
+
+        assertErrorResponse(response, 500, "MobiException", "User not found");
+    }
+
+    @Test
+    public void updateWebhookConfigurationIllegalArgumentTest() {
+        String jsonld = "[{\"@id\":\"http://mobi.solutions/webhooks/config/1\","
+                + "\"@type\":[\"http://mobi.solutions/ontologies/webhooks#WebhookConfiguration\"],"
+                + "\"http://mobi.solutions/ontologies/webhooks#url\":[{\"@value\":\"https://example.com\"}],"
+                + "\"http://mobi.solutions/ontologies/webhooks#httpMethod\":[{\"@value\":\"POST\"}],"
+                + "\"http://mobi.solutions/ontologies/webhooks#eventFilter\":[{\"@value\":\"test\"}],"
+                + "\"http://mobi.solutions/ontologies/webhooks#active\":[{\"@value\":\"ACTIVE\"}]}]";
+
+        doThrow(new IllegalArgumentException("WebhookRecord does not have a linked configuration"))
+                .when(webhookConfigurationService).updateConfiguration(any(WebhookRecord.class), any());
+
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("jsonld", jsonld);
+
+        Response response = target().path("webhooks/" + ResourceUtils.encode(RECORD_IRI) + "/configuration")
+                .request().put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
+
+        assertErrorResponse(response, 400, "IllegalArgumentException",
+                "WebhookRecord does not have a linked configuration");
+    }
+
+    @Test
+    public void updateWebhookConfigurationShaclFailureTest() {
+        String jsonld = "[{\"@id\":\"http://mobi.solutions/webhooks/config/1\","
+                + "\"@type\":[\"http://mobi.solutions/ontologies/webhooks#WebhookConfiguration\"],"
+                + "\"http://mobi.solutions/ontologies/webhooks#eventFilter\":[{\"@value\":\"test\"}],"
+                + "\"http://mobi.solutions/ontologies/webhooks#active\":[{\"@value\":\"ACTIVE\"}]}]";
+
+        doThrow(new IllegalArgumentException("WebhookConfiguration failed SHACL validation:\n<report>"))
+                .when(webhookConfigurationService).updateConfiguration(any(WebhookRecord.class), any());
+
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("jsonld", jsonld);
+
+        Response response = target().path("webhooks/" + ResourceUtils.encode(RECORD_IRI) + "/configuration")
+                .request().put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
+
+        assertErrorContains(response, 400, "IllegalArgumentException", "WebhookConfiguration failed SHACL validation");
+    }
+
+    @Test
+    public void updateWebhookConfigurationUnsupportedFileFormatTest() {
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.bodyPart("file", "config.csv",
+                new ByteArrayInputStream("col1,col2".getBytes(StandardCharsets.UTF_8)));
+
+        Response response = target().path("webhooks/" + ResourceUtils.encode(RECORD_IRI) + "/configuration")
+                .request().put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
+
+        assertErrorResponse(response, 400, "IllegalArgumentException",
+                "Unsupported file format 'csv'. Supported: Turtle (.ttl), RDF/XML (.xml/.rdf), JSON-LD (.jsonld/.json)");
+    }
+
+    @Test
+    public void updateWebhookConfigurationMobiExceptionTest() {
+        String jsonld = "[{\"@id\":\"http://mobi.solutions/webhooks/config/1\","
+                + "\"@type\":[\"http://mobi.solutions/ontologies/webhooks#WebhookConfiguration\"],"
+                + "\"http://mobi.solutions/ontologies/webhooks#url\":[{\"@value\":\"https://example.com\"}],"
+                + "\"http://mobi.solutions/ontologies/webhooks#httpMethod\":[{\"@value\":\"POST\"}],"
+                + "\"http://mobi.solutions/ontologies/webhooks#eventFilter\":[{\"@value\":\"test\"}],"
+                + "\"http://mobi.solutions/ontologies/webhooks#active\":[{\"@value\":\"ACTIVE\"}]}]";
+
+        doThrow(new MobiException("Unexpected service failure"))
+                .when(webhookConfigurationService).updateConfiguration(any(WebhookRecord.class), any());
+
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("jsonld", jsonld);
+
+        Response response = target().path("webhooks/" + ResourceUtils.encode(RECORD_IRI) + "/configuration")
+                .request().put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
+
+        assertErrorResponse(response, 500, "MobiException", "Unexpected service failure");
     }
 }
