@@ -49,6 +49,11 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>prov.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.annotation.versioning</artifactId>
         </dependency>
@@ -99,6 +104,15 @@
                                     <ontologyFile>${basedir}/../com.mobi.catalog.api/src/main/resources/mcat.ttl</ontologyFile>
                                     <outputPackage>com.mobi.catalog.api.ontologies.mcat</outputPackage>
                                     <ontologyName>MCAT</ontologyName>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${basedir}/../com.mobi.rdf.orm.ontologies/src/main/resources/prov-o.ttl</ontologyFile>
+                                    <outputPackage>com.mobi.ontologies.provo</outputPackage>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${basedir}/../com.mobi.prov.api/src/main/resources/mobi_prov.ttl</ontologyFile>
+                                    <outputPackage>com.mobi.prov.api.ontologies.mobiprov</outputPackage>
+                                    <ontologyName>MobiProv</ontologyName>
                                 </ontology>
                             </references>
                             <outputLocation>${project.basedir}/target/generated-sources</outputLocation>

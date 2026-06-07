@@ -24,7 +24,7 @@ var path = require('path');
 var Onto1 = path.resolve(__dirname + '/../../resources/rdf_files/EntityDeletionOntology.ttl');
 
 module.exports = {
-    '@tags': ['sanity', 'ontology-editor'],
+    '@tags': ['sanity', 'ontology-editor', 'ontology-entity'],
 
     'Step 1: Initial Setup': function(browser) {
         browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword)

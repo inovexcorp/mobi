@@ -4,13 +4,11 @@ import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookConfiguration;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookRecord;
-
-import java.util.Map;
-
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 
+import java.util.Map;
 
 /*-
  * #%L
@@ -48,17 +46,27 @@ public interface WebhookConfigurationService {
      * Ensures the model contains exactly one WebhookConfiguration and that it conforms to all constraints.
      *
      * @param configModel the {@link Model} containing the WebhookConfiguration to validate
-     * @throws IllegalArgumentException if the model fails SHACL validation or does not contain exactly one WebhookConfiguration
+     * @throws IllegalArgumentException if the model fails SHACL validation or does not contain exactly one
+     *      WebhookConfiguration
      */
     void validateConfiguration(Model configModel);
 
     /**
-     * Retrieves the webhook configuration associated with the given record IRI.
+     * Retrieves the webhook configuration associated with the given record IRI string.
      *
-     * @param recordIri the IRI of the record for which the configuration is to be retrieved
+     * @param recordIri the String representation of the IRI of the record for which the configuration is to be
+     *                  retrieved
      * @return the webhook configuration corresponding to the specified record IRI
      */
     WebhookConfiguration getWebhookConfig(String recordIri);
+
+    /**
+     * Retrieves the webhook configuration associated with the given record IRI.
+     *
+     * @param recordIri the {@link Resource} of the record for which the configuration is to be retrieved
+     * @return the webhook configuration corresponding to the specified record IRI
+     */
+    WebhookConfiguration getWebhookConfig(Resource recordIri);
 
     /**
      * Retrieves a map of all webhook configurations, where the key represents the unique identifier (record IRI)
@@ -70,14 +78,16 @@ public interface WebhookConfigurationService {
 
     /**
      * Retrieves a paginated map of webhook configurations based on the specified search parameters.
-     * The key represents the unique identifier (record IRI), and the value is the corresponding webhook configuration object.
+     * The key represents the unique identifier (record IRI), and the value is the corresponding webhook
+     * configuration object.
+     *
+     * TODO: may need to return and update this to be a more specific paginatedSearchParam once further work is done.
      *
      * @param params an instance of {@code PaginatedSearchParams} containing pagination and filtering criteria
      * @return a HashMap containing the webhook configurations that match the specified search parameters,
      *         keyed by their unique identifiers
      */
     PaginatedSearchResults<WebhookRecord> getWebhooks(PaginatedSearchParams params);
-    //TODO may need to return to above and update this to be a more specific paginatedSearchParam once further implementation is done.
 
     /**
      * Creates a new webhook configuration from the provided RDF4J Model and links it to the specified record.

@@ -125,6 +125,7 @@ public class PlatformAndPoliciesIT extends KarafTestSupport {
         systemPolicyIds.add(vf.createIRI("http://mobi.com/policies/ontology-creation"));
         systemPolicyIds.add(vf.createIRI("http://mobi.com/policies/mapping-creation"));
         systemPolicyIds.add(vf.createIRI("http://mobi.com/policies/workflow-record-creation"));
+        systemPolicyIds.add(vf.createIRI("http://mobi.com/policies/webhook-record-creation"));
         systemPolicyIds.add(vf.createIRI("http://mobi.com/policies/shapes-graph-record-creation"));
         systemPolicyIds.add(vf.createIRI("https://mobi.solutions/policies/system-repo-access"));
         systemPolicyIds.add(vf.createIRI("https://mobi.solutions/policies/prov-repo-access"));
@@ -165,7 +166,7 @@ public class PlatformAndPoliciesIT extends KarafTestSupport {
     public void validateSystemPoliciesLoaded() throws Exception {
         XACMLPolicyManager policyManager = getOsgiService(XACMLPolicyManager.class);
         Set<Resource> policyIds = policyManager.getSystemPolicyIds();
-        assertEquals(9, policyIds.size());
+        assertEquals(10, policyIds.size());
         systemPolicyIds.forEach(systemPolicy -> assertTrue(policyIds.contains(systemPolicy)));
     }
 }

@@ -24,6 +24,8 @@ package com.mobi.webhooks.api;
  */
 
 import com.mobi.webhooks.api.ontology.webhooks.WebhookConfiguration;
+import org.eclipse.rdf4j.model.Resource;
+import org.osgi.service.event.Event;
 
 /**
  * Service for executing webhook HTTP requests.
@@ -33,8 +35,10 @@ public interface WebhookExecutor {
     /**
      * Executes an HTTP request based on the provided webhook configuration.
      *
-     * @param configuration the settings and details required to properly perform the webhook execution,
-     *                      including endpoint URL, HTTP method, headers, and payload.
+     * @param recordIri     the IRI of the WebhookRecord that triggered this execution
+     * @param configuration the settings and details required to perform the webhook execution,
+     *                      including endpoint URL, HTTP method, headers, and payload
+     * @param event         the OSGi Event that triggered this webhook execution, used to build the request payload
      */
-    void executeWebhook(WebhookConfiguration configuration);
+    void executeWebhook(Resource recordIri, WebhookConfiguration configuration, Event event);
 }
