@@ -6,12 +6,14 @@
 @prefix dct: <http://purl.org/dc/terms/>.
 @prefix mcat: <http://mobi.com/ontologies/catalog#>.
 @prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
+@prefix mprov: <http://mobi.com/ontologies/prov#>.
 @prefix : <http://mobi.solutions/ontologies/webhooks#>.
 @base <http://mobi.solutions/ontologies/webhooks>.
 
 <http://mobi.solutions/ontologies/webhooks> a owl:Ontology;
     owl:versionIRI <http://mobi.solutions/ontologies/webhooks#1.0>;
-    owl:imports <http://mobi.com/ontologies/catalog>;
+    owl:imports <http://mobi.com/ontologies/catalog>, <http://mobi.com/ontologies/prov>;
     rdfs:label "The Mobi Webhooks Ontology"@en;
     rdfs:comment "The Mobi webhooks ontology is designed to facilitate webhook configuration and management within the Mobi platform."@en;
     dct:creator [foaf:name "Mobi Development Team"];
@@ -105,20 +107,120 @@
     rdfs:domain :WebhookConfiguration;
     rdfs:range :RequestHeader.
 
-# Request Header
+# Header
 
-:RequestHeader a owl:Class;
-    rdfs:label "Request Header"@en;
-    rdfs:comment "An HTTP header key-value pair to be included in webhook requests."@en.
+:Header a owl:Class;
+    rdfs:label "Header"@en;
+    rdfs:comment "An HTTP header key-value pair."@en.
 
 :hasHeaderName a owl:DatatypeProperty, owl:FunctionalProperty;
     rdfs:label "header name"@en;
     rdfs:comment "The key/name of the HTTP header."@en;
-    rdfs:domain :RequestHeader;
+    rdfs:domain :Header;
     rdfs:range xsd:string.
 
 :hasHeaderValue a owl:DatatypeProperty, owl:FunctionalProperty;
     rdfs:label "header value"@en;
     rdfs:comment "The value of the HTTP header."@en;
-    rdfs:domain :RequestHeader;
+    rdfs:domain :Header;
     rdfs:range xsd:string.
+
+# Request Header
+
+:RequestHeader a owl:Class;
+    rdfs:subClassOf :Header;
+    rdfs:label "Request Header"@en;
+    rdfs:comment "An HTTP header key-value pair to be included in webhook requests."@en.
+
+# Webhook Execution Activity
+
+:WebhookExecutionActivity a owl:Class;
+    rdfs:subClassOf prov:Activity;
+    mprov:provAction prov:used;
+    mprov:actionWord "executed"@en;
+    rdfs:label "Webhook Execution Activity"@en;
+    rdfs:comment "Represents an individual execution attempt of a webhook."@en.
+
+:hasWebhookExecution a owl:ObjectProperty;
+    rdfs:label "has webhook execution"@en;
+    rdfs:comment "Links a Webhook Record to its execution activity."@en;
+    rdfs:domain :WebhookRecord;
+    rdfs:range :WebhookExecutionActivity.
+
+:requestUrl a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "request url"@en;
+    rdfs:comment "The URL to which the webhook request was sent."@en;
+    rdfs:domain :WebhookExecutionActivity;
+    rdfs:range xsd:anyURI .
+
+:requestBody a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "request body"@en;
+    rdfs:comment "The body payload sent in the webhook request."@en;
+    rdfs:domain :WebhookExecutionActivity, :WebhookConfiguration ;
+    rdfs:range xsd:string.
+
+:requestMethod a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "request method"@en;
+    rdfs:comment "The HTTP method used for the webhook request."@en;
+    rdfs:domain :WebhookExecutionActivity;
+    rdfs:range xsd:string.
+
+:succeeded a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "succeeded"@en;
+    rdfs:comment "Whether the webhook execution ultimately succeeded."@en;
+    rdfs:domain :WebhookExecutionActivity;
+    rdfs:range xsd:boolean.
+
+:activityMessage a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "activity message"@en;
+    rdfs:comment "A descriptive message about the outcome of the webhook execution."@en;
+    rdfs:domain :WebhookExecutionActivity;
+    rdfs:range xsd:string.
+
+#Currently no domain due to the fact it is being used by two differing classes within the code
+:hasHeader a owl:ObjectProperty;
+    rdfs:label "has header"@en;
+    rdfs:comment "Links an entity to an HTTP header."@en;
+    rdfs:range :Header.
+
+# Connection Attempt
+
+:ConnectionAttempt a owl:Class;
+    rdfs:label "Connection Attempt"@en;
+    rdfs:comment "A single attempt to connect to a webhook endpoint."@en.
+
+:hasConnectionAttempt a owl:ObjectProperty;
+    rdfs:label "has connection attempt"@en;
+    rdfs:comment "Links a Webhook Execution Activity to an individual connection attempt."@en;
+    rdfs:domain :WebhookExecutionActivity;
+    rdfs:range :ConnectionAttempt.
+
+:hasResponseHeader a owl:ObjectProperty;
+    rdfs:label "has response header"@en;
+    rdfs:comment "Links a Connection Attempt to a response header received from the endpoint."@en;
+    rdfs:domain :ConnectionAttempt;
+    rdfs:range :Header.
+
+:requestTimestamp a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "request timestamp"@en;
+    rdfs:comment "The timestamp when the connection attempt request was sent."@en;
+    rdfs:domain :ConnectionAttempt;
+    rdfs:range xsd:dateTime.
+
+:responseStatus a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "response status"@en;
+    rdfs:comment "The HTTP status code returned by the endpoint."@en;
+    rdfs:domain :ConnectionAttempt;
+    rdfs:range xsd:string.
+
+:responseBody a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "response body"@en;
+    rdfs:comment "The body of the response returned by the endpoint."@en;
+    rdfs:domain :ConnectionAttempt;
+    rdfs:range xsd:string.
+
+:responseTimestamp a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "response timestamp"@en;
+    rdfs:comment "The timestamp when the response was received."@en;
+    rdfs:domain :ConnectionAttempt;
+    rdfs:range xsd:dateTime.

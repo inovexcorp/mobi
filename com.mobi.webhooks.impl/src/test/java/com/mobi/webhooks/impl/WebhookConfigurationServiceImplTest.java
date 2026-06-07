@@ -66,11 +66,13 @@ import java.io.InputStream;
 import java.util.Map;
 
 public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
-    private static final IRI RECORD_IRI = VALUE_FACTORY.createIRI("http://mobi.com/records#test");
-    private static final IRI CONFIG_IRI = VALUE_FACTORY.createIRI("http://mobi.solutions/webhooks/configurations/4068e6ce-808c-4a89-8946-137974593b7a");
-    private static final IRI SECOND_CONFIG_IRI = VALUE_FACTORY.createIRI("http://mobi.solutions/webhooks/configurations/test");
-    private static final IRI FILTERED_RECORD_IRI = VALUE_FACTORY.createIRI("https://mobi.com/records#69cd560d-d733-453a-bb9b-0b9e197d68e7");
-    private static final String TEST_EVENT_FILTER = "(&(event.topics=com/mobi/catalog/version))";
+    private static final IRI TEST_RECORD_IRI = VALUE_FACTORY.createIRI("http://mobi.com/records#test");
+    private static final IRI TEST_CONFIG_IRI = VALUE_FACTORY.createIRI("http://mobi.solutions/webhooks/configurations/test");
+    private static final IRI FILTERED_CONFIG_IRI = VALUE_FACTORY.createIRI("http://mobi.solutions/webhooks/configurations/test-config");
+    private static final IRI FILTERED_RECORD_IRI = VALUE_FACTORY.createIRI("https://mobi.com/records#test-record");
+    private static final IRI SECOND_FILTERED_CONFIG_IRI = VALUE_FACTORY.createIRI("http://mobi.solutions/webhooks/configurations/second-config");
+    private static final IRI SECOND_FILTERED_RECORD_IRI = VALUE_FACTORY.createIRI("https://mobi.com/records#second-test");
+    private static final String TEST_EVENT_FILTER = "(event.topics=com/mobi/catalog/version)";
 
     private final OrmFactory<WebhookRecord> webhookRecordFactory = getRequiredOrmFactory(WebhookRecord.class);
     private final OrmFactory<WebhookConfiguration> webhookConfigurationFactory = getRequiredOrmFactory(WebhookConfiguration.class);
@@ -95,7 +97,7 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
         } catch (IOException e) {
             fail("Could not load test record model: " + e.getMessage());
         }
-        testConfig = createTestConfigModel(SECOND_CONFIG_IRI);
+        testConfig = createTestConfigModel(TEST_CONFIG_IRI);
 
         when(configProvider.getRepository()).thenReturn(repo);
 
@@ -113,11 +115,11 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
 
     @Test
     public void createConfigurationTest() {
-        WebhookRecord record = webhookRecordFactory.createNew(RECORD_IRI);
+        WebhookRecord record = webhookRecordFactory.createNew(TEST_RECORD_IRI);
         int initialSize = record.getModel().size();
 
         service.createConfiguration(record, testConfig);
-        WebhookConfiguration config = webhookConfigurationFactory.getExisting(SECOND_CONFIG_IRI, testConfig).get();
+        WebhookConfiguration config = webhookConfigurationFactory.getExisting(TEST_CONFIG_IRI, testConfig).get();
 
         assertTrue("Record model should grow after config is added", record.getModel().size() > initialSize);
         assertEquals(11, record.getModel().size());
@@ -126,7 +128,7 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
 
     @Test
     public void createConfigurationGeneratesUniqueIRIs() {
-        WebhookRecord record1 = webhookRecordFactory.createNew(RECORD_IRI);
+        WebhookRecord record1 = webhookRecordFactory.createNew(TEST_RECORD_IRI);
         WebhookRecord record2 = webhookRecordFactory.createNew(VALUE_FACTORY.createIRI("urn:record:2"));
 
         service.createConfiguration(record1, testConfig);
@@ -136,20 +138,83 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
         assertThrows(IllegalArgumentException.class, () -> service.createConfiguration(record2, testConfig));
     }
 
+    /* createConfiguration() — cache updates */
+
+    @Test
+    public void createConfigurationAddsToFilterCacheWhenFilterPresent() {
+        WebhookRecord record = webhookRecordFactory.createNew(TEST_RECORD_IRI);
+
+        assertTrue(service.retrieveEventFilters().isEmpty());
+        service.createConfiguration(record, testConfig);
+        assertTrue(service.retrieveEventFilters().containsKey(TEST_RECORD_IRI));
+    }
+
+    @Test
+    public void createConfigurationThrowsErrorWhenNoFilter() {
+        WebhookRecord record = webhookRecordFactory.createNew(TEST_RECORD_IRI);
+        WebhookConfiguration config = webhookConfigurationFactory.getExisting(TEST_CONFIG_IRI, testConfig)
+                .orElseThrow(() -> new IllegalArgumentException("WebhookConfiguration not found for IRI: " + TEST_CONFIG_IRI));
+
+        config.clearEventFilter();
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.createConfiguration(record,
+                config.getModel()));
+
+        assertFalse(service.retrieveEventFilters().containsKey(TEST_RECORD_IRI));
+        assertEquals("WebhookConfiguration is missing required eventFilter", ex.getMessage());
+    }
+
+    /* Retrieve Configurations  */
+
+    @Test
+    public void retrieveConfigurationTest() {
+        loadTrigData();
+        WebhookConfiguration config = service.getWebhookConfig(FILTERED_RECORD_IRI);
+
+        assertEquals(FILTERED_CONFIG_IRI, config.getResource());
+        assertEquals("https://www.example.com", config.getUrl().get());
+        assertEquals("GET", config.getHttpMethod().get());
+        assertEquals("ACTIVE", config.getActive().get());
+        assertEquals("(event.topics=com/mobi/catalog/version)", config.getEventFilter().get());
+    }
+
+    @Test
+    public void retrieveConfigurationFromStringTest() {
+        loadTrigData();
+        WebhookConfiguration config = service.getWebhookConfig(SECOND_FILTERED_RECORD_IRI.stringValue());
+
+        assertEquals(SECOND_FILTERED_CONFIG_IRI, config.getResource());
+        assertEquals("https://www.example.com", config.getUrl().get());
+        assertEquals("POST", config.getHttpMethod().get());
+        assertEquals("INACTIVE", config.getActive().get());
+        assertEquals("(event.topics=com/mobi/catalog/version)", config.getEventFilter().get());
+    }
+
+    @Test
+    public void retrieveConfigurationNotFoundErrorTest() {
+        String notFoundIRI = "https://mobi.com/records#invalid";
+        loadTrigData();
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> service.getWebhookConfig(notFoundIRI));
+
+        assertEquals("Webhook configuration not found for record: " + notFoundIRI, ex.getMessage());
+    }
+
     /* deleteConfiguration() */
 
     @Test
     public void deleteConfigurationRemovesConfigTriplesFromRepo() {
-        IRI newRecordIRI = VALUE_FACTORY.createIRI("https://mobi.com/records#69cd560d-d733-453a-bb9b-0b9e197d68e7");
+        IRI newRecordIRI = VALUE_FACTORY.createIRI("https://mobi.com/records#test-record");
+        loadTrigData();
+
         try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(getClass().getResourceAsStream("/webhook_record.trig"), RDFFormat.TRIG);
             WebhookRecord record = webhookRecordFactory.getExisting(newRecordIRI, testRecord).orElseThrow(
                     () -> new RuntimeException("Could not retrieve existing record")
             );
 
             //initial check to make sure the statements and config is present
             RepositoryResult<Statement> recordStatements = conn.getStatements(null, null, null, newRecordIRI);
-            RepositoryResult<Statement> configStatements = conn.getStatements(CONFIG_IRI, null, null, newRecordIRI);
+            RepositoryResult<Statement> configStatements = conn.getStatements(FILTERED_CONFIG_IRI, null, null, newRecordIRI);
             assertEquals(19, QueryResults.asList(recordStatements).size());
             assertEquals(6, QueryResults.asList(configStatements).size());
 
@@ -157,9 +222,9 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
             service.deleteConfiguration(record, connSpy);
 
             //secondary check to make sure the config has been removed
-            verify(connSpy).remove(eq(CONFIG_IRI), any(), any(), eq(newRecordIRI));
+            verify(connSpy).remove(eq(FILTERED_CONFIG_IRI), any(), any(), eq(newRecordIRI));
             recordStatements = conn.getStatements(null, null, null, newRecordIRI);
-            configStatements = conn.getStatements(CONFIG_IRI, null, null, newRecordIRI);
+            configStatements = conn.getStatements(FILTERED_CONFIG_IRI, null, null, newRecordIRI);
 
             assertEquals(13, QueryResults.asList(recordStatements).size());
             assertEquals(0, QueryResults.asList(configStatements).size());
@@ -170,12 +235,10 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
 
     @Test
     public void deleteConfigurationWhenNoConfigPresent() {
-        IRI secondRecordIRI = VALUE_FACTORY.createIRI("https://mobi.com/records#81c30bf3-3e31-42d6-861b-8877b71c242a");
-
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(testRecord);
 
-            WebhookRecord record = webhookRecordFactory.getExisting(secondRecordIRI, testRecord).orElseThrow(
+            WebhookRecord record = webhookRecordFactory.getExisting(SECOND_FILTERED_RECORD_IRI, testRecord).orElseThrow(
                     () -> new RuntimeException("Could not retrieve existing record")
             );
 
@@ -186,72 +249,6 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
         } catch (Exception e) {
             fail("Should not have thrown exception:");
         }
-    }
-
-    /* start() */
-
-    @Test
-    public void startPopulatesEventFiltersFromRepository() {
-        loadTrigData();
-        service.start();
-
-        Map<Resource, String> filters = service.retrieveEventFilters();
-        assertEquals(1, filters.size());
-        assertTrue(filters.containsKey(FILTERED_RECORD_IRI));
-        assertEquals(TEST_EVENT_FILTER, filters.get(FILTERED_RECORD_IRI));
-    }
-
-    @Test
-    public void startClearsPreviousCacheBeforeRepopulating() {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(getClass().getResourceAsStream("/webhook_record.trig"), RDFFormat.TRIG);
-            service.start();
-            conn.clear();
-            service.start();
-            assertEquals(0, service.retrieveEventFilters().size());
-        } catch (IOException e) {
-            fail("Could not load test data: " + e.getMessage());
-        }
-    }
-
-    @Test
-    public void startWithNoFilteredRecordsProducesEmptyCache() {
-        service.start();
-        assertTrue(service.retrieveEventFilters().isEmpty());
-    }
-
-    /* retrieveEventFilters() */
-
-    @Test
-    public void retrieveEventFiltersReturnsUnmodifiableMap() {
-        Map<Resource, String> filters = service.retrieveEventFilters();
-        UnsupportedOperationException ex = assertThrows(UnsupportedOperationException.class, () -> filters.put(RECORD_IRI, TEST_EVENT_FILTER));
-        assertNotNull(ex);
-    }
-
-    /* createConfiguration() — cache updates */
-
-    @Test
-    public void createConfigurationAddsToFilterCacheWhenFilterPresent() {
-        WebhookRecord record = webhookRecordFactory.createNew(RECORD_IRI);
-
-        assertTrue(service.retrieveEventFilters().isEmpty());
-        service.createConfiguration(record, testConfig);
-        assertTrue(service.retrieveEventFilters().containsKey(RECORD_IRI));
-    }
-
-    @Test
-    public void createConfigurationThrowsErrorWhenNoFilter() {
-        WebhookRecord record = webhookRecordFactory.createNew(RECORD_IRI);
-        WebhookConfiguration config = webhookConfigurationFactory.getExisting(SECOND_CONFIG_IRI, testConfig)
-                .orElseThrow(() -> new IllegalArgumentException("WebhookConfiguration not found for IRI: " + SECOND_CONFIG_IRI));
-
-        config.clearEventFilter();
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.createConfiguration(record,
-                config.getModel()));
-
-        assertFalse(service.retrieveEventFilters().containsKey(RECORD_IRI));
-        assertEquals("WebhookConfiguration is missing required eventFilter", ex.getMessage());
     }
 
     /* deleteConfiguration() — cache updates */
@@ -271,6 +268,45 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
 
         assertFalse("Cache should no longer contain the deleted record",
                 service.retrieveEventFilters().containsKey(FILTERED_RECORD_IRI));
+    }
+
+    /* start() */
+
+    @Test
+    public void startPopulatesEventFiltersFromRepository() {
+        loadTrigData();
+        service.start();
+
+        Map<Resource, String> filters = service.retrieveEventFilters();
+        assertEquals(2, filters.size());
+        assertTrue(filters.containsKey(FILTERED_RECORD_IRI));
+        assertEquals(TEST_EVENT_FILTER, filters.get(FILTERED_RECORD_IRI));
+    }
+
+    @Test
+    public void startClearsPreviousCacheBeforeRepopulating() {
+        loadTrigData();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            service.start();
+            conn.clear();
+            service.start();
+            assertEquals(0, service.retrieveEventFilters().size());
+        }
+    }
+
+    @Test
+    public void startWithNoFilteredRecordsProducesEmptyCache() {
+        service.start();
+        assertTrue(service.retrieveEventFilters().isEmpty());
+    }
+
+    /* retrieveEventFilters() */
+
+    @Test
+    public void retrieveEventFiltersReturnsUnmodifiableMap() {
+        Map<Resource, String> filters = service.retrieveEventFilters();
+        UnsupportedOperationException ex = assertThrows(UnsupportedOperationException.class, () -> filters.put(TEST_RECORD_IRI, TEST_EVENT_FILTER));
+        assertNotNull(ex);
     }
 
     /* SHACL validation */
@@ -296,8 +332,8 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
 
     @Test
     public void webhookConfigEventFilterValidationTest() {
-        Model model = createTestConfigModel(SECOND_CONFIG_IRI);
-        WebhookConfiguration config =  webhookConfigurationFactory.getExisting(SECOND_CONFIG_IRI, model).get();
+        Model model = createTestConfigModel(TEST_CONFIG_IRI);
+        WebhookConfiguration config =  webhookConfigurationFactory.getExisting(TEST_CONFIG_IRI, model).get();
         config.clearEventFilter();
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
@@ -308,8 +344,8 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
 
     @Test
     public void webhookConfigMissingURLValidationTest() {
-        Model model = createTestConfigModel(SECOND_CONFIG_IRI);
-        WebhookConfiguration config =  webhookConfigurationFactory.getExisting(SECOND_CONFIG_IRI, model).get();
+        Model model = createTestConfigModel(TEST_CONFIG_IRI);
+        WebhookConfiguration config =  webhookConfigurationFactory.getExisting(TEST_CONFIG_IRI, model).get();
         config.clearUrl();
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
@@ -326,8 +362,8 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
         service.start();
 
         String newFilter = "(&(event.topics=com/mobi/catalog/commit))";
-        Model newConfigModel = createTestConfigModel(SECOND_CONFIG_IRI);
-        WebhookConfiguration newConfig = webhookConfigurationFactory.getExisting(SECOND_CONFIG_IRI, newConfigModel).get();
+        Model newConfigModel = createTestConfigModel(TEST_CONFIG_IRI);
+        WebhookConfiguration newConfig = webhookConfigurationFactory.getExisting(TEST_CONFIG_IRI, newConfigModel).get();
         newConfig.setEventFilter(newFilter);
         newConfig.setUrl("https://updated.example.com");
 
@@ -336,7 +372,7 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
             service.updateConfiguration(record, newConfig.getModel());
 
             // New config IRI should now have triples in the record named graph
-            assertTrue(conn.hasStatement(SECOND_CONFIG_IRI, null, null, false, FILTERED_RECORD_IRI));
+            assertTrue(conn.hasStatement(TEST_CONFIG_IRI, null, null, false, FILTERED_RECORD_IRI));
         }
     }
 
@@ -349,8 +385,8 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
         assertEquals(TEST_EVENT_FILTER, service.retrieveEventFilters().get(FILTERED_RECORD_IRI));
 
         String newFilter = "(&(event.topics=com/mobi/catalog/commit))";
-        Model newConfigModel = createTestConfigModel(SECOND_CONFIG_IRI);
-        WebhookConfiguration newConfig = webhookConfigurationFactory.getExisting(SECOND_CONFIG_IRI, newConfigModel).get();
+        Model newConfigModel = createTestConfigModel(TEST_CONFIG_IRI);
+        WebhookConfiguration newConfig = webhookConfigurationFactory.getExisting(TEST_CONFIG_IRI, newConfigModel).get();
         newConfig.setEventFilter(newFilter);
 
         WebhookRecord record = webhookRecordFactory.getExisting(FILTERED_RECORD_IRI, testRecord).orElseThrow();
@@ -367,7 +403,7 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
         assertEquals(TEST_EVENT_FILTER, service.retrieveEventFilters().get(FILTERED_RECORD_IRI));
 
         // Use the same filter string as the existing config
-        Model newConfigModel = createTestConfigModel(SECOND_CONFIG_IRI);
+        Model newConfigModel = createTestConfigModel(TEST_CONFIG_IRI);
 
         WebhookRecord record = webhookRecordFactory.getExisting(FILTERED_RECORD_IRI, testRecord).orElseThrow();
         service.updateConfiguration(record, newConfigModel);
@@ -379,9 +415,9 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
     public void updateConfigurationThrowsWhenNoLinkedConfigTest() {
         loadTrigData();
         IRI noConfigRecordIRI = VALUE_FACTORY.createIRI("https://mobi.com/records#81c30bf3-3e31-42d6-861b-8877b71c242a");
-        WebhookRecord record = webhookRecordFactory.getExisting(noConfigRecordIRI, testRecord).orElseThrow();
+        WebhookRecord record = webhookRecordFactory.createNew(noConfigRecordIRI);
 
-        Model newConfigModel = createTestConfigModel(SECOND_CONFIG_IRI);
+        Model newConfigModel = createTestConfigModel(TEST_CONFIG_IRI);
 
         IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
                 service.updateConfiguration(record, newConfigModel));
@@ -394,8 +430,8 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
         loadTrigData();
         service.start();
 
-        Model invalidConfigModel = createTestConfigModel(SECOND_CONFIG_IRI);
-        WebhookConfiguration config = webhookConfigurationFactory.getExisting(SECOND_CONFIG_IRI, invalidConfigModel).get();
+        Model invalidConfigModel = createTestConfigModel(TEST_CONFIG_IRI);
+        WebhookConfiguration config = webhookConfigurationFactory.getExisting(TEST_CONFIG_IRI, invalidConfigModel).get();
         config.clearUrl();
 
         WebhookRecord record = webhookRecordFactory.getExisting(FILTERED_RECORD_IRI, testRecord).orElseThrow();
@@ -408,6 +444,7 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
 
     private void loadTrigData(){
         try (RepositoryConnection conn = repo.getConnection()) {
+//            conn.clear();
             conn.add(getClass().getResourceAsStream("/webhook_record.trig"), RDFFormat.TRIG);
         } catch (IOException e) {
             fail("Could not load test data: " + e.getMessage());
@@ -419,7 +456,7 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
         config.setActive("ACTIVE");
         config.setUrl("https://www.example.com");
         config.setHttpMethod("GET");
-        config.setEventFilter("(&(event.topics=com/mobi/catalog/version))");
+        config.setEventFilter(TEST_EVENT_FILTER);
         return config.getModel();
     }
 

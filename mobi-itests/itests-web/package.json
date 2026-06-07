@@ -14,7 +14,7 @@
     "lint": "jshint --config src/test/resources/jshint.conf.js src/test/js src/test/pages"
   },
   "devDependencies": {
-    "chromedriver": "143",
+    "chromedriver": "149",
     "geckodriver": "^5.0.0",
     "jshint": "^2.13.6",
     "nightwatch": "3.7.0"

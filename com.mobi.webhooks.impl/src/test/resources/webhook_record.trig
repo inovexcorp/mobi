@@ -1,6 +1,6 @@
 
-<https://mobi.com/records#69cd560d-d733-453a-bb9b-0b9e197d68e7> {
-  <https://mobi.com/records#69cd560d-d733-453a-bb9b-0b9e197d68e7> a <http://www.w3.org/2002/07/owl#Thing>,
+<https://mobi.com/records#test-record> {
+  <https://mobi.com/records#test-record> a <http://www.w3.org/2002/07/owl#Thing>,
       <http://mobi.solutions/ontologies/webhooks#WebhookRecord>, <http://mobi.com/ontologies/catalog#Record>,
       <http://mobi.com/ontologies/catalog#UnversionedRecord>;
     <http://purl.org/dc/terms/title> "Test Webhook";
@@ -8,27 +8,52 @@
     <http://purl.org/dc/terms/issued> "2026-04-07T14:18:13.298933-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
     <http://purl.org/dc/terms/modified> "2026-04-07T14:18:13.298933-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
     <http://mobi.com/ontologies/catalog#catalog> <http://mobi.com/catalog-local>;
-    <http://purl.org/dc/terms/publisher> <http://mobi.com/users/a94a8fe5ccb19ba61c4c0873d391e987982fbbd3>;
+    <http://purl.org/dc/terms/publisher> <https://mobi.com/users/test-user>;
     <http://purl.org/dc/terms/abstract> "string";
     <http://mobi.com/ontologies/catalog#keyword> "string";
-    <http://mobi.solutions/ontologies/webhooks#hasWebhookConfiguration> <http://mobi.solutions/webhooks/configurations/4068e6ce-808c-4a89-8946-137974593b7a> .
+    <http://mobi.solutions/ontologies/webhooks#hasWebhookConfiguration> <http://mobi.solutions/webhooks/configurations/test-config> .
   
-  <http://mobi.solutions/webhooks/configurations/4068e6ce-808c-4a89-8946-137974593b7a>
+  <http://mobi.solutions/webhooks/configurations/test-config>
     a <http://www.w3.org/2002/07/owl#Thing>, <http://mobi.solutions/ontologies/webhooks#WebhookConfiguration>;
     <http://mobi.solutions/ontologies/webhooks#url> "https://www.example.com";
     <http://mobi.solutions/ontologies/webhooks#httpMethod> "GET" ;
     <http://mobi.solutions/ontologies/webhooks#active> "ACTIVE" ;
-    <http://mobi.solutions/ontologies/webhooks#eventFilter> "(&(event.topics=com/mobi/catalog/version))" .
+    <http://mobi.solutions/ontologies/webhooks#eventFilter> "(event.topics=com/mobi/catalog/version)" .
 }
 
-<https://mobi.com/records#81c30bf3-3e31-42d6-861b-8877b71c242a> {
-  <https://mobi.com/records#81c30bf3-3e31-42d6-861b-8877b71c242a> a <http://www.w3.org/2002/07/owl#Thing>,
+<https://mobi.com/records#second-test> {
+  <https://mobi.com/records#second-test> a <http://www.w3.org/2002/07/owl#Thing>,
       <http://mobi.solutions/ontologies/webhooks#WebhookRecord>, <http://mobi.com/ontologies/catalog#Record>,
       <http://mobi.com/ontologies/catalog#UnversionedRecord>;
     <http://purl.org/dc/terms/title> "Test Webhook 2";
     <http://purl.org/dc/terms/issued> "2026-04-08T14:53:51.394652-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
     <http://purl.org/dc/terms/modified> "2026-04-08T14:53:51.394652-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
     <http://mobi.com/ontologies/catalog#catalog> <http://mobi.com/catalog-local>;
-    <http://purl.org/dc/terms/publisher> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
-    <http://mobi.com/ontologies/catalog#keyword> "";
+    <http://purl.org/dc/terms/publisher> <https://mobi.com/users/admin>;
+    <http://mobi.solutions/ontologies/webhooks#hasWebhookConfiguration> <http://mobi.solutions/webhooks/configurations/second-config> .
+
+  <http://mobi.solutions/webhooks/configurations/second-config>
+    a <http://www.w3.org/2002/07/owl#Thing>, <http://mobi.solutions/ontologies/webhooks#WebhookConfiguration>;
+    <http://mobi.solutions/ontologies/webhooks#url> "https://www.example.com";
+    <http://mobi.solutions/ontologies/webhooks#httpMethod> "POST" ;
+    <http://mobi.solutions/ontologies/webhooks#active> "INACTIVE" ;
+    <http://mobi.solutions/ontologies/webhooks#eventFilter> "(event.topics=com/mobi/catalog/version)" .
+}
+
+<http://mobi.com/usermanagement> {
+  <https://mobi.com/users/admin> a <http://mobi.com/ontologies/user/management#User>,
+     <http://www.w3.org/2002/07/owl#Thing>, <http://xmlns.com/foaf/0.1/Agent>, <http://www.w3.org/ns/prov#Agent>,
+     <http://www.w3.org/2003/01/geo/wgs84_pos#SpatialThing>, <http://xmlns.com/foaf/0.1/Person>;
+    <http://mobi.com/ontologies/user/management#username> "admin";
+    <http://mobi.com/ontologies/user/management#password> "{CRYPT}21232F297A57A5A743894A0E4A801FC3{CRYPT}";
+    <http://mobi.com/ontologies/user/management#hasUserRole> <http://mobi.com/roles/admin>,
+    <http://mobi.com/roles/user> .
+
+  <https://mobi.com/users/test-user> a <http://mobi.com/ontologies/user/management#User>,
+     <http://www.w3.org/2002/07/owl#Thing>, <http://xmlns.com/foaf/0.1/Agent>, <http://www.w3.org/ns/prov#Agent>,
+     <http://www.w3.org/2003/01/geo/wgs84_pos#SpatialThing>, <http://xmlns.com/foaf/0.1/Person>;
+   <http://mobi.com/ontologies/user/management#username> "test user";
+   <http://mobi.com/ontologies/user/management#password> "{CRYPT}21232F297A57A5A743894A0E4A801FC3{CRYPT}";
+   <http://mobi.com/ontologies/user/management#hasUserRole> <http://mobi.com/roles/admin>,
+   <http://mobi.com/roles/user> .
 }

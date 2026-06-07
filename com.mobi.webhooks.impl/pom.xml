@@ -87,6 +87,11 @@
             <version>4.4.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>prov.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -101,12 +106,12 @@
                         <Bundle-Name>Mobi Webhooks Impl</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            com.mobi.webhooks.impl*;provide:=true
+                            com.mobi.webhooks.api;provide:=true
                         </Export-Package>
                         <_metatype>*</_metatype>
+                        <_dsannotations-options>inherit</_dsannotations-options>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
-                        <_dsannotations-options>inherit</_dsannotations-options>
                     </instructions>
                 </configuration>
             </plugin>

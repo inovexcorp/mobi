@@ -127,28 +127,6 @@
                         </configuration>
                     </plugin>
                     <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maven-plugin</artifactId>
-                        <version>3.0.0</version>
-                        <executions>
-                            <execution>
-                                <id>npm-lint</id>
-                                <phase>compile</phase>
-                                <goals>
-                                    <goal>exec</goal>
-                                </goals>
-                                <configuration>
-                                    <executable>npm</executable>
-                                    <arguments>
-                                        <argument>run</argument>
-                                        <argument>lint</argument>
-                                    </arguments>
-                                    <workingDirectory>${project.basedir}</workingDirectory>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
                         <groupId>com.github.eirslett</groupId>
                         <artifactId>frontend-maven-plugin</artifactId>
                         <version>1.15.1</version>
@@ -159,7 +137,7 @@
                                     <goal>install-node-and-npm</goal>
                                 </goals>
                                 <configuration>
-                                    <nodeVersion>v18.19.0</nodeVersion>
+                                    <nodeVersion>v22.22.0</nodeVersion>
                                 </configuration>
                             </execution>
                             <execution>
@@ -168,6 +146,16 @@
                                     <goal>npm</goal>
                                 </goals>
                                 <phase>generate-test-sources</phase>
+                            </execution>
+                            <execution>
+                                <id>npm lint</id>
+                                <goals>
+                                    <goal>npm</goal>
+                                </goals>
+                                <phase>test-compile</phase>
+                                <configuration>
+                                    <arguments>run lint</arguments>
+                                </configuration>
                             </execution>
                             <execution>
                                 <id>npm run test</id>

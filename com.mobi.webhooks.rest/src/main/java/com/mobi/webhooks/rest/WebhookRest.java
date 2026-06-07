@@ -109,6 +109,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+/**
+ * The WebhookRest class provides endpoints for managing WebhookRecords within the application.
+ * It includes methods for retrieving a list of, creating, and updating WebhookRecords.
+ */
 @Component(service = WebhookRest.class, immediate = true)
 @JaxrsResource
 @Path("/webhooks")
@@ -244,6 +248,19 @@ public class WebhookRest {
         }
     }
 
+    /**
+     * Creates a new Webhook Record in the local catalog.
+     * Processes the request payload to extract the webhook configuration, validate it,
+     * and persist a new record in the local repository.
+     *
+     * @param servletRequest the HTTP request containing the multipart form data with details about
+     *                       the webhook configuration, including fields such as title, description,
+     *                       markdown, keywords, JSON-LD, and optionally, a file upload.
+     * @return a {@link Response} object containing the status of the operation. If the creation
+     *         is successful, the response contains the IRI of the newly created WebhookRecord
+     *         and a 201 status code. In cases of errors, the response includes an appropriate
+     *         status code and error description.
+     */
     @POST
     @Tag(name = TAG, description = DESCRIPTION)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -314,7 +331,7 @@ public class WebhookRest {
         } catch (IllegalArgumentException | RDFParseException ex) {
             LOG.debug("Request processing took {}ms", System.currentTimeMillis() - start);
             throw RestUtils.getErrorObjBadRequest(ex);
-        } catch (IllegalStateException | MobiException ex) {
+        } catch (IllegalStateException | MobiException | NullPointerException ex) {
             LOG.debug("Request processing took {}ms", System.currentTimeMillis() - start);
             throw RestUtils.getErrorObjInternalServerError(ex);
         }
@@ -404,7 +421,8 @@ public class WebhookRest {
                 case "xml", "rdf" -> RDFFormat.RDFXML;
                 case "jsonld", "json" -> RDFFormat.JSONLD;
                 default -> throw new IllegalArgumentException(
-                        "Unsupported file format '" + extension + "'. Supported: Turtle (.ttl), RDF/XML (.xml/.rdf), JSON-LD (.jsonld/.json)");
+                        "Unsupported file format '" + extension + "'. Supported: Turtle (.ttl), RDF/XML (.xml/.rdf), "
+                                + "JSON-LD (.jsonld/.json)");
             };
             try {
                 Model model = new LinkedHashModel();

@@ -32,21 +32,26 @@ import com.mobi.webhooks.api.WebhookConfigurationService;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookConfiguration;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookConfigurationFactory;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookRecord;
-
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.common.exception.ValidationException;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDF4J;
+import org.eclipse.rdf4j.query.GraphQuery;
+import org.eclipse.rdf4j.query.GraphQueryResult;
+import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryException;
+import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
@@ -77,17 +82,23 @@ import java.util.concurrent.ConcurrentMap;
 public class WebhookConfigurationServiceImpl implements WebhookConfigurationService {
 
     private static final Logger LOG = LoggerFactory.getLogger(WebhookConfigurationServiceImpl.class);
-    //TODO ensure removal of PLACEHOLDER method by MVP completion.
+    //TODO: ensure removal of PLACEHOLDER method by MVP completion.
     private static final String PLACEHOLDER = "Method not implemented yet";
     private static final String GET_EVENT_FILTERS_QUERY;
+    private static final String GET_WEBHOOK_CONFIG_QUERY;
 
     private final ConcurrentMap<Resource, String> eventFilters = new ConcurrentHashMap<>();
     protected final ValueFactory vf = new ValidatingValueFactory();
 
     static {
         try {
-            GET_EVENT_FILTERS_QUERY = IOUtils.toString(
-                    Objects.requireNonNull(WebhookConfigurationServiceImpl.class.getResourceAsStream("/get-webhook-event-filters.rq")),
+            GET_EVENT_FILTERS_QUERY = IOUtils.toString(Objects.requireNonNull(
+                    WebhookConfigurationServiceImpl.class.getResourceAsStream("/get-webhook-event-filters.rq")),
+                    StandardCharsets.UTF_8
+            );
+
+            GET_WEBHOOK_CONFIG_QUERY = IOUtils.toString(Objects.requireNonNull(
+                    WebhookConfigurationServiceImpl.class.getResourceAsStream("/get-webhook-config.rq")),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {
@@ -154,8 +165,33 @@ public class WebhookConfigurationServiceImpl implements WebhookConfigurationServ
 
     @Override
     public WebhookConfiguration getWebhookConfig(String recordIri) {
-        LOG.info(PLACEHOLDER);
-        return null;
+        IRI recordResource = vf.createIRI(recordIri);
+        return getWebhookConfig(recordResource);
+    }
+
+    @Override
+    public WebhookConfiguration getWebhookConfig(Resource recordIri) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Value configIRI;
+            try (RepositoryResult<Statement> stmtResult = conn.getStatements(
+                    recordIri, vf.createIRI(WebhookRecord.hasWebhookConfiguration_IRI), null, recordIri)) {
+                if (!stmtResult.hasNext()) {
+                    throw new IllegalStateException("Webhook configuration not found for record: "
+                            + recordIri.stringValue());
+                }
+                configIRI = stmtResult.next().getObject();
+            }
+
+            GraphQuery query = conn.prepareGraphQuery(GET_WEBHOOK_CONFIG_QUERY);
+            query.setBinding("recordId", recordIri);
+
+            try (GraphQueryResult result = query.evaluate()) {
+                Model configModel = QueryResults.asModel(result);
+                return webhookConfigurationFactory.getExisting((Resource) configIRI, configModel).orElseThrow(
+                        () -> new IllegalStateException("No Webhook Configuration found in model for record: "
+                                + recordIri.stringValue()));
+            }
+        }
     }
 
     @Override
@@ -183,8 +219,8 @@ public class WebhookConfigurationServiceImpl implements WebhookConfigurationServ
 
         webhookRecord.setHasWebhookConfiguration(webhookConfig);
         webhookRecord.getModel().addAll(webhookConfig.getModel());
-        String filter = webhookConfig.getEventFilter()
-                .orElseThrow(() -> new IllegalArgumentException("WebhookConfiguration is missing required eventFilter"));
+        String filter = webhookConfig.getEventFilter().orElseThrow(() ->
+                new IllegalArgumentException("WebhookConfiguration is missing required eventFilter"));
         eventFilters.put(webhookRecord.getResource(), filter);
     }
 

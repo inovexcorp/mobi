@@ -1,0 +1,20 @@
+PREFIX wh: <http://mobi.solutions/ontologies/webhooks#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+construct where {
+    ?activity a wh:WebhookExecutionActivity ;
+        wh:hasConnectionAttempt ?attempt ;
+        wh:requestUrl ?url;
+        wh:requestMethod ?method;
+        wh:succeeded ?success;
+        wh:requestBody ?requestBody;
+        wh:hasHeader ?requestHeader ;
+        prov:startedAtTime ?requestStart ;
+        prov:endedAtTime ?activityEnd .
+
+    ?attempt a wh:ConnectionAttempt;
+        wh:responseStatus ?status;
+        wh:responseTimestamp ?responseTime;
+        wh:requestTimestamp ?requestTime;
+        wh:responseBody ?responseBody .
+}
