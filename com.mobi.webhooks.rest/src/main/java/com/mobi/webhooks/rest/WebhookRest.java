@@ -26,6 +26,7 @@ package com.mobi.webhooks.rest;
 import static com.mobi.rest.util.RestUtils.checkStringParam;
 import static com.mobi.rest.util.RestUtils.createPaginatedResponse;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
+import static com.mobi.rest.util.RestUtils.modelToSkolemizedJsonld;
 import static com.mobi.rest.util.RestUtils.validatePaginationParams;
 
 import com.mobi.catalog.api.PaginatedSearchParams;
@@ -52,6 +53,7 @@ import com.mobi.rest.util.RestUtils;
 import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import com.mobi.rest.util.swagger.JsonLdObject;
 import com.mobi.webhooks.api.WebhookConfigurationService;
+import com.mobi.webhooks.api.ontology.webhooks.WebhookConfiguration;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookRecord;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookRecordFactory;
 import com.mobi.webhooks.api.record.config.WebhookRecordCreateSettings;
@@ -245,6 +247,75 @@ public class WebhookRest {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | MobiException ex) {
             throw RestUtils.getErrorObjInternalServerError(ex);
+        }
+    }
+
+    /**
+     * Retrieves the WebhookConfiguration associated with the specified WebhookRecord.
+     *
+     * @param servletRequest HttpServletRequest
+     * @param recordId       IRI of the WebhookRecord
+     * @return Response containing the JSON-LD representation of the WebhookConfiguration
+     */
+    @GET
+    @Tag(name = TAG, description = DESCRIPTION)
+    @Path("{recordId}/configuration")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @Operation(summary = "Retrieves the WebhookConfiguration for the specified WebhookRecord")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A JSON-LD object representing the WebhookConfiguration",
+                    content = @Content(schema = @Schema(implementation = JsonLdObject.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The provided recordId is not a valid IRI",
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "User does not have permission to view this WebhookRecord",
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Webhook Configuration linked to the provided ID does not exist",
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving the WebhookConfiguration",
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
+            )
+    })
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    public Response getWebhookConfiguration(
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
+            @Parameter(description = "IRI of the WebhookRecord", required = true,
+                    schema = @Schema(type = "string", format = "uri"))
+            @PathParam("recordId") String recordId) {
+        long start = System.currentTimeMillis();
+        User activeUser = getActiveUser(servletRequest, engineManager);
+        LOG.debug("GET /webhooks/{}/configuration requested by user: {}", recordId,
+                activeUser.getResource().stringValue());
+        try {
+            WebhookConfiguration config = webhookConfigurationService.getWebhookConfig(recordId);
+            LOG.debug("GET /webhooks/{}/configuration completed in {}ms", recordId,
+                    System.currentTimeMillis() - start);
+            return Response.ok(modelToSkolemizedJsonld(config.getModel(), bNodeService)).build();
+        } catch (MobiNotFoundException ex) {
+            throw RestUtils.getErrorObjNotFound(ex);
+        } catch (MobiException | IllegalStateException ex) {
+            throw RestUtils.getErrorObjInternalServerError(ex);
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
         }
     }
 

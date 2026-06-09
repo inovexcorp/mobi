@@ -42,6 +42,7 @@ import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.impl.core.SimpleRepositoryManager;
+import com.mobi.rest.util.MobiNotFoundException;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookConfiguration;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookConfigurationFactory;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookRecord;
@@ -61,6 +62,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
@@ -194,7 +196,7 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
         String notFoundIRI = "https://mobi.com/records#invalid";
         loadTrigData();
 
-        IllegalStateException ex = assertThrows(IllegalStateException.class,
+        MobiNotFoundException ex = assertThrows(MobiNotFoundException.class,
                 () -> service.getWebhookConfig(notFoundIRI));
 
         assertEquals("Webhook configuration not found for record: " + notFoundIRI, ex.getMessage());
