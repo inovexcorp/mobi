@@ -28,6 +28,7 @@ import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.Bindings;
+import com.mobi.rest.util.MobiNotFoundException;
 import com.mobi.webhooks.api.WebhookConfigurationService;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookConfiguration;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookConfigurationFactory;
@@ -64,6 +65,7 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
@@ -176,7 +178,7 @@ public class WebhookConfigurationServiceImpl implements WebhookConfigurationServ
             try (RepositoryResult<Statement> stmtResult = conn.getStatements(
                     recordIri, vf.createIRI(WebhookRecord.hasWebhookConfiguration_IRI), null, recordIri)) {
                 if (!stmtResult.hasNext()) {
-                    throw new IllegalStateException("Webhook configuration not found for record: "
+                    throw new MobiNotFoundException("Webhook configuration not found for record: "
                             + recordIri.stringValue());
                 }
                 configIRI = stmtResult.next().getObject();

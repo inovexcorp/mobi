@@ -23,6 +23,7 @@ package com.mobi.webhooks.rest;
  * #L%
  */
 
+import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorContains;
@@ -56,7 +57,9 @@ import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.rest.test.util.FormDataMultiPart;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.UsernameTestFilter;
+import com.mobi.rest.util.MobiNotFoundException;
 import com.mobi.webhooks.api.WebhookConfigurationService;
+import com.mobi.webhooks.api.ontology.webhooks.WebhookConfiguration;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookRecord;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookRecordFactory;
 import org.eclipse.rdf4j.model.IRI;
@@ -101,6 +104,7 @@ public class WebhookRestTest extends MobiRestTestCXF {
     private static IRI recordId;
     private static IRI catalogId;
     private static WebhookRecord webhookRecord1;
+    private static WebhookConfiguration webhookConfig;
 
     @BeforeClass
     public static void startServer() {
@@ -118,12 +122,14 @@ public class WebhookRestTest extends MobiRestTestCXF {
 
         OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
         recordFactory = getRequiredOrmFactory(WebhookRecord.class);
+        OrmFactory<WebhookConfiguration> configFactory = getRequiredOrmFactory(WebhookConfiguration.class);
 
         IRI userIRI = vf.createIRI("http://mobi.com/users/" + UsernameTestFilter.USERNAME);
         recordId = vf.createIRI(RECORD_IRI);
         catalogId = vf.createIRI(CATALOG_IRI);
         user = userFactory.createNew(userIRI);
         webhookRecord1 = recordFactory.createNew(recordId);
+        webhookConfig = configFactory.createNew(vf.createIRI("http://mobi.com/webhookConfig1"));
 
         WebhookRest rest = new WebhookRest();
         rest.recordManager = recordManager;
@@ -155,6 +161,7 @@ public class WebhookRestTest extends MobiRestTestCXF {
         when(searchResults.pageNumber()).thenReturn(1);
         when(recordManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class),
                 any(User.class), any(RepositoryConnection.class))).thenReturn(searchResults);
+        when(webhookConfigurationService.getWebhookConfig(anyString())).thenReturn(webhookConfig);
         when(recordManager.getRecordOpt(any(Resource.class), any(Resource.class),
                 any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(Optional.of(webhookRecord1));
     }
@@ -390,6 +397,19 @@ public class WebhookRestTest extends MobiRestTestCXF {
         assertErrorResponse(response, 500, "MobiException", "Repository unavailable");
     }
 
+    /* Webhook Configuration Retrieval */
+
+    /* Success Test Cases */
+    @Test
+    public void getWebhookConfigurationTest() {
+        Response response = target().path("webhooks/" + encode(RECORD_IRI) + "/configuration")
+                .request().get();
+
+        assertEquals(200, response.getStatus());
+        verify(webhookConfigurationService).getWebhookConfig(RECORD_IRI);
+        verify(bNodeService, atLeastOnce()).skolemize(any(Statement.class));
+    }
+
     /* Webhook Configuration Update */
 
     /* Success Test Cases */
@@ -435,6 +455,18 @@ public class WebhookRestTest extends MobiRestTestCXF {
 
     /* Failure Test Cases */
     @Test
+    public void getWebhookConfigurationNotFoundTest() {
+        when(webhookConfigurationService.getWebhookConfig(anyString()))
+                .thenThrow(new MobiNotFoundException("Webhook configuration not found for record: " + RECORD_IRI));
+
+        Response response = target().path("webhooks/" + encode(RECORD_IRI) + "/configuration")
+                .request().get();
+
+        assertErrorResponse(response, 404, "MobiNotFoundException",
+                "Webhook configuration not found for record: " + RECORD_IRI);
+    }
+
+    @Test
     public void updateWebhookConfigurationRecordNotFoundTest() {
         when(recordManager.getRecordOpt(any(Resource.class), any(Resource.class),
                 any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
@@ -454,6 +486,27 @@ public class WebhookRestTest extends MobiRestTestCXF {
 
         assertErrorResponse(response, 404, "MobiNotFoundException",
                 "WebhookRecord " + RECORD_IRI + " could not be found");
+    }
+
+    @Test
+    public void getWebhookConfigurationMobiExceptionTest() {
+        when(webhookConfigurationService.getWebhookConfig(anyString()))
+                .thenThrow(new MobiException("Service unavailable"));
+
+        Response response = target().path("webhooks/" + encode(RECORD_IRI) + "/configuration")
+                .request().get();
+
+        assertErrorResponse(response, 500, "MobiException", "Service unavailable");
+    }
+
+    @Test
+    public void getWebhookConfigurationUserNotFoundTest() {
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
+
+        Response response = target().path("webhooks/" + encode(RECORD_IRI) + "/configuration")
+                .request().get();
+
+        assertErrorResponse(response, 500, "MobiException", "User not found");
     }
 
     @Test
