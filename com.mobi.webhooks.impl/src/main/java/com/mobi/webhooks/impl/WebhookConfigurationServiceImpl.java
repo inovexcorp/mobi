@@ -33,6 +33,7 @@ import com.mobi.webhooks.api.WebhookConfigurationService;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookConfiguration;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookConfigurationFactory;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookRecord;
+
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.common.exception.ValidationException;
 import org.eclipse.rdf4j.model.IRI;
@@ -65,7 +66,6 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;

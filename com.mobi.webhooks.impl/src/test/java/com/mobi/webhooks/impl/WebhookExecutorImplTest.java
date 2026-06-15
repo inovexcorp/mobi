@@ -39,6 +39,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doReturn;
 
+import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
@@ -96,6 +97,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -107,6 +109,10 @@ public class WebhookExecutorImplTest {
     private static final IRI USER_IRI = VF.createIRI("https://mobi.com/users/test-user");
     private static final IRI RECORD_IRI = VF.createIRI("https://mobi.com/records#test-record");
     private static final IRI SECOND_RECORD_IRI = VF.createIRI("https://mobi.com/records#second-test");
+    private static final IRI EXEC_RECORD_IRI = VF.createIRI("https://mobi.com/records#exec-record");
+    private static final IRI ACTIVITY_1 = VF.createIRI("https://mobi.com/activities/exec-1");
+    private static final IRI ACTIVITY_2 = VF.createIRI("https://mobi.com/activities/exec-2");
+    private static final String PROV_STARTED_AT_TIME = "http://www.w3.org/ns/prov#startedAtTime";
     private static final String MATCHING_TOPIC_STRING = "com/mobi/catalog/version";
     private static final String MATCHING_TOPIC_FILTER = "(&(event.topics=com/mobi/catalog/version))";
     private static final String NON_MATCHING_TOPIC_FILTER = "(&(event.topics=com/mobi/catalog/data/changed))";
@@ -148,13 +154,14 @@ public class WebhookExecutorImplTest {
     private AutoCloseable closeable;
     private WebhookExecutorImpl executor;
     private OsgiRepository repo;
+    private MemoryRepositoryWrapper provRepository;
     private WebhookExecutionActivity webhookExecutionActivity;
 
     @Before
-    public void setUp() throws IOException, InterruptedException {
+    public void setUp() throws IOException {
         closeable = MockitoAnnotations.openMocks(this);
         repo = repoManager.createMemoryRepository();
-        MemoryRepositoryWrapper provRepository = new MemoryRepositoryWrapper();
+        provRepository = new MemoryRepositoryWrapper();
         provRepository.setDelegate(new SailRepository(new MemoryStore()));
         webhookExecutionActivity = webhookExecutionActivityFactory.createNew(VF.createIRI("https://mobi.com/activities/test-activity"));
         User user = userFactory.createNew(USER_IRI);
@@ -176,6 +183,7 @@ public class WebhookExecutorImplTest {
 
         when(engineManager.retrieveUser(any())).thenReturn(Optional.of(user));
         when(provService.createActivity(any(ActivityConfig.class))).thenReturn(webhookExecutionActivity);
+        when(provService.getConnection()).thenAnswer(invocation -> provRepository.getConnection());
 
         when(httpResponse.getStatusLine()).thenReturn(mock(StatusLine.class));
         when(httpResponse.getStatusLine().getStatusCode()).thenReturn(200);
@@ -409,7 +417,118 @@ public class WebhookExecutorImplTest {
         verify(provService, times(2)).updateActivity(any());
     }
 
+    /* getExecutions() */
+
+    @Test
+    public void getExecutionsReturnsActivitiesDescendingByDefault() {
+        loadExecutionData();
+
+        PaginatedSearchResults<WebhookExecutionActivity> results =
+                executor.getExecutions(EXEC_RECORD_IRI, 0, 10, null, false);
+
+        assertEquals(2, results.totalSize());
+        assertEquals(List.of(ACTIVITY_2, ACTIVITY_1),
+                results.page().stream().map(WebhookExecutionActivity::getResource).toList());
+    }
+
+    @Test
+    public void getExecutionsReturnsActivitiesAscending() {
+        loadExecutionData();
+
+        PaginatedSearchResults<WebhookExecutionActivity> results =
+                executor.getExecutions(EXEC_RECORD_IRI, 0, 10, PROV_STARTED_AT_TIME, true);
+
+        assertEquals(List.of(ACTIVITY_1, ACTIVITY_2),
+                results.page().stream().map(WebhookExecutionActivity::getResource).toList());
+
+        assertEquals(2, results.totalSize());
+        assertEquals(10, results.pageSize());
+        assertEquals(1, results.pageNumber());
+        assertEquals(2, results.page().size());
+
+        String url = "https://www.example.com/test/";
+        WebhookExecutionActivity act1 = results.page().get(0);
+        WebhookExecutionActivity act2 = results.page().get(1);
+
+        verifyActivityCreation(act1.getModel(), url, "GET", false, "500", 3);
+        verifyActivityCreation(act2.getModel(), url, "GET", true, "200", 1);
+    }
+
+    @Test
+    public void getExecutionsPaginatesResults() {
+        loadExecutionData();
+
+        PaginatedSearchResults<WebhookExecutionActivity> results =
+                executor.getExecutions(EXEC_RECORD_IRI, 1, 1, null, false);
+
+        assertEquals(2, results.totalSize());
+        assertEquals(1, results.pageSize());
+        assertEquals(2, results.pageNumber());
+        assertEquals(1, results.page().size());
+        // descending order: index 0 = ACTIVITY_2, so offset 1 = ACTIVITY_1
+        assertEquals(ACTIVITY_1, results.page().get(0).getResource());
+    }
+
+    @Test
+    public void getExecutionsOffsetBeyondTotalReturnsEmptyPage() {
+        loadExecutionData();
+
+        PaginatedSearchResults<WebhookExecutionActivity> results =
+                executor.getExecutions(EXEC_RECORD_IRI, 10, 5, null, false);
+
+        assertEquals(2, results.totalSize());
+        assertTrue(results.page().isEmpty());
+    }
+
+    @Test
+    public void getExecutionsForRecordWithNoExecutionsReturnsEmpty() {
+        loadExecutionData();
+
+        PaginatedSearchResults<WebhookExecutionActivity> results =
+                executor.getExecutions(VF.createIRI("https://mobi.com/records#unknown"), 0, 10, null, false);
+
+        assertEquals(0, results.totalSize());
+        assertTrue(results.page().isEmpty());
+    }
+
+    /* getLatestExecution() */
+
+    @Test
+    public void getLatestExecutionReturnsMostRecentWithAttempts() {
+        loadExecutionData();
+
+        Optional<WebhookExecutionActivity> latest = executor.getLatestExecution(EXEC_RECORD_IRI);
+
+        assertTrue(latest.isPresent());
+        assertEquals(ACTIVITY_2, latest.get().getResource());
+        // the constructed model should include the activity's linked connection attempt
+        assertTrue(latest.get().getModel().contains(ACTIVITY_2,
+                VF.createIRI(WebhookExecutionActivity.hasConnectionAttempt_IRI), null));
+
+        String url = "https://www.example.com/test/";
+        WebhookExecutionActivity activity = latest.get();
+        verifyActivityCreation(activity.getModel(), url, "GET", true, "200", 1);
+    }
+
+    @Test
+    public void getLatestExecutionEmptyWhenNoExecutions() {
+        loadExecutionData();
+
+        Optional<WebhookExecutionActivity> latest =
+                executor.getLatestExecution(VF.createIRI("https://mobi.com/records#unknown"));
+
+        assertTrue(latest.isEmpty());
+    }
+
     /* Helper Methods */
+
+    private void loadExecutionData() {
+        try (RepositoryConnection conn = provRepository.getConnection()) {
+            conn.add(getClass().getResourceAsStream("/prov_data.trig"), RDFFormat.TRIG);
+        } catch (IOException e) {
+            fail("Could not load test data: " + e.getMessage());
+        }
+    }
 
     private void loadTrigData() {
         try (RepositoryConnection conn = repo.getConnection()) {
@@ -428,8 +547,6 @@ public class WebhookExecutorImplTest {
             fail("Failed to remove statements" + e.getMessage());
         }
     }
-
-
 
     private void verifyActivityCreation(Model activityModel, String url, String method, boolean success,
                                         String responseStatus, int attemptCount) {

@@ -1,0 +1,24 @@
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX webhooks: <http://mobi.solutions/ontologies/webhooks#>
+
+CONSTRUCT {
+    ?activity ?activityPred ?activityObj .
+    ?attempt ?attemptPred ?attemptObj .
+    ?attemptHeader ?attemptHeaderPred ?attemptHeaderObj .
+    ?activityHeader ?activityHeaderPred ?activityHeaderObj .
+}
+WHERE {
+    ?activity ?activityPred ?activityObj .
+    OPTIONAL {
+        ?activity webhooks:hasConnectionAttempt ?attempt .
+        ?attempt ?attemptPred ?attemptObj .
+        OPTIONAL {
+            ?attempt webhooks:hasResponseHeader ?attemptHeader .
+            ?attemptHeader ?attemptHeaderPred ?attemptHeaderObj .
+        }
+    }
+    OPTIONAL {
+        ?activity webhooks:hasHeader ?activityHeader .
+        ?activityHeader ?activityHeaderPred ?activityHeaderObj .
+    }
+}
