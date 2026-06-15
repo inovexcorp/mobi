@@ -30,6 +30,8 @@ import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorContains;
 import static com.mobi.rest.test.util.ErrorResponseAssert.assertErrorResponse;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -59,7 +61,9 @@ import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.UsernameTestFilter;
 import com.mobi.rest.util.MobiNotFoundException;
 import com.mobi.webhooks.api.WebhookConfigurationService;
+import com.mobi.webhooks.api.WebhookExecutor;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookConfiguration;
+import com.mobi.webhooks.api.ontology.webhooks.WebhookExecutionActivity;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookRecord;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookRecordFactory;
 import org.eclipse.rdf4j.model.IRI;
@@ -67,6 +71,7 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.model.vocabulary.PROV;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
@@ -95,6 +100,7 @@ public class WebhookRestTest extends MobiRestTestCXF {
     private static CatalogConfigProvider configProvider;
     private static BNodeService bNodeService;
     private static WebhookConfigurationService webhookConfigurationService;
+    private static WebhookExecutor webhookExecutor;
     private static OrmFactory<WebhookRecord> recordFactory;
 
     @SuppressWarnings("unchecked")
@@ -105,6 +111,11 @@ public class WebhookRestTest extends MobiRestTestCXF {
     private static IRI catalogId;
     private static WebhookRecord webhookRecord1;
     private static WebhookConfiguration webhookConfig;
+    private static WebhookExecutionActivity webhookExecution;
+
+    @SuppressWarnings("unchecked")
+    private static final PaginatedSearchResults<WebhookExecutionActivity> executionResults =
+            mock(PaginatedSearchResults.class);
 
     @BeforeClass
     public static void startServer() {
@@ -119,10 +130,12 @@ public class WebhookRestTest extends MobiRestTestCXF {
         configProvider = mock(CatalogConfigProvider.class);
         bNodeService = mock(BNodeService.class);
         webhookConfigurationService = mock(WebhookConfigurationService.class);
+        webhookExecutor = mock(WebhookExecutor.class);
 
         OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
         recordFactory = getRequiredOrmFactory(WebhookRecord.class);
         OrmFactory<WebhookConfiguration> configFactory = getRequiredOrmFactory(WebhookConfiguration.class);
+        OrmFactory<WebhookExecutionActivity> executionFactory = getRequiredOrmFactory(WebhookExecutionActivity.class);
 
         IRI userIRI = vf.createIRI("http://mobi.com/users/" + UsernameTestFilter.USERNAME);
         recordId = vf.createIRI(RECORD_IRI);
@@ -130,6 +143,7 @@ public class WebhookRestTest extends MobiRestTestCXF {
         user = userFactory.createNew(userIRI);
         webhookRecord1 = recordFactory.createNew(recordId);
         webhookConfig = configFactory.createNew(vf.createIRI("http://mobi.com/webhookConfig1"));
+        webhookExecution = executionFactory.createNew(vf.createIRI("http://mobi.com/activities/execution1"));
 
         WebhookRest rest = new WebhookRest();
         rest.recordManager = recordManager;
@@ -137,6 +151,7 @@ public class WebhookRestTest extends MobiRestTestCXF {
         rest.configProvider = configProvider;
         rest.bNodeService = bNodeService;
         rest.webhookConfigurationService = webhookConfigurationService;
+        rest.webhookExecutor = webhookExecutor;
         rest.webhookRecordFactory = (WebhookRecordFactory) recordFactory;
 
         configureServer(rest, new UsernameTestFilter());
@@ -147,7 +162,7 @@ public class WebhookRestTest extends MobiRestTestCXF {
         WebhookRecord record = recordFactory.createNew(recordId);
 
         reset(recordManager, engineManager, configProvider, bNodeService, searchResults,
-                webhookConfigurationService);
+                webhookConfigurationService, webhookExecutor, executionResults);
 
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogId);
@@ -164,12 +179,20 @@ public class WebhookRestTest extends MobiRestTestCXF {
         when(webhookConfigurationService.getWebhookConfig(anyString())).thenReturn(webhookConfig);
         when(recordManager.getRecordOpt(any(Resource.class), any(Resource.class),
                 any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(Optional.of(webhookRecord1));
+        when(executionResults.page()).thenReturn(List.of(webhookExecution));
+        when(executionResults.totalSize()).thenReturn(1);
+        when(executionResults.pageSize()).thenReturn(10);
+        when(executionResults.pageNumber()).thenReturn(1);
+        when(webhookExecutor.getExecutions(any(Resource.class), anyInt(), anyInt(), any(), anyBoolean()))
+                .thenReturn(executionResults);
+        when(webhookExecutor.getLatestExecution(any(Resource.class)))
+                .thenReturn(Optional.of(webhookExecution));
     }
 
     @After
     public void resetMocks() {
         reset(recordManager, engineManager, configProvider, bNodeService, searchResults,
-                webhookConfigurationService);
+                webhookConfigurationService, webhookExecutor, executionResults);
     }
 
     /* Webhook Record Creation */
@@ -395,6 +418,129 @@ public class WebhookRestTest extends MobiRestTestCXF {
                 .request().get();
 
         assertErrorResponse(response, 500, "MobiException", "Repository unavailable");
+    }
+
+    /* Webhook Execution Retrieval */
+
+    /* Success Test Cases */
+    @Test
+    public void getWebhookExecutionsTest() throws Exception {
+        Response response = target().path("webhooks/" + encode(RECORD_IRI) + "/executions")
+                .queryParam("offset", 0).queryParam("limit", 10).request().get();
+
+        assertEquals(200, response.getStatus());
+        verify(webhookExecutor).getExecutions(eq(recordId), eq(0), eq(10), any(), eq(false));
+        ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    public void getWebhookExecutionsWithSortAndAscendingTest() {
+        Response response = target().path("webhooks/" + encode(RECORD_IRI) + "/executions")
+                .queryParam("offset", 0).queryParam("limit", 10)
+                .queryParam("sort", PROV.STARTED_AT_TIME.stringValue())
+                .queryParam("ascending", true).request().get();
+
+        assertEquals(200, response.getStatus());
+        verify(webhookExecutor).getExecutions(eq(recordId), eq(0), eq(10),
+                eq(PROV.STARTED_AT_TIME.stringValue()), eq(true));
+    }
+
+    @Test
+    public void getLatestWebhookExecutionTest() throws Exception {
+        Response response = target().path("webhooks/" + encode(RECORD_IRI) + "/executions/latest")
+                .request().get();
+
+        assertEquals(200, response.getStatus());
+        verify(webhookExecutor).getLatestExecution(recordId);
+        ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    public void getLatestWebhookExecutionEmptyTest() throws Exception {
+        when(webhookExecutor.getLatestExecution(any(Resource.class))).thenReturn(Optional.empty());
+
+        Response response = target().path("webhooks/" + encode(RECORD_IRI) + "/executions/latest")
+                .request().get();
+
+        assertEquals(200, response.getStatus());
+        ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
+        assertEquals(0, result.size());
+    }
+
+    /* Failure Test Cases */
+    @Test
+    public void getWebhookExecutionsRecordNotFoundTest() {
+        when(recordManager.getRecordOpt(any(Resource.class), any(Resource.class),
+                any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
+
+        Response response = target().path("webhooks/" + encode(RECORD_IRI) + "/executions")
+                .queryParam("offset", 0).queryParam("limit", 10).request().get();
+
+        assertErrorResponse(response, 404, "MobiNotFoundException",
+                "WebhookRecord " + RECORD_IRI + " could not be found");
+    }
+
+    @Test
+    public void getWebhookExecutionsInvalidSortTest() {
+        Response response = target().path("webhooks/" + encode(RECORD_IRI) + "/executions")
+                .queryParam("offset", 0).queryParam("limit", 10)
+                .queryParam("sort", "urn:not-a-valid-sort-field").request().get();
+
+        assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    public void getWebhookExecutionsNegativeOffsetTest() {
+        Response response = target().path("webhooks/" + encode(RECORD_IRI) + "/executions")
+                .queryParam("offset", -1).queryParam("limit", 10).request().get();
+
+        assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    public void getWebhookExecutionsUserNotFoundTest() {
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
+
+        Response response = target().path("webhooks/" + encode(RECORD_IRI) + "/executions")
+                .queryParam("offset", 0).queryParam("limit", 10).request().get();
+
+        assertErrorResponse(response, 500, "MobiException", "User not found");
+    }
+
+    @Test
+    public void getWebhookExecutionsMobiExceptionTest() {
+        when(webhookExecutor.getExecutions(any(Resource.class), anyInt(), anyInt(), any(), anyBoolean()))
+                .thenThrow(new MobiException("Prov repository unavailable"));
+
+        Response response = target().path("webhooks/" + encode(RECORD_IRI) + "/executions")
+                .queryParam("offset", 0).queryParam("limit", 10).request().get();
+
+        assertErrorResponse(response, 500, "MobiException", "Prov repository unavailable");
+    }
+
+    @Test
+    public void getLatestWebhookExecutionRecordNotFoundTest() {
+        when(recordManager.getRecordOpt(any(Resource.class), any(Resource.class),
+                any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
+
+        Response response = target().path("webhooks/" + encode(RECORD_IRI) + "/executions/latest")
+                .request().get();
+
+        assertErrorResponse(response, 404, "MobiNotFoundException",
+                "WebhookRecord " + RECORD_IRI + " could not be found");
+    }
+
+    @Test
+    public void getLatestWebhookExecutionMobiExceptionTest() {
+        when(webhookExecutor.getLatestExecution(any(Resource.class)))
+                .thenThrow(new MobiException("Prov repository unavailable"));
+
+        Response response = target().path("webhooks/" + encode(RECORD_IRI) + "/executions/latest")
+                .request().get();
+
+        assertErrorResponse(response, 500, "MobiException", "Prov repository unavailable");
     }
 
     /* Webhook Configuration Retrieval */

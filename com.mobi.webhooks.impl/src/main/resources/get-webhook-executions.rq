@@ -1,0 +1,8 @@
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX webhooks: <http://mobi.solutions/ontologies/webhooks#>
+
+SELECT DISTINCT ?activity ?startTime WHERE {
+    ?activity a webhooks:WebhookExecutionActivity ;
+              prov:used ?record ;
+              prov:startedAtTime ?startTime .
+}

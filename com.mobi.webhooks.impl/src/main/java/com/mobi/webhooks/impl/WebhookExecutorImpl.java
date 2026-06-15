@@ -26,7 +26,9 @@ package com.mobi.webhooks.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.config.CatalogConfigProvider;
+import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.provo.Entity;
@@ -46,6 +48,8 @@ import com.mobi.webhooks.api.ontology.webhooks.HeaderFactory;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookConfiguration;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookExecutionActivity;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookExecutionActivityFactory;
+
+import org.apache.commons.io.IOUtils;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -64,7 +68,10 @@ import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.PROV;
+import org.eclipse.rdf4j.query.GraphQuery;
 import org.eclipse.rdf4j.query.QueryResults;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.osgi.framework.Filter;
@@ -82,13 +89,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -107,6 +117,23 @@ public class WebhookExecutorImpl implements WebhookExecutor, EventHandler {
     private static final ValueFactory VF = new ValidatingValueFactory();
     private static final Logger LOG = LoggerFactory.getLogger(WebhookExecutorImpl.class);
     private static final String WEBHOOK_NAMESPACE = "https://mobi.solutions/webhooks/";
+    private static final String RECORD_BINDING = "record";
+    private static final String ACTIVITY_BINDING = "activity";
+    private static final String GET_EXECUTIONS_QUERY;
+    private static final String GET_EXECUTION_MODEL_QUERY;
+
+    static {
+        try {
+            GET_EXECUTIONS_QUERY = IOUtils.toString(Objects.requireNonNull(
+                    WebhookExecutorImpl.class.getResourceAsStream("/get-webhook-executions.rq")),
+                    StandardCharsets.UTF_8);
+            GET_EXECUTION_MODEL_QUERY = IOUtils.toString(Objects.requireNonNull(
+                    WebhookExecutorImpl.class.getResourceAsStream("/get-webhook-execution-model.rq")),
+                    StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+    }
 
     private final ConcurrentLinkedQueue<PendingWebhookRequest> pendingRequests = new ConcurrentLinkedQueue<>();
     private final CopyOnWriteArrayList<ExecutingWebhook> currentlyExecuting = new CopyOnWriteArrayList<>();
@@ -115,8 +142,14 @@ public class WebhookExecutorImpl implements WebhookExecutor, EventHandler {
     private int retryLimit;
 
     private record PendingWebhookRequest(Resource recordIri, WebhookConfiguration config, Event event) {}
-
     private record ExecutingWebhook(Resource recordIri, Resource activityIri) {}
+
+    /**
+     * Simple {@link PaginatedSearchResults} implementation backing the webhook execution retrieval endpoints.
+     */
+    private record WebhookExecutionResults(List<WebhookExecutionActivity> page, int totalSize, int pageSize,
+                                           int pageNumber) implements PaginatedSearchResults<WebhookExecutionActivity> {
+    }
 
     protected CloseableHttpClient httpClient;
 
@@ -167,6 +200,7 @@ public class WebhookExecutorImpl implements WebhookExecutor, EventHandler {
 
         ProvOntologyLoader.loadOntology(provRepository,
                 WebhookConfigurationService.class.getResourceAsStream("/webhooks.ttl"));
+
         LOG.debug("Webhooks provenance ontology loaded into prov repository");
         LOG.info("WebhookExecutorImpl activated successfully");
     }
@@ -402,7 +436,7 @@ public class WebhookExecutorImpl implements WebhookExecutor, EventHandler {
         LOG.debug("Finalized webhook execution activity {} for record {} (succeeded={}, attempts={})",
                 activity.getResource(), recordIri, succeeded, attempts);
     }
-    
+
     private void handleRequestHeaders(WebhookConfiguration config, WebhookExecutionActivity activity) {
         LOG.trace("Attaching {} request header(s) to webhook execution activity {}",
                 config.getHasRequestHeader().size(), activity.getResource());
@@ -494,5 +528,107 @@ public class WebhookExecutorImpl implements WebhookExecutor, EventHandler {
 
         LOG.debug("Dispatching {} request to {}", method, url);
         return httpClient.execute(request);
+    }
+
+    /**
+     *     sort parameter is not currently used due to only timestamp filter logic being implemented, but should be left
+     *     as a placeholder for future implementation.
+     */
+    @Override
+    public PaginatedSearchResults<WebhookExecutionActivity> getExecutions(Resource recordIri, int offset, int limit,
+                                                                          String sort, boolean ascending) {
+        long start = System.currentTimeMillis();
+        try (RepositoryConnection conn = provService.getConnection()) {
+            List<Resource> activityIris = getExecutionActivityIris(conn, recordIri, ascending, false);
+            int totalSize = activityIris.size();
+
+            List<Resource> pageIris = paginate(activityIris, offset, limit);
+            List<WebhookExecutionActivity> page = new ArrayList<>();
+            for (Resource activityIri : pageIris) {
+                loadFullActivity(conn, activityIri).ifPresent(page::add);
+            }
+
+            int pageSize = limit > 0 ? limit : totalSize;
+            int pageNumber = limit > 0 ? (offset / limit) + 1 : 1;
+            LOG.debug("Retrieved {} of {} webhook execution(s) for record {} in {}ms",
+                    page.size(), totalSize, recordIri, System.currentTimeMillis() - start);
+            return new WebhookExecutionResults(page, totalSize, pageSize, pageNumber);
+        }
+    }
+
+    @Override
+    public Optional<WebhookExecutionActivity> getLatestExecution(Resource recordIri) {
+        long start = System.currentTimeMillis();
+        try (RepositoryConnection conn = provService.getConnection()) {
+            List<Resource> activityIris = getExecutionActivityIris(conn, recordIri, false, true);
+
+            Optional<WebhookExecutionActivity> latest = activityIris.isEmpty() ? Optional.empty()
+                    : loadFullActivity(conn, activityIris.get(0));
+
+            LOG.debug("Retrieved latest webhook execution for record {} in {}ms (found={})",
+                    recordIri, System.currentTimeMillis() - start, latest.isPresent());
+            return latest;
+        }
+    }
+
+    /**
+     * Runs the execution-listing SPARQL query for the given record, returning the matching
+     * {@link WebhookExecutionActivity} IRIs ordered by start time.
+     *
+     * @param conn       a connection to the provenance repository
+     * @param recordIri  the WebhookRecord IRI to filter executions by
+     * @param ascending  whether to order by start time ascending (true) or descending (false)
+     * @param latestOnly whether to apply the latest filter (LIMIT 1, descending) regardless of {@code ascending}
+     * @return the ordered list of WebhookExecutionActivity IRIs
+     */
+    private List<Resource> getExecutionActivityIris(RepositoryConnection conn, Resource recordIri, boolean ascending,
+                                                    boolean latestOnly) {
+
+        LOG.trace("Retrieving IRI of executions for {}", recordIri);
+        StringBuilder queryStr = new StringBuilder(GET_EXECUTIONS_QUERY);
+        if (latestOnly) {
+            LOG.trace("Applying latest filter for record IRI: {}", recordIri);
+            queryStr.append("\nORDER BY DESC(?startTime)\nLIMIT 1");
+        } else {
+            queryStr.append("\nORDER BY ").append(ascending ? "ASC" : "DESC").append("(?startTime)");
+        }
+
+        TupleQuery query = conn.prepareTupleQuery(queryStr.toString());
+        LOG.trace("Setting record binding for record IRI: {}", recordIri);
+        query.setBinding(RECORD_BINDING, recordIri);
+
+        List<Resource> activityIris = new ArrayList<>();
+        try (TupleQueryResult result = query.evaluate()) {
+            result.forEach(bindings -> activityIris.add((Resource) bindings.getValue(ACTIVITY_BINDING)));
+        }
+        return activityIris;
+    }
+
+    /**
+     * Builds the full RDF model for a single WebhookExecutionActivity (its own statements plus its
+     * ConnectionAttempts and headers) and wraps it as a {@link WebhookExecutionActivity}.
+     *
+     * @param conn        a connection to the provenance repository
+     * @param activityIri the IRI of the WebhookExecutionActivity to load
+     * @return an Optional containing the populated WebhookExecutionActivity, or empty if it could not be loaded
+     */
+    private Optional<WebhookExecutionActivity> loadFullActivity(RepositoryConnection conn, Resource activityIri) {
+        LOG.trace("Loading full activity for {}", activityIri);
+
+        GraphQuery query = conn.prepareGraphQuery(GET_EXECUTION_MODEL_QUERY);
+        query.setBinding(ACTIVITY_BINDING, activityIri);
+        Model model = QueryResults.asModel(query.evaluate());
+        return webhookExecutionActivityFactory.getExisting(activityIri, model);
+    }
+
+    /**
+     * Returns the sublist of IRIs for the requested page, accounting for offset and limit bounds.
+     */
+    private List<Resource> paginate(List<Resource> activityIris, int offset, int limit) {
+        if (offset >= activityIris.size()) {
+            return Collections.emptyList();
+        }
+        int end = limit > 0 ? Math.min(offset + limit, activityIris.size()) : activityIris.size();
+        return activityIris.subList(offset, end);
     }
 }

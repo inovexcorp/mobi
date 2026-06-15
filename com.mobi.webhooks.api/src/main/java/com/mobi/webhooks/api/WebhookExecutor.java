@@ -23,9 +23,13 @@ package com.mobi.webhooks.api;
  * #L%
  */
 
+import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookConfiguration;
 import org.eclipse.rdf4j.model.Resource;
 import org.osgi.service.event.Event;
+import com.mobi.webhooks.api.ontology.webhooks.WebhookExecutionActivity;
+
+import java.util.Optional;
 
 /**
  * Service for executing webhook HTTP requests.
@@ -41,4 +45,29 @@ public interface WebhookExecutor {
      * @param event         the OSGi Event that triggered this webhook execution, used to build the request payload
      */
     void executeWebhook(Resource recordIri, WebhookConfiguration configuration, Event event);
+
+    /**
+     * Retrieves a paginated, sorted list of the {@link WebhookExecutionActivity WebhookExecutionActivities}
+     * associated with the provided WebhookRecord. Each returned activity's {@code getModel()} includes the
+     * activity's linked {@code ConnectionAttempt}s (and their headers) so it can be serialized in full.
+     *
+     * @param recordIri the IRI of the WebhookRecord to retrieve executions for
+     * @param offset    the offset for the page of results
+     * @param limit     the maximum number of executions to return in one page (0 for no limit)
+     * @param sort      the IRI of the property to sort by. Currently only {@code prov:startedAtTime} is supported
+     * @param ascending whether the results should be sorted ascending (true) or descending (false) by start time
+     * @return a {@link PaginatedSearchResults} of WebhookExecutionActivities for the record
+     */
+    PaginatedSearchResults<WebhookExecutionActivity> getExecutions(Resource recordIri, int offset, int limit,
+                                                                   String sort, boolean ascending);
+
+    /**
+     * Retrieves the latest {@link WebhookExecutionActivity WebhookExecutionActivity} associated with the provided
+     * WebhookRecord.
+     *
+     * @param recordIri the IRI of the WebhookRecord to retrieve the latest execution for
+     * @return the latest WebhookExecutionActivity for the record, if any
+     */
+    Optional<WebhookExecutionActivity> getLatestExecution(Resource recordIri);
+
 }
