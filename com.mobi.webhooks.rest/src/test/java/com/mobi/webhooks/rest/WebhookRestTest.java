@@ -67,9 +67,11 @@ import com.mobi.webhooks.api.ontology.webhooks.WebhookExecutionActivity;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookRecord;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookRecordFactory;
 import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.PROV;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -92,6 +94,7 @@ public class WebhookRestTest extends MobiRestTestCXF {
 
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final String RECORD_IRI = "http://mobi.com/webhookRecord1";
+    private static final String ACTIVITY_IRI = "https://mobi.solutions/webhooks/execution/test-activity-uuid";
     private static final String CATALOG_IRI = "http://mobi.com/catalog-local";
 
     private static MemoryRepositoryWrapper repo;
@@ -158,7 +161,7 @@ public class WebhookRestTest extends MobiRestTestCXF {
     }
 
     @Before
-    public void setupMocks() {
+    public void setupMocks() throws Exception {
         WebhookRecord record = recordFactory.createNew(recordId);
 
         reset(recordManager, engineManager, configProvider, bNodeService, searchResults,
@@ -179,6 +182,8 @@ public class WebhookRestTest extends MobiRestTestCXF {
         when(webhookConfigurationService.getWebhookConfig(anyString())).thenReturn(webhookConfig);
         when(recordManager.getRecordOpt(any(Resource.class), any(Resource.class),
                 any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(Optional.of(webhookRecord1));
+        when(webhookExecutor.createCallback(any(Resource.class), any(), any(User.class)))
+                .thenReturn(new LinkedHashModel());
         when(executionResults.page()).thenReturn(List.of(webhookExecution));
         when(executionResults.totalSize()).thenReturn(1);
         when(executionResults.pageSize()).thenReturn(10);
@@ -741,5 +746,72 @@ public class WebhookRestTest extends MobiRestTestCXF {
                 .request().put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
         assertErrorResponse(response, 500, "MobiException", "Unexpected service failure");
+    }
+
+    /* Webhook Callback Creation */
+
+    /* Success Test Cases */
+    @Test
+    public void createCallbackTest() throws Exception {
+        Response response = target().path("webhooks/" + ResourceUtils.encode(ACTIVITY_IRI) + "/callback")
+                .request().post(Entity.entity("{\"status\":\"done\"}", MediaType.APPLICATION_JSON));
+
+        assertEquals(201, response.getStatus());
+        verify(webhookExecutor).createCallback(any(Resource.class), any(), any(User.class));
+    }
+
+    @Test
+    public void createCallbackWithEmptyBodyTest() throws Exception {
+        Response response = target().path("webhooks/" + ResourceUtils.encode(ACTIVITY_IRI) + "/callback")
+                .request().post(Entity.entity("", MediaType.TEXT_PLAIN));
+
+        assertEquals(201, response.getStatus());
+        verify(webhookExecutor).createCallback(any(Resource.class), any(), any(User.class));
+    }
+
+    /* Failure Test Cases */
+    @Test
+    public void createCallbackActivityNotFoundTest() throws Exception {
+        doThrow(new IllegalArgumentException("WebhookExecutionActivity not found for IRI: " + ACTIVITY_IRI))
+                .when(webhookExecutor).createCallback(any(Resource.class), any(), any(User.class));
+
+        Response response = target().path("webhooks/" + ResourceUtils.encode(ACTIVITY_IRI) + "/callback")
+                .request().post(Entity.entity("{}", MediaType.APPLICATION_JSON));
+
+        assertErrorResponse(response, 400, "IllegalArgumentException",
+                "WebhookExecutionActivity not found for IRI: " + ACTIVITY_IRI);
+    }
+
+    @Test
+    public void createCallbackBodyReadErrorTest() throws Exception {
+        doThrow(new IllegalStateException("Could not read callback request body: stream closed"))
+                .when(webhookExecutor).createCallback(any(Resource.class), any(), any(User.class));
+
+        Response response = target().path("webhooks/" + ResourceUtils.encode(ACTIVITY_IRI) + "/callback")
+                .request().post(Entity.entity("{}", MediaType.APPLICATION_JSON));
+
+        assertErrorResponse(response, 500, "IllegalStateException",
+                "Could not read callback request body: stream closed");
+    }
+
+    @Test
+    public void createCallbackMobiExceptionTest() throws Exception {
+        doThrow(new MobiException("Prov repository unavailable"))
+                .when(webhookExecutor).createCallback(any(Resource.class), any(), any(User.class));
+
+        Response response = target().path("webhooks/" + ResourceUtils.encode(ACTIVITY_IRI) + "/callback")
+                .request().post(Entity.entity("{}", MediaType.APPLICATION_JSON));
+
+        assertErrorResponse(response, 500, "MobiException", "Prov repository unavailable");
+    }
+
+    @Test
+    public void createCallbackUserNotFoundTest() {
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
+
+        Response response = target().path("webhooks/" + ResourceUtils.encode(ACTIVITY_IRI) + "/callback")
+                .request().post(Entity.entity("{}", MediaType.APPLICATION_JSON));
+
+        assertErrorResponse(response, 500, "MobiException", "User not found");
     }
 }
