@@ -23,6 +23,8 @@ package com.mobi.webhooks.impl;
  * #L%
  */
 
+import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_OVERRIDES;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -31,12 +33,17 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
 import com.mobi.ontologies.provo.EntityFactory;
 import com.mobi.prov.api.ProvOntologyLoader;
 import com.mobi.prov.api.ProvenanceService;
 import com.mobi.prov.api.builder.ActivityConfig;
 import com.mobi.repository.api.OsgiRepository;
+import com.mobi.security.policy.api.PDP;
+import com.mobi.security.policy.api.Request;
+import com.mobi.security.policy.api.ontologies.policy.Read;
+import com.mobi.security.policy.api.xacml.XACML;
 import com.mobi.sse.SSETopics;
 import com.mobi.webhooks.api.WebhookConfigurationService;
 import com.mobi.webhooks.api.WebhookExecutor;
@@ -45,6 +52,8 @@ import com.mobi.webhooks.api.ontology.webhooks.ConnectionAttempt;
 import com.mobi.webhooks.api.ontology.webhooks.ConnectionAttemptFactory;
 import com.mobi.webhooks.api.ontology.webhooks.Header;
 import com.mobi.webhooks.api.ontology.webhooks.HeaderFactory;
+import com.mobi.webhooks.api.ontology.webhooks.WebhookCallback;
+import com.mobi.webhooks.api.ontology.webhooks.WebhookCallbackFactory;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookConfiguration;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookExecutionActivity;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookExecutionActivityFactory;
@@ -60,6 +69,8 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
@@ -88,22 +99,27 @@ import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * Simple implementation of WebhookExecutor for executing webhook HTTP requests.
@@ -178,7 +194,13 @@ public class WebhookExecutorImpl implements WebhookExecutor, EventHandler {
     HeaderFactory headerFactory;
 
     @Reference
+    WebhookCallbackFactory webhookCallbackFactory;
+
+    @Reference
     EngineManager engineManager;
+
+    @Reference
+    PDP pdp;
 
     @Activate
     @Modified
@@ -263,21 +285,21 @@ public class WebhookExecutorImpl implements WebhookExecutor, EventHandler {
                 () -> new IllegalStateException("WebhookConfiguration is missing HTTP method property"));
         LOG.debug("Webhook for record {} resolved to {} {}", recordIri, method, url);
 
-        Resource activityIRI = VF.createIRI(WEBHOOK_NAMESPACE + "execution/" + UUID.randomUUID());
+        // Create WebhookExecutionActivity
+        ActivityConfig activityConfig = createActivityConfig(recordIri);
+        WebhookExecutionActivity activity = startWebhookActivity(url, method, activityConfig);
+        Resource activityIRI = activity.getResource();
         LOG.debug("Created webhook execution activity IRI {} for record {}", activityIRI, recordIri);
 
-        // Build payload from event properties + activity IRI placeholder
+        // Build payload from event properties + activity IRI
         String requestBody;
         try {
-            requestBody = buildPayload(event, config, activityIRI);
+            requestBody = buildPayload(event, config, activity);
         } catch (JsonProcessingException e) {
             LOG.error("Failed to build webhook payload for record {} (activity {})", recordIri, activityIRI, e);
             throw new IllegalStateException("Failed to build webhook payload", e);
         }
-
-        // Create WebhookExecutionActivity
-        ActivityConfig activityConfig = createActivityConfig(recordIri);
-        WebhookExecutionActivity activity = startWebhookActivity(url, method, requestBody, activityConfig);
+        activity.setRequestBody(requestBody);
 
         // Attach request headers to activity
         handleRequestHeaders(config, activity);
@@ -355,14 +377,96 @@ public class WebhookExecutorImpl implements WebhookExecutor, EventHandler {
         }
     }
 
-    private String buildPayload(Event event, WebhookConfiguration config, Resource activityIri)
+    @Override
+    public Model createCallback(Resource activityIri, HttpServletRequest request, User user)
+            throws IllegalAccessException {
+        long start = System.currentTimeMillis();
+        LOG.debug("createCallback called for activity: {}, method={} URL={} user={}",
+                activityIri, request.getMethod(), request.getRequestURL(), user.getResource().stringValue());
+        WebhookExecutionActivity activity = resolveActivity(activityIri);
+        verifyLinkedRecordAccess(activity, user);
+        WebhookCallback callback = buildCallback(request);
+        persistCallback(activity, callback);
+        LOG.debug("Callback {} created and linked to activity {} in {}ms",
+                callback.getResource(), activityIri, System.currentTimeMillis() - start);
+        return callback.getModel();
+    }
+
+    private WebhookExecutionActivity resolveActivity(Resource activityIri) {
+        Activity genericActivity = provService.getActivity(activityIri).orElseThrow(
+                () -> new IllegalArgumentException(
+                        "WebhookExecutionActivity not found for IRI: " + activityIri));
+        return webhookExecutionActivityFactory
+                .getExisting(genericActivity.getResource(), genericActivity.getModel())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Resource " + activityIri + " is not a WebhookExecutionActivity"));
+    }
+
+    private void verifyLinkedRecordAccess(WebhookExecutionActivity activity, User user)
+            throws IllegalAccessException {
+        Resource recordIri = activity.getUsed_resource().stream().findFirst().orElseThrow(
+                () -> new IllegalArgumentException(
+                        "WebhookExecutionActivity " + activity.getResource() + " has no linked WebhookRecord"));
+        IRI subjectId = (IRI) user.getResource();
+        LOG.debug("Verifying user {} has access to WebhookRecord {}", subjectId.stringValue(), recordIri);
+        IRI actionId = VF.createIRI(Read.TYPE);
+        Map<String, Literal> subjectAttrs = new HashMap<>();
+        Map<String, Literal> actionAttrs = new HashMap<>();
+        subjectAttrs.put(XACML.SUBJECT_ID, VF.createLiteral(subjectId.stringValue()));
+        actionAttrs.put(XACML.ACTION_ID, VF.createLiteral(actionId.stringValue()));
+        Request pdpRequest = pdp.createRequest(List.of(subjectId), subjectAttrs, List.of((IRI) recordIri),
+                new HashMap<>(), List.of(actionId), actionAttrs);
+        LOG.debug("Executing XACML request for user: {} to access WebhookRecord {}",
+                subjectId.stringValue(), recordIri);
+        Set<String> viewableRecords = pdp.filter(pdpRequest, VF.createIRI(POLICY_PERMIT_OVERRIDES));
+        if (viewableRecords.isEmpty()) {
+            throw new IllegalAccessException("User " + subjectId.stringValue()
+                    + " does not have access to WebhookRecord " + recordIri);
+        }
+    }
+
+    private WebhookCallback buildCallback(HttpServletRequest request) {
+        String body;
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(request.getInputStream(), StandardCharsets.UTF_8))) {
+            body = reader.lines().collect(Collectors.joining(System.lineSeparator()));
+        } catch (IOException e) {
+            throw new IllegalStateException("Could not read callback request body: " + e.getMessage(), e);
+        }
+        Resource callbackIri = VF.createIRI(WEBHOOK_NAMESPACE + "callback/" + UUID.randomUUID());
+        WebhookCallback callback = webhookCallbackFactory.createNew(callbackIri);
+        callback.setCallbackFireTime(OffsetDateTime.now());
+        callback.setCallbackBody(body);
+        callback.setCallbackIssuer(resolveCallbackIssuer(request));
+        return callback;
+    }
+
+    private void persistCallback(WebhookExecutionActivity activity, WebhookCallback callback) {
+        activity.addHasCallback(callback);
+        activity.getModel().addAll(callback.getModel());
+        provService.updateActivity(activity);
+    }
+
+    private String resolveCallbackIssuer(HttpServletRequest request) {
+        String origin = request.getHeader("Origin");
+        if (origin != null && !origin.isBlank()) {
+            return origin;
+        }
+        String referer = request.getHeader("Referer");
+        if (referer != null && !referer.isBlank()) {
+            return referer;
+        }
+        return request.getRemoteAddr();
+    }
+
+    private String buildPayload(Event event, WebhookConfiguration config, WebhookExecutionActivity activity)
             throws JsonProcessingException {
 
         ObjectNode node = mapper.createObjectNode();
         Optional<String> requestBody = config.getRequestBody();
 
         requestBody.ifPresent(s -> node.put("data", s));
-        node.put("activityIRI", activityIri.stringValue());
+        node.put("activityIRI", activity.getResource().stringValue());
 
         ObjectNode eventData = mapper.createObjectNode();
         for (String key : event.getPropertyNames()) {
@@ -370,19 +474,17 @@ public class WebhookExecutorImpl implements WebhookExecutor, EventHandler {
         }
         node.set("event", eventData);
 
-        // Return as JSON string
         String payload = mapper.writeValueAsString(node);
-        LOG.trace("Built webhook payload for activity {}.", activityIri);
+        LOG.trace("Built webhook payload for activity {}.", activity.getResource());
         return payload;
     }
 
-    private WebhookExecutionActivity startWebhookActivity(String url, String method, String requestBody,
+    private WebhookExecutionActivity startWebhookActivity(String url, String method,
                                                           ActivityConfig activityConfig) {
         WebhookExecutionActivity activity = (WebhookExecutionActivity) provService.createActivity(activityConfig);
 
         activity.setRequestUrl(VF.createIRI(url));
         activity.setRequestMethod(method);
-        activity.setRequestBody(requestBody);
         activity.addStartedAtTime(OffsetDateTime.now());
         LOG.trace("Started webhook execution activity {} for {} {}", activity.getResource(), method, url);
         return activity;

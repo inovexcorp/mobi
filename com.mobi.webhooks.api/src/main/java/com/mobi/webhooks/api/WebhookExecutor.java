@@ -24,12 +24,16 @@ package com.mobi.webhooks.api;
  */
 
 import com.mobi.catalog.api.PaginatedSearchResults;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookConfiguration;
+import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.osgi.service.event.Event;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookExecutionActivity;
 
 import java.util.Optional;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * Service for executing webhook HTTP requests.
@@ -45,6 +49,20 @@ public interface WebhookExecutor {
      * @param event         the OSGi Event that triggered this webhook execution, used to build the request payload
      */
     void executeWebhook(Resource recordIri, WebhookConfiguration configuration, Event event);
+
+    /**
+     * Creates a WebhookCallback RDF representation and links it to the specified WebhookExecutionActivity
+     * in the provenance repository.
+     *
+     * @param activityIri the IRI of the WebhookExecutionActivity to associate the callback with
+     * @param request     the incoming HTTP request containing the callback body and metadata
+     * @param user        the authenticated user making the request; used to verify read access on the linked record
+     * @return an RDF4J Model representing the newly created WebhookCallback
+     * @throws IllegalArgumentException if the WebhookExecutionActivity cannot be found for the given IRI
+     * @throws IllegalAccessException   if the user does not have read access to the linked WebhookRecord
+     * @throws IllegalStateException    if the callback request body cannot be read
+     */
+    Model createCallback(Resource activityIri, HttpServletRequest request, User user) throws IllegalAccessException;
 
     /**
      * Retrieves a paginated, sorted list of the {@link WebhookExecutionActivity WebhookExecutionActivities}

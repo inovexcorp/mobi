@@ -224,3 +224,33 @@
     rdfs:comment "The timestamp when the response was received."@en;
     rdfs:domain :ConnectionAttempt;
     rdfs:range xsd:dateTime.
+
+# Webhook Callback
+
+:WebhookCallback a owl:Class;
+    rdfs:label "Webhook Callback"@en;
+    rdfs:comment "A callback received from an external system notifying of pipeline or ETL completion."@en.
+
+:hasCallback a owl:ObjectProperty;
+    rdfs:label "has callback"@en;
+    rdfs:comment "Links a Webhook Execution Activity to a callback received from an external system."@en;
+    rdfs:domain :WebhookExecutionActivity;
+    rdfs:range :WebhookCallback.
+
+:callbackFireTime a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "callback fire time"@en;
+    rdfs:comment "The timestamp when the callback was received."@en;
+    rdfs:domain :WebhookCallback;
+    rdfs:range xsd:dateTime.
+
+:callbackBody a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "callback body"@en;
+    rdfs:comment "The body content of the incoming callback request."@en;
+    rdfs:domain :WebhookCallback;
+    rdfs:range xsd:string.
+
+:callbackIssuer a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "callback issuer"@en;
+    rdfs:comment "The URL or identifier of the external system that issued the callback."@en;
+    rdfs:domain :WebhookCallback;
+    rdfs:range xsd:string.

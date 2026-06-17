@@ -55,8 +55,8 @@ import com.mobi.rest.util.RestUtils;
 import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import com.mobi.rest.util.swagger.JsonLdObject;
 import com.mobi.webhooks.api.WebhookConfigurationService;
-import com.mobi.webhooks.api.ontology.webhooks.WebhookConfiguration;
 import com.mobi.webhooks.api.WebhookExecutor;
+import com.mobi.webhooks.api.ontology.webhooks.WebhookConfiguration;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookExecutionActivity;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookRecord;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookRecordFactory;
@@ -158,10 +158,10 @@ public class WebhookRest {
     WebhookConfigurationService webhookConfigurationService;
 
     @Reference
-    WebhookRecordFactory webhookRecordFactory;
+    WebhookExecutor webhookExecutor;
 
     @Reference
-    WebhookExecutor webhookExecutor;
+    WebhookRecordFactory webhookRecordFactory;
 
     /**
      * Retrieves a paginated list of WebhookRecords accessible to the requesting user. Filters results by view
@@ -690,6 +690,65 @@ public class WebhookRest {
             LOG.debug("Request processing took {}ms", System.currentTimeMillis() - start);
             throw RestUtils.getErrorObjNotFound(ex);
         } catch (IllegalStateException | MobiException | NullPointerException ex) {
+            LOG.debug("Request processing took {}ms", System.currentTimeMillis() - start);
+            throw RestUtils.getErrorObjInternalServerError(ex);
+        }
+    }
+
+    /**
+     * Creates a new WebhookCallback linked to the specified WebhookExecutionActivity in the provenance repository.
+     * The callback captures the fire time, request body, and issuer from the incoming request.
+     *
+     * @param servletRequest the incoming HTTP request containing the callback payload
+     * @param activityIri    the IRI of the WebhookExecutionActivity to associate the callback with
+     * @return a {@link Response} containing the newly created WebhookCallback as JSON-LD with status 201,
+     *         or an error response if the activity cannot be found or the request cannot be parsed
+     */
+    @POST
+    @Tag(name = TAG, description = DESCRIPTION)
+    @Path("{activityIri}/callback")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @Operation(summary = "Creates a callback record linked to the specified WebhookExecutionActivity")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201",
+                    description = "Callback created. Returns the new WebhookCallback as JSON-LD",
+                    content = @Content(schema = @Schema(implementation = JsonLdObject.class))),
+            @ApiResponse(responseCode = "400",
+                    description = "The specified WebhookExecutionActivity could not be found",
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))),
+            @ApiResponse(responseCode = "401",
+                    description = "User is not authenticated or session has expired",
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))),
+            @ApiResponse(responseCode = "403",
+                    description = "User does not have read access to the linked WebhookRecord",
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))),
+            @ApiResponse(responseCode = "500",
+                    description = "An error occurred while creating the callback",
+                    content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class)))
+    })
+    public Response createCallback(
+            @Parameter(hidden = true) @Context HttpServletRequest servletRequest,
+            @Parameter(description = "IRI of the WebhookExecutionActivity to link the callback to",
+                    required = true, schema = @Schema(type = "string", format = "uri"))
+            @PathParam("activityIri") String activityIri) {
+        long start = System.currentTimeMillis();
+        User activeUser = getActiveUser(servletRequest, engineManager);
+        LOG.debug("POST /webhooks/{}/callback requested by user: {}",
+                activityIri, activeUser.getResource().stringValue());
+        try {
+            Resource activityIriResource = vf.createIRI(activityIri);
+            Model callbackModel = webhookExecutor.createCallback(activityIriResource, servletRequest, activeUser);
+            LOG.debug("POST /webhooks/{}/callback completed in {}ms",
+                    activityIri, System.currentTimeMillis() - start);
+            return Response.status(201).entity(modelToSkolemizedJsonld(callbackModel, bNodeService)).build();
+        } catch (IllegalArgumentException ex) {
+            LOG.debug("Request processing took {}ms", System.currentTimeMillis() - start);
+            throw RestUtils.getErrorObjBadRequest(ex);
+        } catch (IllegalAccessException ex) {
+            LOG.debug("Request processing took {}ms", System.currentTimeMillis() - start);
+            throw RestUtils.getErrorObjForbidden(ex);
+        } catch (IllegalStateException | MobiException ex) {
             LOG.debug("Request processing took {}ms", System.currentTimeMillis() - start);
             throw RestUtils.getErrorObjInternalServerError(ex);
         }

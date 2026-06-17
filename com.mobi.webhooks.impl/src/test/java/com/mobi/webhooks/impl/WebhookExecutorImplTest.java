@@ -25,6 +25,7 @@ package com.mobi.webhooks.impl;
 
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -47,6 +48,8 @@ import com.mobi.ontologies.provo.Entity;
 import com.mobi.ontologies.provo.EntityFactory;
 import com.mobi.prov.api.ProvenanceService;
 import com.mobi.prov.api.builder.ActivityConfig;
+import com.mobi.security.policy.api.PDP;
+import com.mobi.security.policy.api.Request;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.api.RepositoryManager;
@@ -59,9 +62,10 @@ import com.mobi.webhooks.api.ontology.webhooks.ConnectionAttemptFactory;
 import com.mobi.webhooks.api.ontology.webhooks.Header;
 import com.mobi.webhooks.api.ontology.webhooks.HeaderFactory;
 import com.mobi.webhooks.api.ontology.webhooks.RequestHeader;
+import com.mobi.webhooks.api.ontology.webhooks.WebhookCallback;
+import com.mobi.webhooks.api.ontology.webhooks.WebhookCallbackFactory;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookConfiguration;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookExecutionActivity;
-
 import com.mobi.webhooks.api.ontology.webhooks.WebhookExecutionActivityFactory;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.StatusLine;
@@ -77,6 +81,7 @@ import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.model.vocabulary.PROV;
 import org.eclipse.rdf4j.query.GraphQuery;
 import org.eclipse.rdf4j.query.GraphQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -92,6 +97,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.osgi.service.event.Event;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -102,6 +108,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import javax.servlet.ReadListener;
+import javax.servlet.ServletInputStream;
+import javax.servlet.http.HttpServletRequest;
 
 public class WebhookExecutorImplTest {
 
@@ -119,6 +128,7 @@ public class WebhookExecutorImplTest {
 
     private final RepositoryManager repoManager = new SimpleRepositoryManager();
     private final OrmFactory<WebhookExecutionActivity> webhookExecutionActivityFactory = getRequiredOrmFactory(WebhookExecutionActivity.class);
+    private final OrmFactory<WebhookCallback> webhookCallbackFactory = getRequiredOrmFactory(WebhookCallback.class);
     private final OrmFactory<ConnectionAttempt> connectionAttemptFactory = getRequiredOrmFactory(ConnectionAttempt.class);
     private final OrmFactory<Header> headerFactory = getRequiredOrmFactory(Header.class);
     private final OrmFactory<Entity> entityFactory = getRequiredOrmFactory(Entity.class);
@@ -143,6 +153,9 @@ public class WebhookExecutorImplTest {
     private EngineManager engineManager;
 
     @Mock
+    private PDP pdp;
+
+    @Mock
     private CloseableHttpClient httpClient;
 
     @Mock
@@ -156,6 +169,7 @@ public class WebhookExecutorImplTest {
     private OsgiRepository repo;
     private MemoryRepositoryWrapper provRepository;
     private WebhookExecutionActivity webhookExecutionActivity;
+    private User testUser;
 
     @Before
     public void setUp() throws IOException {
@@ -164,8 +178,8 @@ public class WebhookExecutorImplTest {
         provRepository = new MemoryRepositoryWrapper();
         provRepository.setDelegate(new SailRepository(new MemoryStore()));
         webhookExecutionActivity = webhookExecutionActivityFactory.createNew(VF.createIRI("https://mobi.com/activities/test-activity"));
-        User user = userFactory.createNew(USER_IRI);
-        user.setUsername(VF.createLiteral("test user"));
+        testUser = userFactory.createNew(USER_IRI);
+        testUser.setUsername(VF.createLiteral("test user"));
 
         when(config.connectionTimeout()).thenReturn(5000);
         when(config.retryLimit()).thenReturn(3);
@@ -181,7 +195,7 @@ public class WebhookExecutorImplTest {
         when(configProvider.getRepository()).thenReturn(repo);
         when(configProvider.getRepositoryId()).thenReturn("System");
 
-        when(engineManager.retrieveUser(any())).thenReturn(Optional.of(user));
+        when(engineManager.retrieveUser(any())).thenReturn(Optional.of(testUser));
         when(provService.createActivity(any(ActivityConfig.class))).thenReturn(webhookExecutionActivity);
         when(provService.getConnection()).thenAnswer(invocation -> provRepository.getConnection());
 
@@ -201,11 +215,13 @@ public class WebhookExecutorImplTest {
         executor.provService = provService;
         executor.provRepository = provRepository;
         executor.webhookExecutionActivityFactory = (WebhookExecutionActivityFactory) webhookExecutionActivityFactory;
+        executor.webhookCallbackFactory = (WebhookCallbackFactory) webhookCallbackFactory;
         executor.connectionAttemptFactory = (ConnectionAttemptFactory) connectionAttemptFactory;
         executor.headerFactory = (HeaderFactory) headerFactory;
         executor.configProvider = configProvider;
         executor.entityFactory = (EntityFactory) entityFactory;
         executor.engineManager = engineManager;
+        executor.pdp = pdp;
 
         executor.activate(config);
         executor.httpClient = httpClient;
@@ -415,6 +431,90 @@ public class WebhookExecutorImplTest {
 
         verify(provService, times(2)).addActivity(any());
         verify(provService, times(2)).updateActivity(any());
+    }
+
+    /* createCallback() */
+
+    @Test
+    public void createCallbackSuccess() throws Exception {
+        IRI activityIri = VF.createIRI("https://mobi.com/activities/test-activity");
+        webhookExecutionActivity.getModel().add(activityIri, PROV.USED, RECORD_IRI);
+        when(provService.getActivity(activityIri)).thenReturn(Optional.of(webhookExecutionActivity));
+        when(pdp.createRequest(any(), any(), any(), any(), any(), any())).thenReturn(mock(Request.class));
+        when(pdp.filter(any(), any())).thenReturn(Set.of(RECORD_IRI.stringValue()));
+
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getInputStream()).thenReturn(new ServletInputStream() {
+            private final ByteArrayInputStream wrapped =
+                    new ByteArrayInputStream("callback-body".getBytes(StandardCharsets.UTF_8));
+
+            @Override
+            public boolean isFinished() { return wrapped.available() == 0; }
+
+            @Override
+            public boolean isReady() { return true; }
+
+            @Override
+            public void setReadListener(ReadListener readListener) {}
+
+            @Override
+            public int read() throws IOException { return wrapped.read(); }
+        });
+        when(request.getHeaderNames()).thenReturn(null);
+        when(request.getHeader("Origin")).thenReturn("https://example.com");
+
+        Model result = executor.createCallback(activityIri, request, testUser);
+
+        assertFalse(result.isEmpty());
+        assertTrue(result.stream().anyMatch(s ->
+                s.getPredicate().stringValue().equals(WebhookCallback.callbackBody_IRI)));
+        verify(provService).updateActivity(any(WebhookExecutionActivity.class));
+    }
+
+    @Test
+    public void createCallbackActivityNotFound() {
+        IRI activityIri = VF.createIRI("https://mobi.com/activities/missing-activity");
+        when(provService.getActivity(activityIri)).thenReturn(Optional.empty());
+
+        HttpServletRequest request = mock(HttpServletRequest.class);
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> executor.createCallback(activityIri, request, testUser));
+        assertEquals("WebhookExecutionActivity not found for IRI: " + activityIri, ex.getMessage());
+        verify(provService, never()).updateActivity(any());
+    }
+
+    @Test
+    public void createCallbackBodyReadError() throws Exception {
+        IRI activityIri = VF.createIRI("https://mobi.com/activities/test-activity");
+        webhookExecutionActivity.getModel().add(activityIri, PROV.USED, RECORD_IRI);
+        when(provService.getActivity(activityIri)).thenReturn(Optional.of(webhookExecutionActivity));
+        when(pdp.createRequest(any(), any(), any(), any(), any(), any())).thenReturn(mock(Request.class));
+        when(pdp.filter(any(), any())).thenReturn(Set.of(RECORD_IRI.stringValue()));
+
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getHeaderNames()).thenReturn(null);
+        when(request.getInputStream()).thenThrow(new IOException("Stream closed"));
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> executor.createCallback(activityIri, request, testUser));
+        assertTrue(ex.getMessage().contains("Stream closed"));
+        verify(provService, never()).updateActivity(any());
+    }
+
+    @Test
+    public void createCallbackAccessDenied() {
+        IRI activityIri = VF.createIRI("https://mobi.com/activities/test-activity");
+        webhookExecutionActivity.getModel().add(activityIri, PROV.USED, RECORD_IRI);
+        when(provService.getActivity(activityIri)).thenReturn(Optional.of(webhookExecutionActivity));
+        when(pdp.createRequest(any(), any(), any(), any(), any(), any())).thenReturn(mock(Request.class));
+        when(pdp.filter(any(), any())).thenReturn(Collections.emptySet());
+
+        HttpServletRequest request = mock(HttpServletRequest.class);
+
+        assertThrows(IllegalAccessException.class,
+                () -> executor.createCallback(activityIri, request, testUser));
+        verify(provService, never()).updateActivity(any());
     }
 
     /* getExecutions() */
