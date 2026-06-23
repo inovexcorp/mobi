@@ -32,15 +32,40 @@
 #
 
 #
-# The following section shows the possible configuration options for the default 
+# The following section shows the possible configuration options for the default
 # karaf scripts
 #
+# The settings below are designed to be overridden by the environment (for
+# example, Docker container environment variables). Defaults are only applied
+# when a value has NOT already been provided externally, and operator-supplied
+# JVM flags are appended to the distribution defaults rather than replacing them.
+#
+# Variables an operator may set in the environment:
+#   JAVA_MIN_MEM      Minimum heap (-Xms). Default: 512M
+#   JAVA_MAX_MEM      Maximum heap (-Xmx). Default: 1024M
+#   JAVA_OPTS         Extra generic JVM options; appended after the memory flags
+#   EXTRA_JAVA_OPTS   Additional JVM options; appended after the defaults below
+# Note: for a duplicated raw flag (e.g. two -Xmx), the JVM uses the LAST one,
+# so externally-supplied flags (appended later) take precedence.
+#
 # export JAVA_HOME # Location of Java installation
-export JAVA_MIN_MEM=512M # Minimum memory for the JVM
-export JAVA_MAX_MEM=1024M # Maximum memory for the JVM
-export JAVA_OPTS="-Xms${JAVA_MIN_MEM} -Xmx${JAVA_MAX_MEM}" # Generic JVM options, for instance, where you can pass the memory configuration
+
+# Apply memory defaults only when not already set in the environment.
+: "${JAVA_MIN_MEM:=512M}" # Minimum memory for the JVM
+: "${JAVA_MAX_MEM:=1024M}" # Maximum memory for the JVM
+export JAVA_MIN_MEM JAVA_MAX_MEM
+
+# Build JAVA_OPTS from the (possibly overridden) memory settings, preserving any
+# JAVA_OPTS already provided externally. Memory flags come first so that a raw
+# -Xms/-Xmx supplied via JAVA_OPTS still wins (last-flag-wins).
+export JAVA_OPTS="-Xms${JAVA_MIN_MEM} -Xmx${JAVA_MAX_MEM} ${JAVA_OPTS}"
+
 # export JAVA_NON_DEBUG_OPTS # Additional non-debug JVM options
-export EXTRA_JAVA_OPTS="-Xss4m -Dfile.encoding=UTF-8"
+
+# Keep the distribution's required defaults and append any externally-provided
+# EXTRA_JAVA_OPTS so operator flags are applied (and win on conflict).
+DEFAULT_EXTRA_JAVA_OPTS="-Xss4m -Dfile.encoding=UTF-8"
+export EXTRA_JAVA_OPTS="${DEFAULT_EXTRA_JAVA_OPTS} ${EXTRA_JAVA_OPTS}"
 # export KARAF_HOME # Karaf home folder
 # export KARAF_DATA # Karaf data folder
 # export KARAF_BASE # Karaf base folder

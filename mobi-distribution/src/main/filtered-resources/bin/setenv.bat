@@ -33,25 +33,40 @@ rem karaf script afterwards.
 rem
 
 rem
-rem The following section shows the possible configuration options for the default 
+rem The following section shows the possible configuration options for the default
 rem karaf scripts
+rem
+rem The settings below are designed to be overridden by the environment.
+rem Defaults are only applied when a value has NOT already been provided
+rem externally, and operator-supplied JVM flags are appended to the distribution
+rem defaults rather than replacing them.
+rem
+rem Variables an operator may set in the environment:
+rem   JAVA_MIN_MEM      Minimum heap (-Xms). Default: 512M
+rem   JAVA_MAX_MEM      Maximum heap (-Xmx). Default: 1024M
+rem   JAVA_OPTS         Extra generic JVM options; appended after the memory flags
+rem   EXTRA_JAVA_OPTS   Additional JVM options; appended after the defaults below
+rem Note: for a duplicated raw flag (e.g. two -Xmx), the JVM uses the LAST one,
+rem so externally-supplied flags (appended later) take precedence.
 rem
 rem Window name of the windows console
 rem SET KARAF_TITLE
 rem Location of Java installation
 rem SET JAVA_HOME
-rem Minimum memory for the JVM
-SET JAVA_MIN_MEM=512M
-rem Maximum memory for the JVM
-SET JAVA_MAX_MEM=1024M
-rem Generic JVM options (for instance, where you can provide memory configuration)
-rem SET JAVA_OPTS
-SET JAVA_OPTS=-Xms%JAVA_MIN_MEM% -Xmx%JAVA_MAX_MEM%
+rem Apply memory defaults only when not already set in the environment.
+if not defined JAVA_MIN_MEM SET JAVA_MIN_MEM=512M
+if not defined JAVA_MAX_MEM SET JAVA_MAX_MEM=1024M
+rem Build JAVA_OPTS from the (possibly overridden) memory settings, preserving any
+rem JAVA_OPTS already provided externally. Memory flags come first so a raw
+rem -Xms/-Xmx supplied via JAVA_OPTS still wins (last-flag-wins).
+SET JAVA_OPTS=-Xms%JAVA_MIN_MEM% -Xmx%JAVA_MAX_MEM% %JAVA_OPTS%
 rem Additional JVM options
 rem SET JAVA_NON_DEBUG_OPTS
 rem Additional non-debug JVM options
-rem SET EXTRA_JAVA_OPTS
-SET EXTRA_JAVA_OPTS=-Xss4m -Dfile.encoding=UTF-8
+rem Keep the distribution's required defaults and append any externally-provided
+rem EXTRA_JAVA_OPTS so operator flags are applied (and win on conflict).
+SET DEFAULT_EXTRA_JAVA_OPTS=-Xss4m -Dfile.encoding=UTF-8
+SET EXTRA_JAVA_OPTS=%DEFAULT_EXTRA_JAVA_OPTS% %EXTRA_JAVA_OPTS%
 rem Karaf home folder
 rem SET KARAF_HOME
 rem Karaf data folder
