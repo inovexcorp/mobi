@@ -47,6 +47,8 @@
 
 :WebhookConfigurationUrlShape a sh:PropertyShape;
     sh:path :url;
+    sh:datatype xsd:string ;
+    sh:pattern "^(https?|ftp):\/\/[^\s\/$.?#].[^\s]*$" ;
     sh:minCount 1;
     sh:maxCount 1.
 
