@@ -156,8 +156,7 @@ public class WebhookConfigurationServiceImpl implements WebhookConfigurationServ
                 try {
                     Rio.write(report, sw, RDFFormat.TURTLE);
                 } catch (Exception ignored) { /* best-effort */ }
-                throw new IllegalArgumentException(
-                        "WebhookConfiguration failed SHACL validation:\n" + sw, ex);
+                throw new IllegalArgumentException("WebhookConfiguration failed SHACL validation:\n" + sw, ex);
             }
             throw ex;
         } finally {

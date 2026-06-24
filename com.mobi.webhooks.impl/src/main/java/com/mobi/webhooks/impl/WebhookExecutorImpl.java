@@ -283,6 +283,7 @@ public class WebhookExecutorImpl implements WebhookExecutor, EventHandler {
                 () -> new IllegalStateException("WebhookConfiguration is missing URL property"));
         String method = config.getHttpMethod().orElseThrow(
                 () -> new IllegalStateException("WebhookConfiguration is missing HTTP method property"));
+
         LOG.debug("Webhook for record {} resolved to {} {}", recordIri, method, url);
 
         // Create WebhookExecutionActivity

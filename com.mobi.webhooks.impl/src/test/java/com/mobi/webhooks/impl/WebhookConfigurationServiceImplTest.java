@@ -442,6 +442,21 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
         assertTrue(ex.getMessage().startsWith("WebhookConfiguration failed SHACL validation"));
     }
 
+    @Test
+    public void updateConfigurationInvalidURLTest() {
+        loadTrigData();
+        service.start();
+
+        Model invalidConfigModel = createTestConfigModel(TEST_CONFIG_IRI);
+        WebhookConfiguration config = webhookConfigurationFactory.getExisting(TEST_CONFIG_IRI, invalidConfigModel).get();
+        config.setUrl("urn:invalid");
+
+        WebhookRecord record = webhookRecordFactory.getExisting(FILTERED_RECORD_IRI, testRecord).orElseThrow();
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
+                service.updateConfiguration(record, config.getModel()));
+        assertTrue(ex.getMessage().startsWith("WebhookConfiguration failed SHACL validation"));
+    }
+
     /* Helper Methods */
 
     private void loadTrigData(){
