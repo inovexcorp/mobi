@@ -482,7 +482,7 @@ public class RestUtilsTest {
         // TEST ASC
         Response response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 0, 1,
                 true, null, "http://example.com/test#TestThing", service);
-        ArrayNode array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
+        ArrayNode array = mapper.readValue(response.getEntity().toString(), ArrayNode.class);
         assertTrue(array.get(0).isObject());
         ObjectNode jsonObject = (ObjectNode) array.get(0);
         assertEquals("VALUE 1", jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText());
@@ -493,7 +493,7 @@ public class RestUtilsTest {
 
         response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 1, 1, true,
                 null, "http://example.com/test#TestThing", service);
-        array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
+        array = mapper.readValue(response.getEntity().toString(), ArrayNode.class);
         assertTrue(array.get(0).isObject());
         jsonObject = (ObjectNode) array.get(0);
         assertEquals("VALUE 2", jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText());
@@ -504,7 +504,7 @@ public class RestUtilsTest {
 
         response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 2, 1, true,
                 null, "http://example.com/test#TestThing", service);
-        array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
+        array = mapper.readValue(response.getEntity().toString(), ArrayNode.class);
         assertTrue(array.get(0).isObject());
         jsonObject = (ObjectNode) array.get(0);
         assertEquals("VALUE 3", jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText());
@@ -516,7 +516,7 @@ public class RestUtilsTest {
         // TEST DESC
         response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 0, 1, false,
                 null, "http://example.com/test#TestThing", service);
-        array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
+        array = mapper.readValue(response.getEntity().toString(), ArrayNode.class);
         assertTrue(array.get(0).isObject());
         jsonObject = (ObjectNode) array.get(0);
         assertEquals("VALUE 3", jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText());
@@ -527,7 +527,7 @@ public class RestUtilsTest {
 
         response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 1, 1, false,
                 null, "http://example.com/test#TestThing", service);
-        array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
+        array = mapper.readValue(response.getEntity().toString(), ArrayNode.class);
         assertTrue(array.get(0).isObject());
         jsonObject = (ObjectNode) array.get(0);
         assertEquals("VALUE 2", jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText());
@@ -538,7 +538,7 @@ public class RestUtilsTest {
 
         response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 2, 1, false,
                 null, "http://example.com/test#TestThing", service);
-        array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
+        array = mapper.readValue(response.getEntity().toString(), ArrayNode.class);
         assertTrue(array.get(0).isObject());
         jsonObject = (ObjectNode) array.get(0);
         assertEquals("VALUE 1", jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText());
@@ -562,7 +562,7 @@ public class RestUtilsTest {
 
         Response response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 0, 1, true,
                 f, "http://example.com/test#TestThing", service);
-        ArrayNode array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
+        ArrayNode array = mapper.readValue(response.getEntity().toString(), ArrayNode.class);
         assertTrue(array.get(0).isObject());
         ObjectNode jsonObject = (ObjectNode) array.get(0);
         assertEquals("VALUE 1", jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText());
@@ -573,7 +573,7 @@ public class RestUtilsTest {
 
         response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 1, 1, true,
                 f, "http://example.com/test#TestThing", service);
-        array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
+        array = mapper.readValue(response.getEntity().toString(), ArrayNode.class);
         assertTrue(array.get(0).isObject());
         jsonObject = (ObjectNode) array.get(0);
         assertEquals("VALUE 3", jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText());
