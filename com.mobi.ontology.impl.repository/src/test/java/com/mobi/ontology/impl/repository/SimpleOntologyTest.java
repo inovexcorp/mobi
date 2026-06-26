@@ -2165,6 +2165,86 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         assertEquals(diffExpectedUnresolved, diffActualUnresolved);
     }
 
+    @Test
+    public void removeInvalidImportOnBranchTest() throws Exception {
+        // Simulate a branch scenario: ontologyIRI is in the catalog (importsResolver returns a record IRI),
+        // but the branch dataset uses a different commit than master. Without the fix, removeImports rebuilds
+        // default named graphs using master's SdNg, causing getImportsClosure to return a master copy instead
+        // of `this`.
+        IRI ontIRI = vf.createIRI("http://mobi.com/ontology/branchOnt");
+        IRI invalidImport = vf.createIRI("urn:invalidImport");
+        IRI recordIRI = vf.createIRI("urn:branchOntRecord");
+        IRI branchHeadCommit = vf.createIRI("urn:branchHeadCommit");
+        IRI masterHeadCommit = vf.createIRI("urn:masterHeadCommit");
+
+        // Branch commit key (different from master)
+        String branchKey = OntologyDatasets.createRecordKey(recordIRI, branchHeadCommit);
+
+        // Make the ontology appear in the catalog so getDatasetIRI returns master's dataset IRI
+        MasterBranch masterBranch = mock(MasterBranch.class);
+        when(branchManager.getMasterBranch(any(Resource.class), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(masterBranch);
+        when(commitManager.getHeadCommitIRI(masterBranch)).thenReturn(masterHeadCommit);
+        when(importsResolver.getRecordIRIFromOntologyIRI(ontIRI)).thenReturn(Optional.of(recordIRI));
+
+        // Invalid import is unresolvable
+        when(importsResolver.retrieveOntologyLocalFile(invalidImport)).thenReturn(Optional.empty());
+        when(importsResolver.retrieveOntologyFromWebFile(invalidImport)).thenReturn(Optional.empty());
+
+        Model model = mf.createEmptyModel();
+        model.add(ontIRI, RDF.TYPE, OWL.ONTOLOGY);
+        model.add(ontIRI, OWL.IMPORTS, invalidImport);
+        File file = setupOntologyMocks(model);
+
+        SimpleOntology branchOnt = new SimpleOntology(branchKey, file, repo, ontologyManager, catalogConfigProvider,
+                dsUtilsService, importsResolver, bNodeService, branchManager, commitManager);
+
+        // Verify initial state: 1 ontology in closure, invalid import is unloadable
+        assertEquals(1, branchOnt.getImportsClosure().size());
+        assertEquals(Collections.singleton(invalidImport), branchOnt.getUnloadableImportIRIs());
+
+        // Remove the invalid import via diff
+        Model deletions = mf.createEmptyModel();
+        deletions.add(ontIRI, OWL.IMPORTS, invalidImport);
+        branchOnt.setDifference(createDifference(null, deletions));
+
+        Set<Ontology> closure = branchOnt.getImportsClosure();
+        assertEquals(1, closure.size());
+        // The closure must contain `this` (branchOnt itself), not a newly-created master copy
+        assertTrue("getImportsClosure returned a master copy instead of the branch ontology",
+                closure.stream().anyMatch(o -> o == branchOnt));
+    }
+
+    @Test
+    public void removeValidImportWithRemainingUnresolvedTest() throws Exception {
+        // When a valid import is removed but an unresolvable import remains, getUnloadableImportIRIs should
+        // still return the remaining unresolvable import. Without the fix, the pre-existing unresolved import
+        // is stripped from the `unresolved` set and not re-added to UNRESOLVED_IRI_STRING.
+        IRI ontIRI = vf.createIRI("http://mobi.com/ontology/mixedImports");
+        IRI invalidImport = vf.createIRI("urn:invalidImport");
+
+        when(importsResolver.retrieveOntologyLocalFile(invalidImport)).thenReturn(Optional.empty());
+        when(importsResolver.retrieveOntologyFromWebFile(invalidImport)).thenReturn(Optional.empty());
+
+        Model model = mf.createEmptyModel();
+        model.add(ontIRI, RDF.TYPE, OWL.ONTOLOGY);
+        model.add(ontIRI, OWL.IMPORTS, TEST_LOCAL_IMPORT_3);
+        model.add(ontIRI, OWL.IMPORTS, invalidImport);
+        File file = setupOntologyMocks(model);
+        SimpleOntology ontology = new SimpleOntology(ontIRI, file, repo, ontologyManager, catalogConfigProvider,
+                dsUtilsService, importsResolver, bNodeService, branchManager, commitManager);
+
+        // Verify initial state
+        assertEquals(Collections.singleton(invalidImport), ontology.getUnloadableImportIRIs());
+
+        // Remove only the valid import; the invalid one remains
+        Model deletions = mf.createEmptyModel();
+        deletions.add(ontIRI, OWL.IMPORTS, TEST_LOCAL_IMPORT_3);
+        ontology.setDifference(createDifference(null, deletions));
+
+        assertEquals("Remaining unresolvable import should still be reported after removing a valid import",
+                Collections.singleton(invalidImport), ontology.getUnloadableImportIRIs());
+    }
+
     private File setupOntologyMocks(Model model) throws Exception{
         Path path = Files.createTempFile(null, null);
         Rio.write(model, Files.newOutputStream(path), RDFFormat.TURTLE);

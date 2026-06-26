@@ -1624,8 +1624,9 @@ public class SimpleOntology implements Ontology {
                     .collect(Collectors.toSet());
             directImports.removeAll(updatedUnresolvedImports);
 
-            // Calculate any newly added unresolved imports and add to temporary unresolved set
-            updatedUnresolvedImports.removeAll(this.unresolvedImports);
+            // Calculate unresolved imports for updated state: existing unresolved minus explicitly removed, plus any
+            // newly added unresolved imports (added by addTemporaryImports prior to this method running)
+            updatedUnresolvedImports.removeAll(removedImports);
             Set<IRI> unresolved = new HashSet<>(updatedUnresolvedImports);
 
             // Add the ontologyIRI of this to the imports closure
@@ -1663,11 +1664,11 @@ public class SimpleOntology implements Ontology {
             // Add the default graphs and imports statements for the updated closure
             IRI ontologyIRI = getOntologyIRI(conn);
             importClosureIris.forEach(iri -> {
-                IRI importDatasetIRI = getDatasetIRI(iri);
-                if (importDatasetIRI.equals(ontologyIRI)) {
-                    // DatasetIRI doesn't exist for newly updated ontologyIRI
+                if (iri.equals(ontologyIRI)) {
+                    // Use the current connection's SdNg directly to correctly support branch ontologies
                     conn.addDefaultNamedGraph(conn.getSystemDefaultNamedGraph());
                 } else {
+                    IRI importDatasetIRI = getDatasetIRI(iri);
                     IRI importDatasetSdNg = OntologyDatasets.createSystemDefaultNamedGraphIRI(importDatasetIRI);
                     conn.addDefaultNamedGraph(importDatasetSdNg);
                 }
