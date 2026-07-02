@@ -1,4 +1,4 @@
-PREFIX webhooks: <http://mobi.solutions/ontologies/webhooks#>
+PREFIX webhooks: <https://mobi.solutions/ontologies/webhooks#>
 
 CONSTRUCT { ?config ?pred ?obj } WHERE {
   ?recordId a webhooks:WebhookRecord ;

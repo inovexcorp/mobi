@@ -84,7 +84,7 @@
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>sse</artifactId>
-            <version>4.4.0-SNAPSHOT</version>
+            <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

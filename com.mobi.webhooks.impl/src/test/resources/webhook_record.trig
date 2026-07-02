@@ -1,7 +1,7 @@
 
 <https://mobi.com/records#test-record> {
   <https://mobi.com/records#test-record> a <http://www.w3.org/2002/07/owl#Thing>,
-      <http://mobi.solutions/ontologies/webhooks#WebhookRecord>, <http://mobi.com/ontologies/catalog#Record>,
+      <https://mobi.solutions/ontologies/webhooks#WebhookRecord>, <http://mobi.com/ontologies/catalog#Record>,
       <http://mobi.com/ontologies/catalog#UnversionedRecord>;
     <http://purl.org/dc/terms/title> "Test Webhook";
     <http://purl.org/dc/terms/description> "string";
@@ -11,33 +11,33 @@
     <http://purl.org/dc/terms/publisher> <https://mobi.com/users/test-user>;
     <http://purl.org/dc/terms/abstract> "string";
     <http://mobi.com/ontologies/catalog#keyword> "string";
-    <http://mobi.solutions/ontologies/webhooks#hasWebhookConfiguration> <http://mobi.solutions/webhooks/configurations/test-config> .
+    <https://mobi.solutions/ontologies/webhooks#hasWebhookConfiguration> <http://mobi.solutions/webhooks/configurations/test-config> .
   
   <http://mobi.solutions/webhooks/configurations/test-config>
-    a <http://www.w3.org/2002/07/owl#Thing>, <http://mobi.solutions/ontologies/webhooks#WebhookConfiguration>;
-    <http://mobi.solutions/ontologies/webhooks#url> "https://www.example.com";
-    <http://mobi.solutions/ontologies/webhooks#httpMethod> "GET" ;
-    <http://mobi.solutions/ontologies/webhooks#active> "ACTIVE" ;
-    <http://mobi.solutions/ontologies/webhooks#eventFilter> "(event.topics=com/mobi/catalog/version)" .
+    a <http://www.w3.org/2002/07/owl#Thing>, <https://mobi.solutions/ontologies/webhooks#WebhookConfiguration>;
+    <https://mobi.solutions/ontologies/webhooks#url> "https://www.example.com";
+    <https://mobi.solutions/ontologies/webhooks#httpMethod> "GET" ;
+    <https://mobi.solutions/ontologies/webhooks#active> true ;
+    <https://mobi.solutions/ontologies/webhooks#eventFilter> "(event.topics=com/mobi/catalog/version)" .
 }
 
 <https://mobi.com/records#second-test> {
   <https://mobi.com/records#second-test> a <http://www.w3.org/2002/07/owl#Thing>,
-      <http://mobi.solutions/ontologies/webhooks#WebhookRecord>, <http://mobi.com/ontologies/catalog#Record>,
+      <https://mobi.solutions/ontologies/webhooks#WebhookRecord>, <http://mobi.com/ontologies/catalog#Record>,
       <http://mobi.com/ontologies/catalog#UnversionedRecord>;
     <http://purl.org/dc/terms/title> "Test Webhook 2";
     <http://purl.org/dc/terms/issued> "2026-04-08T14:53:51.394652-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
     <http://purl.org/dc/terms/modified> "2026-04-08T14:53:51.394652-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
     <http://mobi.com/ontologies/catalog#catalog> <http://mobi.com/catalog-local>;
     <http://purl.org/dc/terms/publisher> <https://mobi.com/users/admin>;
-    <http://mobi.solutions/ontologies/webhooks#hasWebhookConfiguration> <http://mobi.solutions/webhooks/configurations/second-config> .
+    <https://mobi.solutions/ontologies/webhooks#hasWebhookConfiguration> <http://mobi.solutions/webhooks/configurations/second-config> .
 
   <http://mobi.solutions/webhooks/configurations/second-config>
-    a <http://www.w3.org/2002/07/owl#Thing>, <http://mobi.solutions/ontologies/webhooks#WebhookConfiguration>;
-    <http://mobi.solutions/ontologies/webhooks#url> "https://www.example.com";
-    <http://mobi.solutions/ontologies/webhooks#httpMethod> "POST" ;
-    <http://mobi.solutions/ontologies/webhooks#active> "INACTIVE" ;
-    <http://mobi.solutions/ontologies/webhooks#eventFilter> "(event.topics=com/mobi/catalog/version)" .
+    a <http://www.w3.org/2002/07/owl#Thing>, <https://mobi.solutions/ontologies/webhooks#WebhookConfiguration>;
+    <https://mobi.solutions/ontologies/webhooks#url> "https://www.example.com";
+    <https://mobi.solutions/ontologies/webhooks#httpMethod> "POST" ;
+    <https://mobi.solutions/ontologies/webhooks#active> false ;
+    <https://mobi.solutions/ontologies/webhooks#eventFilter> "(event.topics=com/mobi/catalog/version)" .
 }
 
 <http://mobi.com/usermanagement> {
