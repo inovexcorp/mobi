@@ -67,7 +67,6 @@ import com.mobi.webhooks.api.ontology.webhooks.WebhookExecutionActivity;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookRecord;
 import com.mobi.webhooks.api.ontology.webhooks.WebhookRecordFactory;
 import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -293,11 +292,11 @@ public class WebhookRestTest extends MobiRestTestCXF {
     @Test
     public void createWebhookRecordWithJsonldTest() {
         String jsonld = "[{\"@id\":\"http://mobi.solutions/webhooks/config/1\","
-                + "\"@type\":[\"http://mobi.solutions/ontologies/webhooks#WebhookConfiguration\"],"
-                + "\"http://mobi.solutions/ontologies/webhooks#url\":[{\"@value\":\"https://example.com\"}],"
-                + "\"http://mobi.solutions/ontologies/webhooks#httpMethod\":[{\"@value\":\"POST\"}],"
-                + "\"http://mobi.solutions/ontologies/webhooks#eventFilter\":[{\"@value\":\"test\"}],"
-                + "\"http://mobi.solutions/ontologies/webhooks#active\":[{\"@value\":\"ACTIVE\"}]}]";
+                + "\"@type\":[\"https://mobi.solutions/ontologies/webhooks#WebhookConfiguration\"],"
+                + "\"https://mobi.solutions/ontologies/webhooks#url\":[{\"@value\":\"https://example.com\"}],"
+                + "\"https://mobi.solutions/ontologies/webhooks#httpMethod\":[{\"@value\":\"POST\"}],"
+                + "\"https://mobi.solutions/ontologies/webhooks#eventFilter\":[{\"@value\":\"test\"}],"
+                + "\"https://mobi.solutions/ontologies/webhooks#active\":[{\"@value\":\"ACTIVE\"}]}]";
 
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("title", "Test Webhook");
@@ -315,7 +314,7 @@ public class WebhookRestTest extends MobiRestTestCXF {
     @Test
     public void createWebhookRecordWithTurtleFileTest() {
         String turtle = """
-                @prefix : <http://mobi.solutions/ontologies/webhooks#> .
+                @prefix : <https://mobi.solutions/ontologies/webhooks#> .
                 <http://mobi.solutions/webhooks/config/1> a :WebhookConfiguration ;
                   :url "https://example.com" ;
                   :httpMethod "POST" ;
@@ -567,11 +566,11 @@ public class WebhookRestTest extends MobiRestTestCXF {
     @Test
     public void updateWebhookConfigurationWithJsonldTest() {
         String jsonld = "[{\"@id\":\"http://mobi.solutions/webhooks/config/1\","
-                + "\"@type\":[\"http://mobi.solutions/ontologies/webhooks#WebhookConfiguration\"],"
-                + "\"http://mobi.solutions/ontologies/webhooks#url\":[{\"@value\":\"https://example.com\"}],"
-                + "\"http://mobi.solutions/ontologies/webhooks#httpMethod\":[{\"@value\":\"POST\"}],"
-                + "\"http://mobi.solutions/ontologies/webhooks#eventFilter\":[{\"@value\":\"test\"}],"
-                + "\"http://mobi.solutions/ontologies/webhooks#active\":[{\"@value\":\"ACTIVE\"}]}]";
+                + "\"@type\":[\"https://mobi.solutions/ontologies/webhooks#WebhookConfiguration\"],"
+                + "\"https://mobi.solutions/ontologies/webhooks#url\":[{\"@value\":\"https://example.com\"}],"
+                + "\"https://mobi.solutions/ontologies/webhooks#httpMethod\":[{\"@value\":\"POST\"}],"
+                + "\"https://mobi.solutions/ontologies/webhooks#eventFilter\":[{\"@value\":\"test\"}],"
+                + "\"https://mobi.solutions/ontologies/webhooks#active\":[{\"@value\":\"ACTIVE\"}]}]";
 
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("jsonld", jsonld);
@@ -586,7 +585,7 @@ public class WebhookRestTest extends MobiRestTestCXF {
     @Test
     public void updateWebhookConfigurationWithTurtleFileTest() {
         String turtle = """
-                @prefix : <http://mobi.solutions/ontologies/webhooks#> .
+                @prefix : <https://mobi.solutions/ontologies/webhooks#> .
                 <http://mobi.solutions/webhooks/config/1> a :WebhookConfiguration ;
                   :url "https://example.com" ;
                   :httpMethod "POST" ;
@@ -623,11 +622,11 @@ public class WebhookRestTest extends MobiRestTestCXF {
                 any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
 
         String jsonld = "[{\"@id\":\"http://mobi.solutions/webhooks/config/1\","
-                + "\"@type\":[\"http://mobi.solutions/ontologies/webhooks#WebhookConfiguration\"],"
-                + "\"http://mobi.solutions/ontologies/webhooks#url\":[{\"@value\":\"https://example.com\"}],"
-                + "\"http://mobi.solutions/ontologies/webhooks#httpMethod\":[{\"@value\":\"POST\"}],"
-                + "\"http://mobi.solutions/ontologies/webhooks#eventFilter\":[{\"@value\":\"test\"}],"
-                + "\"http://mobi.solutions/ontologies/webhooks#active\":[{\"@value\":\"ACTIVE\"}]}]";
+                + "\"@type\":[\"https://mobi.solutions/ontologies/webhooks#WebhookConfiguration\"],"
+                + "\"https://mobi.solutions/ontologies/webhooks#url\":[{\"@value\":\"https://example.com\"}],"
+                + "\"https://mobi.solutions/ontologies/webhooks#httpMethod\":[{\"@value\":\"POST\"}],"
+                + "\"https://mobi.solutions/ontologies/webhooks#eventFilter\":[{\"@value\":\"test\"}],"
+                + "\"https://mobi.solutions/ontologies/webhooks#active\":[{\"@value\":\"ACTIVE\"}]}]";
 
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("jsonld", jsonld);
@@ -676,11 +675,11 @@ public class WebhookRestTest extends MobiRestTestCXF {
     @Test
     public void updateWebhookConfigurationIllegalArgumentTest() {
         String jsonld = "[{\"@id\":\"http://mobi.solutions/webhooks/config/1\","
-                + "\"@type\":[\"http://mobi.solutions/ontologies/webhooks#WebhookConfiguration\"],"
-                + "\"http://mobi.solutions/ontologies/webhooks#url\":[{\"@value\":\"https://example.com\"}],"
-                + "\"http://mobi.solutions/ontologies/webhooks#httpMethod\":[{\"@value\":\"POST\"}],"
-                + "\"http://mobi.solutions/ontologies/webhooks#eventFilter\":[{\"@value\":\"test\"}],"
-                + "\"http://mobi.solutions/ontologies/webhooks#active\":[{\"@value\":\"ACTIVE\"}]}]";
+                + "\"@type\":[\"https://mobi.solutions/ontologies/webhooks#WebhookConfiguration\"],"
+                + "\"https://mobi.solutions/ontologies/webhooks#url\":[{\"@value\":\"https://example.com\"}],"
+                + "\"https://mobi.solutions/ontologies/webhooks#httpMethod\":[{\"@value\":\"POST\"}],"
+                + "\"https://mobi.solutions/ontologies/webhooks#eventFilter\":[{\"@value\":\"test\"}],"
+                + "\"https://mobi.solutions/ontologies/webhooks#active\":[{\"@value\":\"ACTIVE\"}]}]";
 
         doThrow(new IllegalArgumentException("WebhookRecord does not have a linked configuration"))
                 .when(webhookConfigurationService).updateConfiguration(any(WebhookRecord.class), any());
@@ -698,9 +697,9 @@ public class WebhookRestTest extends MobiRestTestCXF {
     @Test
     public void updateWebhookConfigurationShaclFailureTest() {
         String jsonld = "[{\"@id\":\"http://mobi.solutions/webhooks/config/1\","
-                + "\"@type\":[\"http://mobi.solutions/ontologies/webhooks#WebhookConfiguration\"],"
-                + "\"http://mobi.solutions/ontologies/webhooks#eventFilter\":[{\"@value\":\"test\"}],"
-                + "\"http://mobi.solutions/ontologies/webhooks#active\":[{\"@value\":\"ACTIVE\"}]}]";
+                + "\"@type\":[\"https://mobi.solutions/ontologies/webhooks#WebhookConfiguration\"],"
+                + "\"https://mobi.solutions/ontologies/webhooks#eventFilter\":[{\"@value\":\"test\"}],"
+                + "\"https://mobi.solutions/ontologies/webhooks#active\":[{\"@value\":\"ACTIVE\"}]}]";
 
         doThrow(new IllegalArgumentException("WebhookConfiguration failed SHACL validation:\n<report>"))
                 .when(webhookConfigurationService).updateConfiguration(any(WebhookRecord.class), any());
@@ -730,11 +729,11 @@ public class WebhookRestTest extends MobiRestTestCXF {
     @Test
     public void updateWebhookConfigurationMobiExceptionTest() {
         String jsonld = "[{\"@id\":\"http://mobi.solutions/webhooks/config/1\","
-                + "\"@type\":[\"http://mobi.solutions/ontologies/webhooks#WebhookConfiguration\"],"
-                + "\"http://mobi.solutions/ontologies/webhooks#url\":[{\"@value\":\"https://example.com\"}],"
-                + "\"http://mobi.solutions/ontologies/webhooks#httpMethod\":[{\"@value\":\"POST\"}],"
-                + "\"http://mobi.solutions/ontologies/webhooks#eventFilter\":[{\"@value\":\"test\"}],"
-                + "\"http://mobi.solutions/ontologies/webhooks#active\":[{\"@value\":\"ACTIVE\"}]}]";
+                + "\"@type\":[\"https://mobi.solutions/ontologies/webhooks#WebhookConfiguration\"],"
+                + "\"https://mobi.solutions/ontologies/webhooks#url\":[{\"@value\":\"https://example.com\"}],"
+                + "\"https://mobi.solutions/ontologies/webhooks#httpMethod\":[{\"@value\":\"POST\"}],"
+                + "\"https://mobi.solutions/ontologies/webhooks#eventFilter\":[{\"@value\":\"test\"}],"
+                + "\"https://mobi.solutions/ontologies/webhooks#active\":[{\"@value\":\"ACTIVE\"}]}]";
 
         doThrow(new MobiException("Unexpected service failure"))
                 .when(webhookConfigurationService).updateConfiguration(any(WebhookRecord.class), any());

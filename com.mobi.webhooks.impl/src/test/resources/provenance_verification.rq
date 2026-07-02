@@ -1,4 +1,4 @@
-PREFIX wh: <http://mobi.solutions/ontologies/webhooks#>
+PREFIX wh: <https://mobi.solutions/ontologies/webhooks#>
 PREFIX prov: <http://www.w3.org/ns/prov#>
 
 construct where {

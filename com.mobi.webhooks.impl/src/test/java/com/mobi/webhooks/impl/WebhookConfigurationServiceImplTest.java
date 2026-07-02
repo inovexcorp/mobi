@@ -175,7 +175,7 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
         assertEquals(FILTERED_CONFIG_IRI, config.getResource());
         assertEquals("https://www.example.com", config.getUrl().get());
         assertEquals("GET", config.getHttpMethod().get());
-        assertEquals("ACTIVE", config.getActive().get());
+        assertEquals(true, config.getActive().get());
         assertEquals("(event.topics=com/mobi/catalog/version)", config.getEventFilter().get());
     }
 
@@ -187,7 +187,7 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
         assertEquals(SECOND_FILTERED_CONFIG_IRI, config.getResource());
         assertEquals("https://www.example.com", config.getUrl().get());
         assertEquals("POST", config.getHttpMethod().get());
-        assertEquals("INACTIVE", config.getActive().get());
+        assertEquals(false, config.getActive().get());
         assertEquals("(event.topics=com/mobi/catalog/version)", config.getEventFilter().get());
     }
 
@@ -470,7 +470,7 @@ public class WebhookConfigurationServiceImplTest extends OrmEnabledTestCase {
 
     private Model createTestConfigModel(Resource iri) {
         WebhookConfiguration config = webhookConfigurationFactory.createNew(iri);
-        config.setActive("ACTIVE");
+        config.setActive(true);
         config.setUrl("https://www.example.com");
         config.setHttpMethod("GET");
         config.setEventFilter(TEST_EVENT_FILTER);

@@ -8,11 +8,11 @@
 @prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix prov: <http://www.w3.org/ns/prov#>.
 @prefix mprov: <http://mobi.com/ontologies/prov#>.
-@prefix : <http://mobi.solutions/ontologies/webhooks#>.
-@base <http://mobi.solutions/ontologies/webhooks>.
+@prefix : <https://mobi.solutions/ontologies/webhooks#>.
+@base <https://mobi.solutions/ontologies/webhooks>.
 
 <http://mobi.solutions/ontologies/webhooks> a owl:Ontology;
-    owl:versionIRI <http://mobi.solutions/ontologies/webhooks#1.0>;
+    owl:versionIRI <https://mobi.solutions/ontologies/webhooks#1.0>;
     owl:imports <http://mobi.com/ontologies/catalog>, <http://mobi.com/ontologies/prov>;
     rdfs:label "The Mobi Webhooks Ontology"@en;
     rdfs:comment "The Mobi webhooks ontology is designed to facilitate webhook configuration and management within the Mobi platform."@en;
@@ -67,9 +67,10 @@
     sh:path :active;
     sh:minCount 1;
     sh:maxCount 1;
-    sh:in ("ACTIVE" "INACTIVE").
+    sh:datatype xsd:boolean ;
+    sh:in ( true false ).
 
-:WebhookConfigurationSecretTokenShape a sh:PropertyShape;
+    :WebhookConfigurationSecretTokenShape a sh:PropertyShape;
     sh:path :secretToken;
     sh:maxCount 1.
 
@@ -95,7 +96,7 @@
     rdfs:label "active"@en;
     rdfs:comment "Indicates whether the webhook is currently active (ACTIVE or INACTIVE)."@en;
     rdfs:domain :WebhookConfiguration;
-    rdfs:range xsd:string.
+    rdfs:range xsd:boolean.
 
 :secretToken a owl:DatatypeProperty, owl:FunctionalProperty;
     rdfs:label "secret token"@en;

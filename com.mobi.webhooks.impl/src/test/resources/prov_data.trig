@@ -21,15 +21,15 @@
     <http://www.w3.org/ns/prov#endedAtTime> "2026-06-12T11:46:34.499767-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
   
   <https://mobi.com/activities/exec-1> a <http://www.w3.org/ns/prov#Activity>,
-      <http://mobi.solutions/ontologies/webhooks#WebhookExecutionActivity>, <http://www.w3.org/2002/07/owl#Thing>;
+      <https://mobi.solutions/ontologies/webhooks#WebhookExecutionActivity>, <http://www.w3.org/2002/07/owl#Thing>;
     <http://www.w3.org/ns/prov#used> <https://mobi.com/records#exec-record>;
-    <http://mobi.solutions/ontologies/webhooks#requestUrl> <https://www.example.com/test/>;
-    <http://mobi.solutions/ontologies/webhooks#requestBody> "{\"activityIRI\":\"https://mobi.solutions/webhooks/execution/af577bc9-a671-4ceb-ad04-44468771a84a\",\"event\":{\"commit\":\"http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997\",\"user\":\"http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997\",\"branch\":\"https://mobi.com/branches#8a1206a2-5f6e-4e42-bf84-5c75f020ca8d\",\"record\":\"https://mobi.com/records#6bc57944-35f6-4724-a411-124b2247195c\",\"event.topics\":\"com/mobi/catalog/commit\"}}";
-    <http://mobi.solutions/ontologies/webhooks#requestMethod> "GET";
-    <http://mobi.solutions/ontologies/webhooks#succeeded> false;
-    <http://mobi.solutions/ontologies/webhooks#activityMessage> "Webhook execution failed after 3 attempt(s) for record: https://mobi.com/records#exec-record";
-    <http://mobi.solutions/ontologies/webhooks#hasHeader> <https://mobi.solutions/webhooks/headers/test>;
-    <http://mobi.solutions/ontologies/webhooks#hasConnectionAttempt> <https://mobi.solutions/webhooks/attempt/af58e594-9254-4cc5-9999-fd517e608d66>,
+    <https://mobi.solutions/ontologies/webhooks#requestUrl> <https://www.example.com/test/>;
+    <https://mobi.solutions/ontologies/webhooks#requestBody> "{\"activityIRI\":\"https://mobi.solutions/webhooks/execution/af577bc9-a671-4ceb-ad04-44468771a84a\",\"event\":{\"commit\":\"http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997\",\"user\":\"http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997\",\"branch\":\"https://mobi.com/branches#8a1206a2-5f6e-4e42-bf84-5c75f020ca8d\",\"record\":\"https://mobi.com/records#6bc57944-35f6-4724-a411-124b2247195c\",\"event.topics\":\"com/mobi/catalog/commit\"}}";
+    <https://mobi.solutions/ontologies/webhooks#requestMethod> "GET";
+    <https://mobi.solutions/ontologies/webhooks#succeeded> false;
+    <https://mobi.solutions/ontologies/webhooks#activityMessage> "Webhook execution failed after 3 attempt(s) for record: https://mobi.com/records#exec-record";
+    <https://mobi.solutions/ontologies/webhooks#hasHeader> <https://mobi.solutions/webhooks/headers/test>;
+    <https://mobi.solutions/ontologies/webhooks#hasConnectionAttempt> <https://mobi.solutions/webhooks/attempt/af58e594-9254-4cc5-9999-fd517e608d66>,
       <https://mobi.solutions/webhooks/attempt/9f3adb50-a92d-4423-a8a6-7f3f89ef93b9>, <https://mobi.solutions/webhooks/attempt/59d394a7-31b0-44e9-8560-95a0bf7c5f0d>;
     <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
     <http://www.w3.org/ns/prov#startedAtTime> "2026-06-12T11:46:34.471887-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
@@ -40,9 +40,9 @@
     <http://www.w3.org/ns/prov#atLocation> "system";
     <http://www.w3.org/ns/prov#generatedAtTime> "2026-06-12T11:46:34.499603-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
   
-  <https://mobi.solutions/webhooks/attempt/af58e594-9254-4cc5-9999-fd517e608d66> a <http://mobi.solutions/ontologies/webhooks#ConnectionAttempt>,
+  <https://mobi.solutions/webhooks/attempt/af58e594-9254-4cc5-9999-fd517e608d66> a <https://mobi.solutions/ontologies/webhooks#ConnectionAttempt>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasResponseHeader> <https://mobi.solutions/webhooks/headers/eee04b66-6002-4d59-86fd-1b9b4be0f817>,
+    <https://mobi.solutions/ontologies/webhooks#hasResponseHeader> <https://mobi.solutions/webhooks/headers/eee04b66-6002-4d59-86fd-1b9b4be0f817>,
       <https://mobi.solutions/webhooks/headers/b1dab717-fd53-428d-af92-9d6d32afe65a>, <https://mobi.solutions/webhooks/headers/c5e93559-ccaf-450e-8585-7951a203018f>,
       <https://mobi.solutions/webhooks/headers/e4cc2054-b77c-4def-8aa9-0e4650936705>, <https://mobi.solutions/webhooks/headers/fbc1d3f0-6925-4ab8-8a9b-4c4748bdb9e9>,
       <https://mobi.solutions/webhooks/headers/994489c1-5fcc-461a-9f8a-dc3b9b759e25>, <https://mobi.solutions/webhooks/headers/67f4d23a-acef-446e-b7c4-c64fc193b0ca>,
@@ -50,89 +50,89 @@
       <https://mobi.solutions/webhooks/headers/11a35547-7c8e-461f-82d9-371ebe646b45>, <https://mobi.solutions/webhooks/headers/150e1a16-adba-460c-aa4d-919e7448e6b2>,
       <https://mobi.solutions/webhooks/headers/05332653-d03d-4970-a317-3eaf6e9cd917>, <https://mobi.solutions/webhooks/headers/b1a5059c-93a5-4bb7-9644-9a6db998435c>,
       <https://mobi.solutions/webhooks/headers/1a1385ec-04e2-4b41-abbe-0370bddb4413>, <https://mobi.solutions/webhooks/headers/a16b0ea3-f281-40a7-85c4-122e25b399c6>;
-    <http://mobi.solutions/ontologies/webhooks#requestTimestamp> "2026-06-12T11:46:34.476453-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
-    <http://mobi.solutions/ontologies/webhooks#responseStatus> "500";
-    <http://mobi.solutions/ontologies/webhooks#responseBody> "";
-    <http://mobi.solutions/ontologies/webhooks#responseTimestamp> "2026-06-12T11:46:35.054903-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+    <https://mobi.solutions/ontologies/webhooks#requestTimestamp> "2026-06-12T11:46:34.476453-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <https://mobi.solutions/ontologies/webhooks#responseStatus> "500";
+    <https://mobi.solutions/ontologies/webhooks#responseBody> "";
+    <https://mobi.solutions/ontologies/webhooks#responseTimestamp> "2026-06-12T11:46:35.054903-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
   
-  <https://mobi.solutions/webhooks/headers/eee04b66-6002-4d59-86fd-1b9b4be0f817> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/eee04b66-6002-4d59-86fd-1b9b4be0f817> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "Date";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "Fri, 12 Jun 2026 15:46:35 GMT" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "Date";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "Fri, 12 Jun 2026 15:46:35 GMT" .
   
-  <https://mobi.solutions/webhooks/headers/b1dab717-fd53-428d-af92-9d6d32afe65a> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/b1dab717-fd53-428d-af92-9d6d32afe65a> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "Content-Type";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "text/html; charset=utf-8" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "Content-Type";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "text/html; charset=utf-8" .
   
-  <https://mobi.solutions/webhooks/headers/c5e93559-ccaf-450e-8585-7951a203018f> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/c5e93559-ccaf-450e-8585-7951a203018f> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "Transfer-Encoding";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "chunked" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "Transfer-Encoding";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "chunked" .
   
-  <https://mobi.solutions/webhooks/headers/e4cc2054-b77c-4def-8aa9-0e4650936705> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/e4cc2054-b77c-4def-8aa9-0e4650936705> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "Connection";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "keep-alive" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "Connection";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "keep-alive" .
   
-  <https://mobi.solutions/webhooks/headers/fbc1d3f0-6925-4ab8-8a9b-4c4748bdb9e9> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/fbc1d3f0-6925-4ab8-8a9b-4c4748bdb9e9> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-srv-trace";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "v=1;t=a399d02a1089c5c4" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-srv-trace";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "v=1;t=a399d02a1089c5c4" .
   
-  <https://mobi.solutions/webhooks/headers/994489c1-5fcc-461a-9f8a-dc3b9b759e25> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/994489c1-5fcc-461a-9f8a-dc3b9b759e25> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-srv-span";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "v=1;s=e4621e03186a384d" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-srv-span";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "v=1;s=e4621e03186a384d" .
   
-  <https://mobi.solutions/webhooks/headers/67f4d23a-acef-446e-b7c4-c64fc193b0ca> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/67f4d23a-acef-446e-b7c4-c64fc193b0ca> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "access-control-allow-origin";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "*" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "access-control-allow-origin";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "*" .
   
-  <https://mobi.solutions/webhooks/headers/91663727-c1de-4db7-b01d-b0a6dde6a4c1> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/91663727-c1de-4db7-b01d-b0a6dde6a4c1> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-ratelimit-limit";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "120" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-ratelimit-limit";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "120" .
   
-  <https://mobi.solutions/webhooks/headers/29a50643-23e0-4171-ba87-78cbfeab2563> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/29a50643-23e0-4171-ba87-78cbfeab2563> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-ratelimit-remaining";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "119" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-ratelimit-remaining";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "119" .
   
-  <https://mobi.solutions/webhooks/headers/11a35547-7c8e-461f-82d9-371ebe646b45> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/11a35547-7c8e-461f-82d9-371ebe646b45> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-ratelimit-reset";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "1781279255" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-ratelimit-reset";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "1781279255" .
   
-  <https://mobi.solutions/webhooks/headers/150e1a16-adba-460c-aa4d-919e7448e6b2> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/150e1a16-adba-460c-aa4d-919e7448e6b2> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "vary";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "Accept-Encoding" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "vary";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "Accept-Encoding" .
   
-  <https://mobi.solutions/webhooks/headers/05332653-d03d-4970-a317-3eaf6e9cd917> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/05332653-d03d-4970-a317-3eaf6e9cd917> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "set-cookie";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "__cf_bm=gWR28C8TA82f4SeuvNYug_aqFr8NA6oC_JVnP8Vgncc-1781279194.9398673-1.0.1.1-YMFqdPTlI_hBOZf4poq_IOCPJc.S45fCmA1fU12nBUfIavmD4c4S40_IiknbEEAZW3OJPqbtl0LrqF4RQfQOi_7ic9MS7vzfi47Say76ZlLvW1PsSX4n1jKYOeqstLTw; HttpOnly; SameSite=None; Secure; Path=/; Domain=pstmn.io; Expires=Fri, 12 Jun 2026 16:16:35 GMT" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "set-cookie";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "__cf_bm=gWR28C8TA82f4SeuvNYug_aqFr8NA6oC_JVnP8Vgncc-1781279194.9398673-1.0.1.1-YMFqdPTlI_hBOZf4poq_IOCPJc.S45fCmA1fU12nBUfIavmD4c4S40_IiknbEEAZW3OJPqbtl0LrqF4RQfQOi_7ic9MS7vzfi47Say76ZlLvW1PsSX4n1jKYOeqstLTw; HttpOnly; SameSite=None; Secure; Path=/; Domain=pstmn.io; Expires=Fri, 12 Jun 2026 16:16:35 GMT" .
   
-  <https://mobi.solutions/webhooks/headers/b1a5059c-93a5-4bb7-9644-9a6db998435c> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/b1a5059c-93a5-4bb7-9644-9a6db998435c> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "cf-cache-status";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "DYNAMIC" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "cf-cache-status";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "DYNAMIC" .
   
-  <https://mobi.solutions/webhooks/headers/1a1385ec-04e2-4b41-abbe-0370bddb4413> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/1a1385ec-04e2-4b41-abbe-0370bddb4413> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "Server";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "cloudflare" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "Server";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "cloudflare" .
   
-  <https://mobi.solutions/webhooks/headers/a16b0ea3-f281-40a7-85c4-122e25b399c6> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/a16b0ea3-f281-40a7-85c4-122e25b399c6> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "CF-RAY";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "a0a9fd385e74de9a-EWR" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "CF-RAY";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "a0a9fd385e74de9a-EWR" .
   
-  <https://mobi.solutions/webhooks/attempt/9f3adb50-a92d-4423-a8a6-7f3f89ef93b9> a <http://mobi.solutions/ontologies/webhooks#ConnectionAttempt>,
+  <https://mobi.solutions/webhooks/attempt/9f3adb50-a92d-4423-a8a6-7f3f89ef93b9> a <https://mobi.solutions/ontologies/webhooks#ConnectionAttempt>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasResponseHeader> <https://mobi.solutions/webhooks/headers/87f7e29a-656c-4781-9e6c-4dd674ec55cb>,
+    <https://mobi.solutions/ontologies/webhooks#hasResponseHeader> <https://mobi.solutions/webhooks/headers/87f7e29a-656c-4781-9e6c-4dd674ec55cb>,
       <https://mobi.solutions/webhooks/headers/20d3142e-3291-487a-bfb7-39a0d9760d6a>, <https://mobi.solutions/webhooks/headers/4ea03d8f-9a42-444c-9ce2-9103b9b8dbcc>,
       <https://mobi.solutions/webhooks/headers/4e1725bd-59ac-4fff-ab11-55c04984b23c>, <https://mobi.solutions/webhooks/headers/ab0ef507-830a-4c14-ba8d-b0e9e0c10e49>,
       <https://mobi.solutions/webhooks/headers/3e7f71d8-30e7-4bdd-ab9b-70c1b32446ef>, <https://mobi.solutions/webhooks/headers/10e2f8cb-fb8c-4bdd-ba4f-3a62ecad20d8>,
@@ -140,99 +140,99 @@
       <https://mobi.solutions/webhooks/headers/208b0a05-317e-4fd4-b26a-5488ae4732f0>, <https://mobi.solutions/webhooks/headers/9b2e5b6b-3d01-436d-af4c-634c7c08fa1c>,
       <https://mobi.solutions/webhooks/headers/220991d9-d801-48f7-8299-cf6155ea4ca6>, <https://mobi.solutions/webhooks/headers/feed87a3-dbe6-4508-b534-93425d0d73a8>,
       <https://mobi.solutions/webhooks/headers/1fbe4d65-9128-4e1d-b2a1-c3e16922087a>, <https://mobi.solutions/webhooks/headers/9936fea2-9082-4414-b748-7f51262953c5>;
-    <http://mobi.solutions/ontologies/webhooks#requestTimestamp> "2026-06-12T11:46:35.057582-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
-    <http://mobi.solutions/ontologies/webhooks#responseStatus> "500";
-    <http://mobi.solutions/ontologies/webhooks#responseBody> "";
-    <http://mobi.solutions/ontologies/webhooks#responseTimestamp> "2026-06-12T11:46:35.63231-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+    <https://mobi.solutions/ontologies/webhooks#requestTimestamp> "2026-06-12T11:46:35.057582-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <https://mobi.solutions/ontologies/webhooks#responseStatus> "500";
+    <https://mobi.solutions/ontologies/webhooks#responseBody> "";
+    <https://mobi.solutions/ontologies/webhooks#responseTimestamp> "2026-06-12T11:46:35.63231-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
 
-  <https://mobi.solutions/webhooks/headers/test> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/test> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "Content-Type";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "text/plain" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "Content-Type";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "text/plain" .
 
-  <https://mobi.solutions/webhooks/headers/test2> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/test2> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "Content-Type";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "text/plain" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "Content-Type";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "text/plain" .
 
-  <https://mobi.solutions/webhooks/headers/87f7e29a-656c-4781-9e6c-4dd674ec55cb> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/87f7e29a-656c-4781-9e6c-4dd674ec55cb> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "Date";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "Fri, 12 Jun 2026 15:46:35 GMT" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "Date";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "Fri, 12 Jun 2026 15:46:35 GMT" .
   
-  <https://mobi.solutions/webhooks/headers/20d3142e-3291-487a-bfb7-39a0d9760d6a> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/20d3142e-3291-487a-bfb7-39a0d9760d6a> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "Content-Type";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "text/html; charset=utf-8" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "Content-Type";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "text/html; charset=utf-8" .
   
-  <https://mobi.solutions/webhooks/headers/4ea03d8f-9a42-444c-9ce2-9103b9b8dbcc> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/4ea03d8f-9a42-444c-9ce2-9103b9b8dbcc> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "Transfer-Encoding";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "chunked" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "Transfer-Encoding";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "chunked" .
   
-  <https://mobi.solutions/webhooks/headers/4e1725bd-59ac-4fff-ab11-55c04984b23c> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/4e1725bd-59ac-4fff-ab11-55c04984b23c> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "Connection";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "keep-alive" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "Connection";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "keep-alive" .
   
-  <https://mobi.solutions/webhooks/headers/ab0ef507-830a-4c14-ba8d-b0e9e0c10e49> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/ab0ef507-830a-4c14-ba8d-b0e9e0c10e49> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-srv-trace";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "v=1;t=b72d192167897e27" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-srv-trace";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "v=1;t=b72d192167897e27" .
   
-  <https://mobi.solutions/webhooks/headers/3e7f71d8-30e7-4bdd-ab9b-70c1b32446ef> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/3e7f71d8-30e7-4bdd-ab9b-70c1b32446ef> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-srv-span";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "v=1;s=bd9c1d5f3d37a5a2" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-srv-span";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "v=1;s=bd9c1d5f3d37a5a2" .
   
-  <https://mobi.solutions/webhooks/headers/10e2f8cb-fb8c-4bdd-ba4f-3a62ecad20d8> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/10e2f8cb-fb8c-4bdd-ba4f-3a62ecad20d8> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "access-control-allow-origin";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "*" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "access-control-allow-origin";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "*" .
   
-  <https://mobi.solutions/webhooks/headers/5860ee75-95e1-4ef6-baf5-ac64f672a24c> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/5860ee75-95e1-4ef6-baf5-ac64f672a24c> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-ratelimit-limit";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "120" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-ratelimit-limit";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "120" .
   
-  <https://mobi.solutions/webhooks/headers/35a72a6d-3396-4398-b4e8-3263e83deb04> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/35a72a6d-3396-4398-b4e8-3263e83deb04> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-ratelimit-remaining";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "118" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-ratelimit-remaining";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "118" .
   
-  <https://mobi.solutions/webhooks/headers/208b0a05-317e-4fd4-b26a-5488ae4732f0> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/208b0a05-317e-4fd4-b26a-5488ae4732f0> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-ratelimit-reset";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "1781279255" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-ratelimit-reset";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "1781279255" .
   
-  <https://mobi.solutions/webhooks/headers/9b2e5b6b-3d01-436d-af4c-634c7c08fa1c> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/9b2e5b6b-3d01-436d-af4c-634c7c08fa1c> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "vary";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "Accept-Encoding" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "vary";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "Accept-Encoding" .
   
-  <https://mobi.solutions/webhooks/headers/220991d9-d801-48f7-8299-cf6155ea4ca6> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/220991d9-d801-48f7-8299-cf6155ea4ca6> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "set-cookie";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "__cf_bm=iJ0Oq3J0T4g4gC9fTkvjSvd1HcTQtm2A413cMg3wgyc-1781279195.1822193-1.0.1.1-3Gg2tIse4LT_QlYDjD2NPA95Cl39jMREe1ylIXnAt1W3b1X3psvnNeKkywWeMgVIsBNq2pFGyJLseUGVCTy9FK2FFEmJkRs3h2ZVt19TBHZtEuou7S.kTQJAp.Yb8xik; HttpOnly; SameSite=None; Secure; Path=/; Domain=pstmn.io; Expires=Fri, 12 Jun 2026 16:16:35 GMT" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "set-cookie";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "__cf_bm=iJ0Oq3J0T4g4gC9fTkvjSvd1HcTQtm2A413cMg3wgyc-1781279195.1822193-1.0.1.1-3Gg2tIse4LT_QlYDjD2NPA95Cl39jMREe1ylIXnAt1W3b1X3psvnNeKkywWeMgVIsBNq2pFGyJLseUGVCTy9FK2FFEmJkRs3h2ZVt19TBHZtEuou7S.kTQJAp.Yb8xik; HttpOnly; SameSite=None; Secure; Path=/; Domain=pstmn.io; Expires=Fri, 12 Jun 2026 16:16:35 GMT" .
   
-  <https://mobi.solutions/webhooks/headers/feed87a3-dbe6-4508-b534-93425d0d73a8> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/feed87a3-dbe6-4508-b534-93425d0d73a8> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "cf-cache-status";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "DYNAMIC" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "cf-cache-status";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "DYNAMIC" .
   
-  <https://mobi.solutions/webhooks/headers/1fbe4d65-9128-4e1d-b2a1-c3e16922087a> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/1fbe4d65-9128-4e1d-b2a1-c3e16922087a> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "Server";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "cloudflare" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "Server";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "cloudflare" .
   
-  <https://mobi.solutions/webhooks/headers/9936fea2-9082-4414-b748-7f51262953c5> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/9936fea2-9082-4414-b748-7f51262953c5> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "CF-RAY";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "a0a9fd39eb84de9a-EWR" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "CF-RAY";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "a0a9fd39eb84de9a-EWR" .
   
-  <https://mobi.solutions/webhooks/attempt/59d394a7-31b0-44e9-8560-95a0bf7c5f0d> a <http://mobi.solutions/ontologies/webhooks#ConnectionAttempt>,
+  <https://mobi.solutions/webhooks/attempt/59d394a7-31b0-44e9-8560-95a0bf7c5f0d> a <https://mobi.solutions/ontologies/webhooks#ConnectionAttempt>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasResponseHeader> <https://mobi.solutions/webhooks/headers/685d0508-9788-4ac6-8cf2-18fb97db3099>,
+    <https://mobi.solutions/ontologies/webhooks#hasResponseHeader> <https://mobi.solutions/webhooks/headers/685d0508-9788-4ac6-8cf2-18fb97db3099>,
       <https://mobi.solutions/webhooks/headers/14d408a2-3b08-4a3c-9319-73d69e941975>, <https://mobi.solutions/webhooks/headers/92bb7798-9096-4ee1-9a9b-b8977788e246>,
       <https://mobi.solutions/webhooks/headers/0a50361b-cec3-43a5-b533-f77e6716620e>, <https://mobi.solutions/webhooks/headers/ef3337f3-7e2b-45f1-a6ba-d03caea42615>,
       <https://mobi.solutions/webhooks/headers/b74461c7-e920-4f94-a714-cb900032066f>, <https://mobi.solutions/webhooks/headers/8a92776d-454b-41f7-8e54-57c4b53e0ad9>,
@@ -240,102 +240,102 @@
       <https://mobi.solutions/webhooks/headers/a85ed12f-a6d6-4ddb-984f-509d326ce146>, <https://mobi.solutions/webhooks/headers/5e10f307-83f7-4ce8-9f6c-270f6790d87e>,
       <https://mobi.solutions/webhooks/headers/52964bd2-4aed-4535-8311-16ffc7110dde>, <https://mobi.solutions/webhooks/headers/0bc8cd15-2d68-4939-a4b2-ad6ebf1782d8>,
       <https://mobi.solutions/webhooks/headers/eae0852b-c9a5-4b9c-ae1f-473570687d4d>, <https://mobi.solutions/webhooks/headers/c977e3d7-b5c6-4639-a672-a1752d5a52b4>;
-    <http://mobi.solutions/ontologies/webhooks#requestTimestamp> "2026-06-12T11:46:35.639936-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
-    <http://mobi.solutions/ontologies/webhooks#responseStatus> "500";
-    <http://mobi.solutions/ontologies/webhooks#responseBody> "";
-    <http://mobi.solutions/ontologies/webhooks#responseTimestamp> "2026-06-12T11:46:35.828328-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+    <https://mobi.solutions/ontologies/webhooks#requestTimestamp> "2026-06-12T11:46:35.639936-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <https://mobi.solutions/ontologies/webhooks#responseStatus> "500";
+    <https://mobi.solutions/ontologies/webhooks#responseBody> "";
+    <https://mobi.solutions/ontologies/webhooks#responseTimestamp> "2026-06-12T11:46:35.828328-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
   
-  <https://mobi.solutions/webhooks/headers/685d0508-9788-4ac6-8cf2-18fb97db3099> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/685d0508-9788-4ac6-8cf2-18fb97db3099> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "Date";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "Fri, 12 Jun 2026 15:46:35 GMT" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "Date";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "Fri, 12 Jun 2026 15:46:35 GMT" .
   
-  <https://mobi.solutions/webhooks/headers/14d408a2-3b08-4a3c-9319-73d69e941975> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/14d408a2-3b08-4a3c-9319-73d69e941975> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "Content-Type";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "text/html; charset=utf-8" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "Content-Type";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "text/html; charset=utf-8" .
   
-  <https://mobi.solutions/webhooks/headers/92bb7798-9096-4ee1-9a9b-b8977788e246> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/92bb7798-9096-4ee1-9a9b-b8977788e246> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "Transfer-Encoding";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "chunked" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "Transfer-Encoding";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "chunked" .
   
-  <https://mobi.solutions/webhooks/headers/0a50361b-cec3-43a5-b533-f77e6716620e> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/0a50361b-cec3-43a5-b533-f77e6716620e> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "Connection";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "keep-alive" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "Connection";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "keep-alive" .
   
-  <https://mobi.solutions/webhooks/headers/ef3337f3-7e2b-45f1-a6ba-d03caea42615> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/ef3337f3-7e2b-45f1-a6ba-d03caea42615> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-srv-trace";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "v=1;t=e5b3b3dc3f3471a7" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-srv-trace";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "v=1;t=e5b3b3dc3f3471a7" .
   
-  <https://mobi.solutions/webhooks/headers/b74461c7-e920-4f94-a714-cb900032066f> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/b74461c7-e920-4f94-a714-cb900032066f> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-srv-span";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "v=1;s=e01ace3615b15af0" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-srv-span";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "v=1;s=e01ace3615b15af0" .
   
-  <https://mobi.solutions/webhooks/headers/8a92776d-454b-41f7-8e54-57c4b53e0ad9> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/8a92776d-454b-41f7-8e54-57c4b53e0ad9> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "access-control-allow-origin";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "*" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "access-control-allow-origin";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "*" .
   
-  <https://mobi.solutions/webhooks/headers/d41063ae-0c58-4fb3-8cee-89172d132d05> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/d41063ae-0c58-4fb3-8cee-89172d132d05> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-ratelimit-limit";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "120" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-ratelimit-limit";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "120" .
   
-  <https://mobi.solutions/webhooks/headers/84b0cfdd-afd5-4372-aff6-9f0f236c9ade> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/84b0cfdd-afd5-4372-aff6-9f0f236c9ade> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-ratelimit-remaining";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "117" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-ratelimit-remaining";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "117" .
   
-  <https://mobi.solutions/webhooks/headers/a85ed12f-a6d6-4ddb-984f-509d326ce146> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/a85ed12f-a6d6-4ddb-984f-509d326ce146> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-ratelimit-reset";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "1781279255" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-ratelimit-reset";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "1781279255" .
   
-  <https://mobi.solutions/webhooks/headers/5e10f307-83f7-4ce8-9f6c-270f6790d87e> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/5e10f307-83f7-4ce8-9f6c-270f6790d87e> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "vary";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "Accept-Encoding" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "vary";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "Accept-Encoding" .
   
-  <https://mobi.solutions/webhooks/headers/52964bd2-4aed-4535-8311-16ffc7110dde> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/52964bd2-4aed-4535-8311-16ffc7110dde> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "set-cookie";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "__cf_bm=WguHNhcDdGaUMXUlXra2AVSEGmxp4U9MupYN1RbXYWI-1781279195.7446167-1.0.1.1-uUsQQQtuUB7gWHhaigZkcH.plEw1i9NKWO7DavWDduJXPzqrefhn_DF3cPzZdYs0Yc.Ftqt6m1NyuVC8DPpQrC6dv7FLTGctRmIS3luEKHFGLEXIjJclLnnQvgN9wrPV; HttpOnly; SameSite=None; Secure; Path=/; Domain=pstmn.io; Expires=Fri, 12 Jun 2026 16:16:35 GMT" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "set-cookie";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "__cf_bm=WguHNhcDdGaUMXUlXra2AVSEGmxp4U9MupYN1RbXYWI-1781279195.7446167-1.0.1.1-uUsQQQtuUB7gWHhaigZkcH.plEw1i9NKWO7DavWDduJXPzqrefhn_DF3cPzZdYs0Yc.Ftqt6m1NyuVC8DPpQrC6dv7FLTGctRmIS3luEKHFGLEXIjJclLnnQvgN9wrPV; HttpOnly; SameSite=None; Secure; Path=/; Domain=pstmn.io; Expires=Fri, 12 Jun 2026 16:16:35 GMT" .
   
-  <https://mobi.solutions/webhooks/headers/0bc8cd15-2d68-4939-a4b2-ad6ebf1782d8> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/0bc8cd15-2d68-4939-a4b2-ad6ebf1782d8> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "cf-cache-status";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "DYNAMIC" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "cf-cache-status";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "DYNAMIC" .
   
-  <https://mobi.solutions/webhooks/headers/eae0852b-c9a5-4b9c-ae1f-473570687d4d> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/eae0852b-c9a5-4b9c-ae1f-473570687d4d> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "Server";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "cloudflare" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "Server";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "cloudflare" .
   
-  <https://mobi.solutions/webhooks/headers/c977e3d7-b5c6-4639-a672-a1752d5a52b4> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/c977e3d7-b5c6-4639-a672-a1752d5a52b4> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "CF-RAY";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "a0a9fd3d6810de9a-EWR" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "CF-RAY";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "a0a9fd3d6810de9a-EWR" .
   
   <https://mobi.com/activities/exec-2> a <http://www.w3.org/ns/prov#Activity>,
-      <http://mobi.solutions/ontologies/webhooks#WebhookExecutionActivity>, <http://www.w3.org/2002/07/owl#Thing>;
+      <https://mobi.solutions/ontologies/webhooks#WebhookExecutionActivity>, <http://www.w3.org/2002/07/owl#Thing>;
     <http://www.w3.org/ns/prov#used> <https://mobi.com/records#exec-record>;
-    <http://mobi.solutions/ontologies/webhooks#requestUrl> <https://www.example.com/test/>;
-    <http://mobi.solutions/ontologies/webhooks#requestBody> "{\"activityIRI\":\"https://mobi.solutions/webhooks/execution/d30d26fb-fca2-48c4-a449-e411ab9c96b8\",\"event\":{\"commit\":\"http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997\",\"user\":\"http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997\",\"branch\":\"https://mobi.com/branches#8a1206a2-5f6e-4e42-bf84-5c75f020ca8d\",\"record\":\"https://mobi.com/records#6bc57944-35f6-4724-a411-124b2247195c\",\"event.topics\":\"com/mobi/catalog/commit\"}}";
-    <http://mobi.solutions/ontologies/webhooks#requestMethod> "GET";
-    <http://mobi.solutions/ontologies/webhooks#succeeded> true;
-    <http://mobi.solutions/ontologies/webhooks#hasHeader> <https://mobi.solutions/webhooks/headers/test2>;
-    <http://mobi.solutions/ontologies/webhooks#hasConnectionAttempt> <https://mobi.solutions/webhooks/attempt/0f447ff3-8974-4952-a039-5ef218f428f0>;
+    <https://mobi.solutions/ontologies/webhooks#requestUrl> <https://www.example.com/test/>;
+    <https://mobi.solutions/ontologies/webhooks#requestBody> "{\"activityIRI\":\"https://mobi.solutions/webhooks/execution/d30d26fb-fca2-48c4-a449-e411ab9c96b8\",\"event\":{\"commit\":\"http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997\",\"user\":\"http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997\",\"branch\":\"https://mobi.com/branches#8a1206a2-5f6e-4e42-bf84-5c75f020ca8d\",\"record\":\"https://mobi.com/records#6bc57944-35f6-4724-a411-124b2247195c\",\"event.topics\":\"com/mobi/catalog/commit\"}}";
+    <https://mobi.solutions/ontologies/webhooks#requestMethod> "GET";
+    <https://mobi.solutions/ontologies/webhooks#succeeded> true;
+    <https://mobi.solutions/ontologies/webhooks#hasHeader> <https://mobi.solutions/webhooks/headers/test2>;
+    <https://mobi.solutions/ontologies/webhooks#hasConnectionAttempt> <https://mobi.solutions/webhooks/attempt/0f447ff3-8974-4952-a039-5ef218f428f0>;
     <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
     <http://www.w3.org/ns/prov#startedAtTime> "2026-06-12T11:47:42.244801-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
     <http://www.w3.org/ns/prov#endedAtTime> "2026-06-12T11:47:42.548931-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
   
-  <https://mobi.solutions/webhooks/attempt/0f447ff3-8974-4952-a039-5ef218f428f0> a <http://mobi.solutions/ontologies/webhooks#ConnectionAttempt>,
+  <https://mobi.solutions/webhooks/attempt/0f447ff3-8974-4952-a039-5ef218f428f0> a <https://mobi.solutions/ontologies/webhooks#ConnectionAttempt>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasResponseHeader> <https://mobi.solutions/webhooks/headers/389d5726-fd91-479a-be0a-88fc87a41e21>,
+    <https://mobi.solutions/ontologies/webhooks#hasResponseHeader> <https://mobi.solutions/webhooks/headers/389d5726-fd91-479a-be0a-88fc87a41e21>,
       <https://mobi.solutions/webhooks/headers/49579f17-0f56-471a-bbaa-f0aee2530a79>, <https://mobi.solutions/webhooks/headers/d925d6fc-7c77-404f-95e0-a0f30f667d5f>,
       <https://mobi.solutions/webhooks/headers/68206e62-c16b-4b90-a6e6-f3132d1c2603>, <https://mobi.solutions/webhooks/headers/a5ad552c-a5ea-42c6-b7b1-1ae634a5ac11>,
       <https://mobi.solutions/webhooks/headers/2f4700d4-a13c-46b9-9087-d9cf80bd83fc>, <https://mobi.solutions/webhooks/headers/5a42e77a-33d0-4374-baab-fc7104dd9a7d>,
@@ -343,85 +343,85 @@
       <https://mobi.solutions/webhooks/headers/8b4f70d2-f97b-4d05-9172-1aea103833ac>, <https://mobi.solutions/webhooks/headers/58552d56-989d-4b59-b188-51bcdebd6804>,
       <https://mobi.solutions/webhooks/headers/aec7e16d-a799-480e-befa-f07732bc4d1a>, <https://mobi.solutions/webhooks/headers/afb5c77a-8835-4a55-9850-f3fa57101ecb>,
       <https://mobi.solutions/webhooks/headers/303cc18e-369c-4a09-85fe-0f6fced186a2>, <https://mobi.solutions/webhooks/headers/99a32460-d435-4fd6-8010-48bf133d7d0a>;
-    <http://mobi.solutions/ontologies/webhooks#requestTimestamp> "2026-06-12T11:47:42.250413-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
-    <http://mobi.solutions/ontologies/webhooks#responseStatus> "200";
-    <http://mobi.solutions/ontologies/webhooks#responseBody> "";
-    <http://mobi.solutions/ontologies/webhooks#responseTimestamp> "2026-06-12T11:47:42.545742-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+    <https://mobi.solutions/ontologies/webhooks#requestTimestamp> "2026-06-12T11:47:42.250413-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <https://mobi.solutions/ontologies/webhooks#responseStatus> "200";
+    <https://mobi.solutions/ontologies/webhooks#responseBody> "";
+    <https://mobi.solutions/ontologies/webhooks#responseTimestamp> "2026-06-12T11:47:42.545742-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
   
-  <https://mobi.solutions/webhooks/headers/389d5726-fd91-479a-be0a-88fc87a41e21> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/389d5726-fd91-479a-be0a-88fc87a41e21> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "Date";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "Fri, 12 Jun 2026 15:47:42 GMT" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "Date";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "Fri, 12 Jun 2026 15:47:42 GMT" .
   
-  <https://mobi.solutions/webhooks/headers/49579f17-0f56-471a-bbaa-f0aee2530a79> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/49579f17-0f56-471a-bbaa-f0aee2530a79> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "Content-Type";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "text/html; charset=utf-8" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "Content-Type";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "text/html; charset=utf-8" .
   
-  <https://mobi.solutions/webhooks/headers/d925d6fc-7c77-404f-95e0-a0f30f667d5f> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/d925d6fc-7c77-404f-95e0-a0f30f667d5f> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "Transfer-Encoding";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "chunked" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "Transfer-Encoding";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "chunked" .
   
-  <https://mobi.solutions/webhooks/headers/68206e62-c16b-4b90-a6e6-f3132d1c2603> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/68206e62-c16b-4b90-a6e6-f3132d1c2603> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "Connection";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "keep-alive" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "Connection";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "keep-alive" .
   
-  <https://mobi.solutions/webhooks/headers/a5ad552c-a5ea-42c6-b7b1-1ae634a5ac11> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/a5ad552c-a5ea-42c6-b7b1-1ae634a5ac11> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-srv-trace";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "v=1;t=172a0acbbf843667" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-srv-trace";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "v=1;t=172a0acbbf843667" .
   
-  <https://mobi.solutions/webhooks/headers/2f4700d4-a13c-46b9-9087-d9cf80bd83fc> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/2f4700d4-a13c-46b9-9087-d9cf80bd83fc> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-srv-span";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "v=1;s=ab232b8a67afd20c" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-srv-span";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "v=1;s=ab232b8a67afd20c" .
   
-  <https://mobi.solutions/webhooks/headers/5a42e77a-33d0-4374-baab-fc7104dd9a7d> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/5a42e77a-33d0-4374-baab-fc7104dd9a7d> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "access-control-allow-origin";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "*" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "access-control-allow-origin";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "*" .
   
-  <https://mobi.solutions/webhooks/headers/a1145a48-8e6b-4cf6-ae27-e3a073597b85> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/a1145a48-8e6b-4cf6-ae27-e3a073597b85> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-ratelimit-limit";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "120" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-ratelimit-limit";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "120" .
   
-  <https://mobi.solutions/webhooks/headers/ce7ce4e0-39ff-4dc5-bf8a-d954fbdf8d76> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/ce7ce4e0-39ff-4dc5-bf8a-d954fbdf8d76> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-ratelimit-remaining";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "119" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-ratelimit-remaining";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "119" .
   
-  <https://mobi.solutions/webhooks/headers/8b4f70d2-f97b-4d05-9172-1aea103833ac> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/8b4f70d2-f97b-4d05-9172-1aea103833ac> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-ratelimit-reset";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "1781279322" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "x-ratelimit-reset";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "1781279322" .
   
-  <https://mobi.solutions/webhooks/headers/58552d56-989d-4b59-b188-51bcdebd6804> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/58552d56-989d-4b59-b188-51bcdebd6804> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "vary";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "Accept-Encoding" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "vary";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "Accept-Encoding" .
   
-  <https://mobi.solutions/webhooks/headers/aec7e16d-a799-480e-befa-f07732bc4d1a> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/aec7e16d-a799-480e-befa-f07732bc4d1a> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "set-cookie";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "__cf_bm=Lh0bkk46vYUigMuSgyLlm11ErtRj9S_3Y.Ffxp7LRJI-1781279262.3591926-1.0.1.1-eBbn0fvs706IbxLi9kFzn0FMSI6swAhD9Fa_MsvTGgVgxSbijXhVey5d6mm0qKpEektLlz84b4GchulQY7MlEeSvzZTlB2k4KYBriu0WqBaq1o83fXC2JGWArP0I17lp; HttpOnly; SameSite=None; Secure; Path=/; Domain=pstmn.io; Expires=Fri, 12 Jun 2026 16:17:42 GMT" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "set-cookie";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "__cf_bm=Lh0bkk46vYUigMuSgyLlm11ErtRj9S_3Y.Ffxp7LRJI-1781279262.3591926-1.0.1.1-eBbn0fvs706IbxLi9kFzn0FMSI6swAhD9Fa_MsvTGgVgxSbijXhVey5d6mm0qKpEektLlz84b4GchulQY7MlEeSvzZTlB2k4KYBriu0WqBaq1o83fXC2JGWArP0I17lp; HttpOnly; SameSite=None; Secure; Path=/; Domain=pstmn.io; Expires=Fri, 12 Jun 2026 16:17:42 GMT" .
   
-  <https://mobi.solutions/webhooks/headers/afb5c77a-8835-4a55-9850-f3fa57101ecb> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/afb5c77a-8835-4a55-9850-f3fa57101ecb> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "cf-cache-status";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "DYNAMIC" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "cf-cache-status";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "DYNAMIC" .
   
-  <https://mobi.solutions/webhooks/headers/303cc18e-369c-4a09-85fe-0f6fced186a2> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/303cc18e-369c-4a09-85fe-0f6fced186a2> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "Server";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "cloudflare" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "Server";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "cloudflare" .
   
-  <https://mobi.solutions/webhooks/headers/99a32460-d435-4fd6-8010-48bf133d7d0a> a <http://mobi.solutions/ontologies/webhooks#Header>,
+  <https://mobi.solutions/webhooks/headers/99a32460-d435-4fd6-8010-48bf133d7d0a> a <https://mobi.solutions/ontologies/webhooks#Header>,
       <http://www.w3.org/2002/07/owl#Thing>;
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderName> "CF-RAY";
-    <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> "a0a9feddb9b2de9a-EWR" .
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderName> "CF-RAY";
+    <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> "a0a9feddb9b2de9a-EWR" .
 }
 
 <http://mobi.solutions/ontologies/workflows> {
@@ -633,7 +633,7 @@
 
 <http://mobi.solutions/ontologies/webhooks> {
   <http://mobi.solutions/ontologies/webhooks> a <http://www.w3.org/2002/07/owl#Ontology>;
-    <http://www.w3.org/2002/07/owl#versionIRI> <http://mobi.solutions/ontologies/webhooks#1.0>;
+    <http://www.w3.org/2002/07/owl#versionIRI> <https://mobi.solutions/ontologies/webhooks#1.0>;
     <http://www.w3.org/2002/07/owl#imports> <http://mobi.com/ontologies/prov>, <http://mobi.com/ontologies/catalog>;
     <http://www.w3.org/2000/01/rdf-schema#label> "The Mobi Webhooks Ontology"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "The Mobi webhooks ontology is designed to facilitate webhook configuration and management within the Mobi platform."@en;
@@ -646,68 +646,68 @@
   _:06e6cc006cc84635b3f87a302a0b2aa220 <http://xmlns.com/foaf/0.1/name> "Mobi";
     <http://xmlns.com/foaf/0.1/homepage> <https://mobi.inovexcorp.com/> .
   
-  <http://mobi.solutions/ontologies/webhooks#WebhookRecord> a <http://www.w3.org/2002/07/owl#Class>;
+  <https://mobi.solutions/ontologies/webhooks#WebhookRecord> a <http://www.w3.org/2002/07/owl#Class>;
     <http://www.w3.org/2000/01/rdf-schema#label> "Webhook Record"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "An unversioned catalog record that represents a webhook configuration for sending HTTP callbacks in response to platform events."@en;
     <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://mobi.com/ontologies/catalog#UnversionedRecord> .
   
-  <http://mobi.solutions/ontologies/webhooks#hasWebhookConfiguration> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+  <https://mobi.solutions/ontologies/webhooks#hasWebhookConfiguration> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
       <http://www.w3.org/2002/07/owl#ObjectProperty>;
     <http://www.w3.org/2000/01/rdf-schema#label> "has webhook configuration"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "Links a Webhook Record to its configuration."@en;
-    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/webhooks#WebhookRecord>;
-    <http://www.w3.org/2000/01/rdf-schema#range> <http://mobi.solutions/ontologies/webhooks#WebhookConfiguration> .
+    <http://www.w3.org/2000/01/rdf-schema#domain> <https://mobi.solutions/ontologies/webhooks#WebhookRecord>;
+    <http://www.w3.org/2000/01/rdf-schema#range> <https://mobi.solutions/ontologies/webhooks#WebhookConfiguration> .
   
-  <http://mobi.solutions/ontologies/webhooks#WebhookConfiguration> a <http://www.w3.org/2002/07/owl#Class>,
+  <https://mobi.solutions/ontologies/webhooks#WebhookConfiguration> a <http://www.w3.org/2002/07/owl#Class>,
       <http://www.w3.org/ns/shacl#NodeShape>, <http://www.w3.org/2000/01/rdf-schema#Class>;
     <http://www.w3.org/2000/01/rdf-schema#label> "Webhook Configuration"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "Configuration details for a webhook including URL, authentication, and event triggers."@en;
-    <http://www.w3.org/ns/shacl#property> <http://mobi.solutions/ontologies/webhooks#WebhookConfigurationUrlShape>,
-      <http://mobi.solutions/ontologies/webhooks#WebhookConfigurationHttpMethodShape>, <http://mobi.solutions/ontologies/webhooks#WebhookConfigurationEventFilterShape>,
-      <http://mobi.solutions/ontologies/webhooks#WebhookConfigurationActiveShape>, <http://mobi.solutions/ontologies/webhooks#WebhookConfigurationSecretTokenShape>;
-    <http://www.w3.org/ns/shacl#targetClass> <http://mobi.solutions/ontologies/webhooks#WebhookConfiguration> .
+    <http://www.w3.org/ns/shacl#property> <https://mobi.solutions/ontologies/webhooks#WebhookConfigurationUrlShape>,
+      <https://mobi.solutions/ontologies/webhooks#WebhookConfigurationHttpMethodShape>, <https://mobi.solutions/ontologies/webhooks#WebhookConfigurationEventFilterShape>,
+      <https://mobi.solutions/ontologies/webhooks#WebhookConfigurationActiveShape>, <https://mobi.solutions/ontologies/webhooks#WebhookConfigurationSecretTokenShape>;
+    <http://www.w3.org/ns/shacl#targetClass> <https://mobi.solutions/ontologies/webhooks#WebhookConfiguration> .
   
-  <http://mobi.solutions/ontologies/webhooks#WebhookConfigurationUrlShape> a <http://www.w3.org/ns/shacl#PropertyShape>;
-    <http://www.w3.org/ns/shacl#path> <http://mobi.solutions/ontologies/webhooks#url>;
+  <https://mobi.solutions/ontologies/webhooks#WebhookConfigurationUrlShape> a <http://www.w3.org/ns/shacl#PropertyShape>;
+    <http://www.w3.org/ns/shacl#path> <https://mobi.solutions/ontologies/webhooks#url>;
     <http://www.w3.org/ns/shacl#maxCount> 1;
     <http://www.w3.org/ns/shacl#minCount> 1 .
   
-  <http://mobi.solutions/ontologies/webhooks#WebhookConfigurationHttpMethodShape> a
+  <https://mobi.solutions/ontologies/webhooks#WebhookConfigurationHttpMethodShape> a
       <http://www.w3.org/ns/shacl#PropertyShape>;
-    <http://www.w3.org/ns/shacl#path> <http://mobi.solutions/ontologies/webhooks#httpMethod>;
+    <http://www.w3.org/ns/shacl#path> <https://mobi.solutions/ontologies/webhooks#httpMethod>;
     <http://www.w3.org/ns/shacl#maxCount> 1;
     <http://www.w3.org/ns/shacl#minCount> 1;
     <http://www.w3.org/ns/shacl#in> _:06e6cc006cc84635b3f87a302a0b2aa221 .
   
-  <http://mobi.solutions/ontologies/webhooks#WebhookConfigurationEventFilterShape> a
+  <https://mobi.solutions/ontologies/webhooks#WebhookConfigurationEventFilterShape> a
       <http://www.w3.org/ns/shacl#PropertyShape>;
-    <http://www.w3.org/ns/shacl#path> <http://mobi.solutions/ontologies/webhooks#eventFilter>;
+    <http://www.w3.org/ns/shacl#path> <https://mobi.solutions/ontologies/webhooks#eventFilter>;
     <http://www.w3.org/ns/shacl#maxCount> 1;
     <http://www.w3.org/ns/shacl#minCount> 1 .
   
-  <http://mobi.solutions/ontologies/webhooks#WebhookConfigurationActiveShape> a <http://www.w3.org/ns/shacl#PropertyShape>;
-    <http://www.w3.org/ns/shacl#path> <http://mobi.solutions/ontologies/webhooks#active>;
+  <https://mobi.solutions/ontologies/webhooks#WebhookConfigurationActiveShape> a <http://www.w3.org/ns/shacl#PropertyShape>;
+    <http://www.w3.org/ns/shacl#path> <https://mobi.solutions/ontologies/webhooks#active>;
     <http://www.w3.org/ns/shacl#maxCount> 1;
     <http://www.w3.org/ns/shacl#minCount> 1;
     <http://www.w3.org/ns/shacl#in> _:06e6cc006cc84635b3f87a302a0b2aa223 .
   
-  <http://mobi.solutions/ontologies/webhooks#WebhookConfigurationSecretTokenShape> a
+  <https://mobi.solutions/ontologies/webhooks#WebhookConfigurationSecretTokenShape> a
       <http://www.w3.org/ns/shacl#PropertyShape>;
-    <http://www.w3.org/ns/shacl#path> <http://mobi.solutions/ontologies/webhooks#secretToken>;
+    <http://www.w3.org/ns/shacl#path> <https://mobi.solutions/ontologies/webhooks#secretToken>;
     <http://www.w3.org/ns/shacl#maxCount> 1 .
   
-  <http://mobi.solutions/ontologies/webhooks#url> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+  <https://mobi.solutions/ontologies/webhooks#url> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
       <http://www.w3.org/2002/07/owl#DatatypeProperty>;
     <http://www.w3.org/2000/01/rdf-schema#label> "url"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "The URL endpoint where webhook events will be sent."@en;
-    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/webhooks#WebhookConfiguration>;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <https://mobi.solutions/ontologies/webhooks#WebhookConfiguration>;
     <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#string> .
   
-  <http://mobi.solutions/ontologies/webhooks#httpMethod> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+  <https://mobi.solutions/ontologies/webhooks#httpMethod> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
       <http://www.w3.org/2002/07/owl#DatatypeProperty>;
     <http://www.w3.org/2000/01/rdf-schema#label> "http method"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "The HTTP method to use when sending webhook requests (e.g., POST, PUT)."@en;
-    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/webhooks#WebhookConfiguration>;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <https://mobi.solutions/ontologies/webhooks#WebhookConfiguration>;
     <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#string> .
   
   _:06e6cc006cc84635b3f87a302a0b2aa221 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
@@ -718,18 +718,18 @@
       "POST";
     <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
   
-  <http://mobi.solutions/ontologies/webhooks#eventFilter> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+  <https://mobi.solutions/ontologies/webhooks#eventFilter> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
       <http://www.w3.org/2002/07/owl#DatatypeProperty>;
     <http://www.w3.org/2000/01/rdf-schema#label> "event filter"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "Filter string to specify which events should trigger the webhook."@en;
-    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/webhooks#WebhookConfiguration>;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <https://mobi.solutions/ontologies/webhooks#WebhookConfiguration>;
     <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#string> .
   
-  <http://mobi.solutions/ontologies/webhooks#active> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+  <https://mobi.solutions/ontologies/webhooks#active> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
       <http://www.w3.org/2002/07/owl#DatatypeProperty>;
     <http://www.w3.org/2000/01/rdf-schema#label> "active"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "Indicates whether the webhook is currently active (ACTIVE or INACTIVE)."@en;
-    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/webhooks#WebhookConfiguration>;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <https://mobi.solutions/ontologies/webhooks#WebhookConfiguration>;
     <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#string> .
   
   _:06e6cc006cc84635b3f87a302a0b2aa223 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
@@ -740,138 +740,138 @@
       "INACTIVE";
     <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
   
-  <http://mobi.solutions/ontologies/webhooks#secretToken> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+  <https://mobi.solutions/ontologies/webhooks#secretToken> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
       <http://www.w3.org/2002/07/owl#DatatypeProperty>;
     <http://www.w3.org/2000/01/rdf-schema#label> "secret token"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "Optional secret token used for authenticating webhook requests."@en;
-    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/webhooks#WebhookConfiguration>;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <https://mobi.solutions/ontologies/webhooks#WebhookConfiguration>;
     <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#string> .
   
-  <http://mobi.solutions/ontologies/webhooks#hasRequestHeader> a <http://www.w3.org/2002/07/owl#ObjectProperty>;
+  <https://mobi.solutions/ontologies/webhooks#hasRequestHeader> a <http://www.w3.org/2002/07/owl#ObjectProperty>;
     <http://www.w3.org/2000/01/rdf-schema#label> "has request header"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "Links a Webhook Configuration to HTTP request headers."@en;
-    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/webhooks#WebhookConfiguration>;
-    <http://www.w3.org/2000/01/rdf-schema#range> <http://mobi.solutions/ontologies/webhooks#RequestHeader> .
+    <http://www.w3.org/2000/01/rdf-schema#domain> <https://mobi.solutions/ontologies/webhooks#WebhookConfiguration>;
+    <http://www.w3.org/2000/01/rdf-schema#range> <https://mobi.solutions/ontologies/webhooks#RequestHeader> .
   
-  <http://mobi.solutions/ontologies/webhooks#RequestHeader> a <http://www.w3.org/2002/07/owl#Class>;
+  <https://mobi.solutions/ontologies/webhooks#RequestHeader> a <http://www.w3.org/2002/07/owl#Class>;
     <http://www.w3.org/2000/01/rdf-schema#label> "Request Header"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "An HTTP header key-value pair to be included in webhook requests."@en;
-    <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://mobi.solutions/ontologies/webhooks#Header> .
+    <http://www.w3.org/2000/01/rdf-schema#subClassOf> <https://mobi.solutions/ontologies/webhooks#Header> .
   
-  <http://mobi.solutions/ontologies/webhooks#Header> a <http://www.w3.org/2002/07/owl#Class>;
+  <https://mobi.solutions/ontologies/webhooks#Header> a <http://www.w3.org/2002/07/owl#Class>;
     <http://www.w3.org/2000/01/rdf-schema#label> "Header"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "An HTTP header key-value pair."@en .
   
-  <http://mobi.solutions/ontologies/webhooks#hasHeaderName> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+  <https://mobi.solutions/ontologies/webhooks#hasHeaderName> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
       <http://www.w3.org/2002/07/owl#DatatypeProperty>;
     <http://www.w3.org/2000/01/rdf-schema#label> "header name"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "The key/name of the HTTP header."@en;
-    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/webhooks#Header>;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <https://mobi.solutions/ontologies/webhooks#Header>;
     <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#string> .
   
-  <http://mobi.solutions/ontologies/webhooks#hasHeaderValue> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+  <https://mobi.solutions/ontologies/webhooks#hasHeaderValue> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
       <http://www.w3.org/2002/07/owl#DatatypeProperty>;
     <http://www.w3.org/2000/01/rdf-schema#label> "header value"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "The value of the HTTP header."@en;
-    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/webhooks#Header>;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <https://mobi.solutions/ontologies/webhooks#Header>;
     <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#string> .
   
-  <http://mobi.solutions/ontologies/webhooks#WebhookExecutionActivity> a <http://www.w3.org/2002/07/owl#Class>;
+  <https://mobi.solutions/ontologies/webhooks#WebhookExecutionActivity> a <http://www.w3.org/2002/07/owl#Class>;
     <http://www.w3.org/2000/01/rdf-schema#label> "Webhook Execution Activity"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "Represents an individual execution attempt of a webhook."@en;
     <http://mobi.com/ontologies/prov#actionWord> "executed"@en;
     <http://mobi.com/ontologies/prov#provAction> <http://www.w3.org/ns/prov#used>;
     <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://www.w3.org/ns/prov#Activity> .
   
-  <http://mobi.solutions/ontologies/webhooks#hasWebhookExecution> a <http://www.w3.org/2002/07/owl#ObjectProperty>;
+  <https://mobi.solutions/ontologies/webhooks#hasWebhookExecution> a <http://www.w3.org/2002/07/owl#ObjectProperty>;
     <http://www.w3.org/2000/01/rdf-schema#label> "has webhook execution"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "Links a Webhook Record to its execution activity."@en;
-    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/webhooks#WebhookRecord>;
-    <http://www.w3.org/2000/01/rdf-schema#range> <http://mobi.solutions/ontologies/webhooks#WebhookExecutionActivity> .
+    <http://www.w3.org/2000/01/rdf-schema#domain> <https://mobi.solutions/ontologies/webhooks#WebhookRecord>;
+    <http://www.w3.org/2000/01/rdf-schema#range> <https://mobi.solutions/ontologies/webhooks#WebhookExecutionActivity> .
   
-  <http://mobi.solutions/ontologies/webhooks#requestUrl> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+  <https://mobi.solutions/ontologies/webhooks#requestUrl> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
       <http://www.w3.org/2002/07/owl#DatatypeProperty>;
     <http://www.w3.org/2000/01/rdf-schema#label> "request url"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "The URL to which the webhook request was sent."@en;
-    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/webhooks#WebhookExecutionActivity>;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <https://mobi.solutions/ontologies/webhooks#WebhookExecutionActivity>;
     <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#anyURI> .
   
-  <http://mobi.solutions/ontologies/webhooks#requestBody> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+  <https://mobi.solutions/ontologies/webhooks#requestBody> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
       <http://www.w3.org/2002/07/owl#DatatypeProperty>;
     <http://www.w3.org/2000/01/rdf-schema#label> "request body"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "The body payload sent in the webhook request."@en;
-    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/webhooks#WebhookConfiguration>,
-      <http://mobi.solutions/ontologies/webhooks#WebhookExecutionActivity>;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <https://mobi.solutions/ontologies/webhooks#WebhookConfiguration>,
+      <https://mobi.solutions/ontologies/webhooks#WebhookExecutionActivity>;
     <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#string> .
   
-  <http://mobi.solutions/ontologies/webhooks#requestMethod> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+  <https://mobi.solutions/ontologies/webhooks#requestMethod> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
       <http://www.w3.org/2002/07/owl#DatatypeProperty>;
     <http://www.w3.org/2000/01/rdf-schema#label> "request method"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "The HTTP method used for the webhook request."@en;
-    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/webhooks#WebhookExecutionActivity>;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <https://mobi.solutions/ontologies/webhooks#WebhookExecutionActivity>;
     <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#string> .
   
-  <http://mobi.solutions/ontologies/webhooks#succeeded> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+  <https://mobi.solutions/ontologies/webhooks#succeeded> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
       <http://www.w3.org/2002/07/owl#DatatypeProperty>;
     <http://www.w3.org/2000/01/rdf-schema#label> "succeeded"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "Whether the webhook execution ultimately succeeded."@en;
-    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/webhooks#WebhookExecutionActivity>;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <https://mobi.solutions/ontologies/webhooks#WebhookExecutionActivity>;
     <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#boolean> .
   
-  <http://mobi.solutions/ontologies/webhooks#activityMessage> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+  <https://mobi.solutions/ontologies/webhooks#activityMessage> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
       <http://www.w3.org/2002/07/owl#DatatypeProperty>;
     <http://www.w3.org/2000/01/rdf-schema#label> "activity message"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "A descriptive message about the outcome of the webhook execution."@en;
-    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/webhooks#WebhookExecutionActivity>;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <https://mobi.solutions/ontologies/webhooks#WebhookExecutionActivity>;
     <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#string> .
   
-  <http://mobi.solutions/ontologies/webhooks#hasHeader> a <http://www.w3.org/2002/07/owl#ObjectProperty>;
+  <https://mobi.solutions/ontologies/webhooks#hasHeader> a <http://www.w3.org/2002/07/owl#ObjectProperty>;
     <http://www.w3.org/2000/01/rdf-schema#label> "has header"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "Links an entity to an HTTP header."@en;
-    <http://www.w3.org/2000/01/rdf-schema#range> <http://mobi.solutions/ontologies/webhooks#Header> .
+    <http://www.w3.org/2000/01/rdf-schema#range> <https://mobi.solutions/ontologies/webhooks#Header> .
   
-  <http://mobi.solutions/ontologies/webhooks#ConnectionAttempt> a <http://www.w3.org/2002/07/owl#Class>;
+  <https://mobi.solutions/ontologies/webhooks#ConnectionAttempt> a <http://www.w3.org/2002/07/owl#Class>;
     <http://www.w3.org/2000/01/rdf-schema#label> "Connection Attempt"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "A single attempt to connect to a webhook endpoint."@en .
   
-  <http://mobi.solutions/ontologies/webhooks#hasConnectionAttempt> a <http://www.w3.org/2002/07/owl#ObjectProperty>;
+  <https://mobi.solutions/ontologies/webhooks#hasConnectionAttempt> a <http://www.w3.org/2002/07/owl#ObjectProperty>;
     <http://www.w3.org/2000/01/rdf-schema#label> "has connection attempt"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "Links a Webhook Execution Activity to an individual connection attempt."@en;
-    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/webhooks#WebhookExecutionActivity>;
-    <http://www.w3.org/2000/01/rdf-schema#range> <http://mobi.solutions/ontologies/webhooks#ConnectionAttempt> .
+    <http://www.w3.org/2000/01/rdf-schema#domain> <https://mobi.solutions/ontologies/webhooks#WebhookExecutionActivity>;
+    <http://www.w3.org/2000/01/rdf-schema#range> <https://mobi.solutions/ontologies/webhooks#ConnectionAttempt> .
   
-  <http://mobi.solutions/ontologies/webhooks#hasResponseHeader> a <http://www.w3.org/2002/07/owl#ObjectProperty>;
+  <https://mobi.solutions/ontologies/webhooks#hasResponseHeader> a <http://www.w3.org/2002/07/owl#ObjectProperty>;
     <http://www.w3.org/2000/01/rdf-schema#label> "has response header"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "Links a Connection Attempt to a response header received from the endpoint."@en;
-    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/webhooks#ConnectionAttempt>;
-    <http://www.w3.org/2000/01/rdf-schema#range> <http://mobi.solutions/ontologies/webhooks#Header> .
+    <http://www.w3.org/2000/01/rdf-schema#domain> <https://mobi.solutions/ontologies/webhooks#ConnectionAttempt>;
+    <http://www.w3.org/2000/01/rdf-schema#range> <https://mobi.solutions/ontologies/webhooks#Header> .
   
-  <http://mobi.solutions/ontologies/webhooks#requestTimestamp> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+  <https://mobi.solutions/ontologies/webhooks#requestTimestamp> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
       <http://www.w3.org/2002/07/owl#DatatypeProperty>;
     <http://www.w3.org/2000/01/rdf-schema#label> "request timestamp"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "The timestamp when the connection attempt request was sent."@en;
-    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/webhooks#ConnectionAttempt>;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <https://mobi.solutions/ontologies/webhooks#ConnectionAttempt>;
     <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#dateTime> .
   
-  <http://mobi.solutions/ontologies/webhooks#responseStatus> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+  <https://mobi.solutions/ontologies/webhooks#responseStatus> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
       <http://www.w3.org/2002/07/owl#DatatypeProperty>;
     <http://www.w3.org/2000/01/rdf-schema#label> "response status"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "The HTTP status code returned by the endpoint."@en;
-    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/webhooks#ConnectionAttempt>;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <https://mobi.solutions/ontologies/webhooks#ConnectionAttempt>;
     <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#string> .
   
-  <http://mobi.solutions/ontologies/webhooks#responseBody> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+  <https://mobi.solutions/ontologies/webhooks#responseBody> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
       <http://www.w3.org/2002/07/owl#DatatypeProperty>;
     <http://www.w3.org/2000/01/rdf-schema#label> "response body"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "The body of the response returned by the endpoint."@en;
-    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/webhooks#ConnectionAttempt>;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <https://mobi.solutions/ontologies/webhooks#ConnectionAttempt>;
     <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#string> .
   
-  <http://mobi.solutions/ontologies/webhooks#responseTimestamp> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+  <https://mobi.solutions/ontologies/webhooks#responseTimestamp> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
       <http://www.w3.org/2002/07/owl#DatatypeProperty>;
     <http://www.w3.org/2000/01/rdf-schema#label> "response timestamp"@en;
     <http://www.w3.org/2000/01/rdf-schema#comment> "The timestamp when the response was received."@en;
-    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/webhooks#ConnectionAttempt>;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <https://mobi.solutions/ontologies/webhooks#ConnectionAttempt>;
     <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#dateTime> .
 }
 

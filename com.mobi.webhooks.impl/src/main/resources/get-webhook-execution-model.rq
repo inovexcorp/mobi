@@ -1,24 +1,43 @@
 PREFIX prov: <http://www.w3.org/ns/prov#>
-PREFIX webhooks: <http://mobi.solutions/ontologies/webhooks#>
+PREFIX webhooks: <https://mobi.solutions/ontologies/webhooks#>
 
 CONSTRUCT {
+    #Main activity, attempt, and callback triples
     ?activity ?activityPred ?activityObj .
     ?attempt ?attemptPred ?attemptObj .
+    ?activityCallback ?callbackProperty ?callbackValue .
+
+    #header construct triples
     ?attemptHeader ?attemptHeaderPred ?attemptHeaderObj .
     ?activityHeader ?activityHeaderPred ?activityHeaderObj .
+    ?callbackHeader ?callbackHeaderPred ?callbackHeaderObj .
+
 }
 WHERE {
     ?activity ?activityPred ?activityObj .
+
     OPTIONAL {
         ?activity webhooks:hasConnectionAttempt ?attempt .
         ?attempt ?attemptPred ?attemptObj .
+
         OPTIONAL {
             ?attempt webhooks:hasResponseHeader ?attemptHeader .
             ?attemptHeader ?attemptHeaderPred ?attemptHeaderObj .
         }
     }
+
     OPTIONAL {
         ?activity webhooks:hasHeader ?activityHeader .
         ?activityHeader ?activityHeaderPred ?activityHeaderObj .
+    }
+
+    OPTIONAL {
+      ?activity webhooks:hasCallback ?activityCallback .
+      ?activityCallback ?callbackProperty ?callbackValue .
+
+      OPTIONAL {
+        ?activityCallback webhooks:hasHeader ?callbackHeader .
+        ?callbackHeader ?callbackHeaderPred ?callbackHeaderObj .
+      }
     }
 }

@@ -1,4 +1,4 @@
-PREFIX webhooks: <http://mobi.solutions/ontologies/webhooks#>
+PREFIX webhooks: <https://mobi.solutions/ontologies/webhooks#>
 
 SELECT ?recordId ?filterString WHERE {
     ?recordId a webhooks:WebhookRecord ;

@@ -1,6 +1,6 @@
 <http://mobi.solutions/webhooks/configurations/test>
-  a <http://www.w3.org/2002/07/owl#Thing>, <http://mobi.solutions/ontologies/webhooks#WebhookConfiguration>;
-  <http://mobi.solutions/ontologies/webhooks#url> "https://www.example.com";
-  <http://mobi.solutions/ontologies/webhooks#httpMethod> "GET" ;
-  <http://mobi.solutions/ontologies/webhooks#active> "ACTIVE" ;
-  <http://mobi.solutions/ontologies/webhooks#eventFilter> "(&(event.topics=com/mobi/catalog/version))" .
+  a <http://www.w3.org/2002/07/owl#Thing>, <https://mobi.solutions/ontologies/webhooks#WebhookConfiguration>;
+  <https://mobi.solutions/ontologies/webhooks#url> "https://www.example.com";
+  <https://mobi.solutions/ontologies/webhooks#httpMethod> "GET" ;
+  <https://mobi.solutions/ontologies/webhooks#active> true ;
+  <https://mobi.solutions/ontologies/webhooks#eventFilter> "(&(event.topics=com/mobi/catalog/version))" .
